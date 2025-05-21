@@ -1,5 +1,4 @@
-import axios from 'axios';
-import authService from './auth.service';
+import api from '../utils/api';
 
 // Interfaces for statistics data
 export interface UserStatistics {
@@ -89,10 +88,7 @@ class StatisticsService {
     currentPage: number;
   }> {
     try {
-      const response = await axios.get('/api/admin/statistics/users', {
-        headers: {
-          Authorization: `Bearer ${authService.getToken()}`
-        },
+      const response = await api.get('/learning-service-api/v1/admin/statistics/users', {
         params: {
           page,
           size,
@@ -111,11 +107,7 @@ class StatisticsService {
   // Get detailed statistics for a specific user (admin only)
   async getUserStatisticsById(userId: string): Promise<UserStatisticsDetail> {
     try {
-      const response = await axios.get(`/api/admin/statistics/users/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${authService.getToken()}`
-        }
-      });
+      const response = await api.get(`/learning-service-api/v1/admin/statistics/users/${userId}`);
       return response.data.data;
     } catch (error) {
       console.error(`Error fetching statistics for user ${userId}:`, error);
@@ -126,11 +118,7 @@ class StatisticsService {
   // Get overall statistics for admin dashboard
   async getStatisticsOverview(): Promise<AdminStatisticsOverview> {
     try {
-      const response = await axios.get('/api/admin/statistics/overview', {
-        headers: {
-          Authorization: `Bearer ${authService.getToken()}`
-        }
-      });
+      const response = await api.get('/learning-service-api/v1/admin/statistics/overview');
       return response.data.data;
     } catch (error) {
       console.error('Error fetching statistics overview:', error);

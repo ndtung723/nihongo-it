@@ -879,7 +879,7 @@ async function toggleChatGPT(vocabId: string) {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
     // Query the AI for vocabulary explanation
-    axios.post(`${apiUrl}/ai-service-api/v1/vocabulary/explain`, null, {
+    axios.post(`${apiUrl}/ai-service-api/v1/chat/vocabulary/explain`, null, {
       params: {
         term: vocabItem.term || '',
         pronunciation: vocabItem.pronunciation || '',
@@ -1056,7 +1056,7 @@ async function sendChatMessage(vocabId: string) {
 
     const vocabWord = vocabItem.term || ''
 
-    const response = await axios.post(`${apiUrl}/api/v1/ai/vocabulary/chat`, null, {
+    const response = await axios.post(`${apiUrl}/ai-service-api/v1/chat/vocabulary/chat`, null, {
       params: {
         vocabWord: vocabWord,
         userMessage: message

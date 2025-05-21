@@ -270,6 +270,7 @@ import { useAuthStore } from '@/stores'
 import axios, { AxiosError } from 'axios'
 import authService from '@/services/auth.service'
 import conversationService from '@/services/conversation.service'
+import aiService from '@/services/ai.service'
 import * as speechsdk from 'microsoft-cognitiveservices-speech-sdk'
 import speechRecognitionService from '@/services/SpeechRecognitionService'
 
@@ -476,92 +477,25 @@ const playAudio = async (line: ConversationLine) => {
     // Text to speak
     const textToSpeak = line.japanese;
 
-    // Get the backend API URL
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080'
-
-    // First check if audio already exists
-    try {
-      const checkResponse = await axios.get(`${apiUrl}/ai-service-api/v1/tts/check`, {
-        params: {
-          text: textToSpeak,
-          contentType: "conversation"
-        },
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
-
-      if (checkResponse.data.exists) {
-        // Audio exists, use it
-        toast.info('Đang phát âm thanh...', {
-          position: 'top',
-          duration: 2000
-        });
-
-        // Get the audio file
-        const response = await axios.get(`${apiUrl}/ai-service-api/v1/tts/audio`, {
-          params: {
-            text: textToSpeak,
-            contentType: "conversation"
-          },
-          headers: {
-            'Authorization': `Bearer ${authToken}`
-          },
-          responseType: 'blob'
-        });
-
-        // Play the audio
-        const audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audio = new Audio(audioUrl);
-        audio.onended = () => {
-          URL.revokeObjectURL(audioUrl);
-          isPlayingAudio.value = false;
-        };
-        await audio.play();
-        return;
-      }
-    } catch (error) {
-      console.log('Error checking for existing audio:', error);
-      // Continue with generating new audio if check fails
-    }
-
-    // No existing audio found, generate new audio
     // Show loading indicator
-    toast.info('Đang tạo âm thanh...', {
+    toast.info('Đang phát âm thanh...', {
       position: 'top',
       duration: 2000
-    })
+    });
 
-    // Set speed for conversation sentences
-    const speed = 1.0;
+    // Generate and play audio using AI service
+    const audioBlob = await aiService.generateTTS(textToSpeak, 'conversation', 1.0, true);
 
-    // Call the TTS API with Authorization header
-    const response = await axios.post(`${apiUrl}/ai-service-api/v1/tts/generate`, textToSpeak, {
-      headers: {
-        'Content-Type': 'text/plain; charset=UTF-8',
-        'Accept-Language': 'ja-JP',
-        'X-Speech-Speed': speed.toString(),
-        'X-Content-Language': 'ja',
-        'X-Content-Type': 'conversation',
-        'X-Save-Audio': 'true', // Tell backend to save this audio
-        'Authorization': `Bearer ${authToken}`,
-        'Accept': 'audio/mpeg'
-      },
-      responseType: 'arraybuffer'
-    })
+    // Custom playing to ensure we set isPlayingAudio.value = false when done
+    const audioUrl = URL.createObjectURL(audioBlob);
+    const audio = new Audio(audioUrl);
 
-    // Convert response to blob and create audio URL
-    const audioBlob = new Blob([response.data], { type: 'audio/mpeg' })
-    const audioUrl = URL.createObjectURL(audioBlob)
-
-    // Play the audio
-    const audio = new Audio(audioUrl)
     audio.onended = () => {
-      URL.revokeObjectURL(audioUrl)
+      URL.revokeObjectURL(audioUrl);
       isPlayingAudio.value = false;
-    }
-    await audio.play()
+    };
+
+    await audio.play();
   } catch (error) {
     console.error('Error generating or playing TTS audio:', error)
     isPlayingAudio.value = false;
@@ -755,45 +689,37 @@ const processRecording = async (index: number) => {
       return;
     }
 
-    // Create FormData and append the audio blob
-    const formData = new FormData()
     if (!recordedAudioBlobs.value[index]) {
       throw new Error('Không tìm thấy bản ghi âm')
     }
 
-    formData.append('file', recordedAudioBlobs.value[index], 'recording.wav')
-
-    if (conversation.value?.dialogue[index]?.japanese) {
-      const referenceText = conversation.value.dialogue[index].japanese;
-      formData.append('reference_text', referenceText);
-      formData.append('sample_id', `conversation_${index}`); // Use a unique ID for this conversation line
+    if (!conversation.value?.dialogue[index]?.japanese) {
+      throw new Error('Không tìm thấy nội dung tham chiếu')
     }
 
-    // Get the backend API URL
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+    // Get reference text
+    const referenceText = conversation.value.dialogue[index].japanese;
+    const sampleId = `conversation_${index}`;
 
-    // Send to speech analysis API
-    const response = await axios.post(`${apiUrl}/ai-service-api/v1/speech/analyze-audio-enhanced`, formData, {
-      headers: {
-        'Authorization': `Bearer ${authToken}`
-      }
-    })
+    // Use AI service to analyze speech
+    const analysis = await aiService.analyzeSpeech(
+      recordedAudioBlobs.value[index] as Blob,
+      referenceText,
+      sampleId
+    );
 
     // Process response
-    if (response.data) {
-      const analysis = response.data as SpeechAnalysisResult;
-      pronunciationScores.value[index] = Math.round(analysis.score);
-      lineAnalysisResults.value[index] = analysis;
+    pronunciationScores.value[index] = Math.round(analysis.score);
+    lineAnalysisResults.value[index] = analysis;
 
-      // Chỉ đánh dấu hoàn thành nếu là dòng cuối cùng đang hiển thị
-      const lastVisibleIndex = visibleLineIndices.value[visibleLineIndices.value.length - 1];
+    // Chỉ đánh dấu hoàn thành nếu là dòng cuối cùng đang hiển thị
+    const lastVisibleIndex = visibleLineIndices.value[visibleLineIndices.value.length - 1];
 
-      if (index === lastVisibleIndex && pronunciationScores.value[index] > 50) {
-        markAsComplete(index);
-      } else {
-        // Nếu không phải dòng cuối cùng, chỉ cập nhật trạng thái hoàn thành
-        lineCompletionStatus.value[index] = true;
-      }
+    if (index === lastVisibleIndex && pronunciationScores.value[index] > 50) {
+      markAsComplete(index);
+    } else {
+      // Nếu không phải dòng cuối cùng, chỉ cập nhật trạng thái hoàn thành
+      lineCompletionStatus.value[index] = true;
     }
   } catch (err) {
     console.error('Error processing recording:', err);
@@ -1441,7 +1367,7 @@ const fetchFurigana = async (text: string): Promise<FuriganaToken[]> => {
     }
 
     // Gọi API với thêm header xác thực
-    const response = await axios.get(`${apiUrl}/api/v1/furigana`, {
+    const response = await axios.get(`${apiUrl}/learning-service-api/v1/furigana`, {
       params: { text },
       headers
     });

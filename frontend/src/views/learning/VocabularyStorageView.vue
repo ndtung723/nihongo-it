@@ -259,6 +259,7 @@ import axios from 'axios'
 import type { VocabularyItem } from '@/services/vocabulary.service'
 import authService from '@/services/auth.service'
 import flashcardService from '@/services/flashcard.service'
+import aiService from '@/services/ai.service'
 
 const router = useRouter()
 const toast = useToast()
@@ -444,33 +445,19 @@ async function playAudio(item: VocabularyItem) {
         duration: 2000
       });
 
-      // Get the backend API URL
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+      // Use AI service to generate and play audio
+      const textToSpeak = item.pronunciation || item.term;
+      const audioBlob = await aiService.generateTTS(textToSpeak, 'vocabulary', 0.9, true);
 
-      // Call the TTS API with Authorization header
-      const response = await axios.post(`${apiUrl}/ai-service-api/v1/tts/generate`, item.term, {
-        headers: {
-          'Content-Type': 'text/plain; charset=UTF-8',
-          'Accept-Language': 'ja-JP',
-          'X-Speech-Speed': '0.9',
-          'X-Content-Language': 'ja',
-          'X-Content-Type': 'vocabulary',
-          'Authorization': `Bearer ${authService.getToken()}`,
-          'Accept': 'audio/mpeg'
-        },
-        responseType: 'arraybuffer'
-      });
-
-      // Convert response to blob and create audio URL
-      const audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
+      // Create custom audio element to track playback state
       const audioUrl = URL.createObjectURL(audioBlob);
-
-      // Play the audio
       const audio = new Audio(audioUrl);
+
       audio.onended = () => {
         URL.revokeObjectURL(audioUrl);
         playingAudioId.value = null;
       };
+
       await audio.play();
     }
   } catch (error) {
@@ -480,12 +467,16 @@ async function playAudio(item: VocabularyItem) {
       duration: 3000
     });
   } finally {
-    // Reset loading state if no audio was played
-    setTimeout(() => {
-      if (playingAudioId.value === item.vocabId) {
+    // Set audio ID to null if there was an issue
+    if (item.audioPath) {
+      playingAudioId.value = null;
+    } else {
+      // For TTS, this is handled by the audio.onended callback
+      // But set a timeout as fallback
+      setTimeout(() => {
         playingAudioId.value = null;
-      }
-    }, 3000);
+      }, 5000);
+    }
   }
 }
 

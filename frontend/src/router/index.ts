@@ -412,7 +412,7 @@ router.beforeEach(async (to, from, next) => {
 
     try {
       // Validate token with the server
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/v1/auth/current`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/user-service-api/v1/auth/current`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         }

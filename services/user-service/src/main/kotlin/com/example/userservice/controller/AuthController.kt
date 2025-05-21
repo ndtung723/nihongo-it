@@ -47,7 +47,7 @@ import java.util.UUID
 import java.security.Principal
 
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/user-service-api/v1/auth")
 @Tag(name = "Authentication", description = "API endpoints for user authentication, registration and profile management")
 class AuthController(
     private val authenticationManager: AuthenticationManager,

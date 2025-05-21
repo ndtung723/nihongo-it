@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*
 import java.util.*
 
 @RestController
-@RequestMapping("/api/admin/users")
+@RequestMapping("/user-service-api/v1/admin/users")
 @Tag(name = "Admin User Management", description = "API endpoints for admin to manage user accounts")
 @PreAuthFilter(hasRole = "admin")
 class AdminController(

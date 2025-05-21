@@ -35,48 +35,48 @@ export interface UpdateTopicRequest {
 const topicService = {
   // Public API endpoints
   getAllTopics(): Promise<AxiosResponse<Topic[]>> {
-    return api.get('/api/v1/topics');
+    return api.get('/learning-service-api/v1/topics');
   },
 
   getTopicById(id: string): Promise<AxiosResponse<Topic>> {
-    return api.get(`/api/v1/topics/${id}`);
+    return api.get(`/learning-service-api/v1/topics/${id}`);
   },
 
   getTopicsByCategoryId(categoryId: string): Promise<AxiosResponse<Topic[]>> {
-    return api.get(`/api/v1/topics/category/${categoryId}`);
+    return api.get(`/learning-service-api/v1/topics/category/${categoryId}`);
   },
 
   // Admin API endpoints
   adminGetAllTopics(): Promise<AxiosResponse<Topic[]>> {
-    return api.get('/api/admin/topics');
+    return api.get('/learning-service-api/v1/admin/topics');
   },
 
   adminGetTopicById(id: string): Promise<AxiosResponse<Topic>> {
-    return api.get(`/api/admin/topics/${id}`);
+    return api.get(`/learning-service-api/v1/admin/topics/${id}`);
   },
 
   adminGetTopicsByCategoryId(categoryId: string): Promise<AxiosResponse<Topic[]>> {
-    return api.get(`/api/admin/topics/category/${categoryId}`);
+    return api.get(`/learning-service-api/v1/admin/topics/category/${categoryId}`);
   },
 
   adminCreateTopic(data: CreateTopicRequest): Promise<AxiosResponse<Topic>> {
-    return api.post('/api/admin/topics', data);
+    return api.post('/learning-service-api/v1/admin/topics', data);
   },
 
   adminUpdateTopic(id: string, data: UpdateTopicRequest): Promise<AxiosResponse<Topic>> {
-    return api.put(`/api/admin/topics/${id}`, data);
+    return api.put(`/learning-service-api/v1/admin/topics/${id}`, data);
   },
 
   adminDeleteTopic(id: string): Promise<AxiosResponse<any>> {
-    return api.delete(`/api/admin/topics/${id}`);
+    return api.delete(`/learning-service-api/v1/admin/topics/${id}`);
   },
 
   adminToggleTopicStatus(id: string): Promise<AxiosResponse<Topic>> {
-    return api.patch(`/api/admin/topics/${id}/toggle-status`);
+    return api.patch(`/learning-service-api/v1/admin/topics/${id}/toggle-status`);
   },
 
   adminSearchTopics(categoryId: string, query: string): Promise<AxiosResponse<Topic[]>> {
-    return api.get(`/api/admin/topics/search?categoryId=${categoryId}&query=${encodeURIComponent(query)}`);
+    return api.get(`/learning-service-api/v1/admin/topics/search?categoryId=${categoryId}&query=${encodeURIComponent(query)}`);
   }
 };
 

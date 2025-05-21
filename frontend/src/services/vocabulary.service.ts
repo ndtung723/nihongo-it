@@ -1,5 +1,4 @@
-import axios from 'axios'
-import authService from './auth.service'
+import api from '../utils/api'
 
 // Types
 export interface VocabularyItem {
@@ -50,20 +49,11 @@ export interface ChatMessage {
   content: string
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
-
-// Helper function to get auth header
-function authHeader() {
-  const token = authService.getToken();
-  return token ? { 'Authorization': `Bearer ${token}` } : {};
-}
-
 class VocabularyService {
   // Get vocabulary with filters
   async getVocabulary(filter: VocabularyFilter): Promise<PagedResponse<VocabularyItem>> {
     try {
-      const response = await axios.get(`${API_URL}/api/v1/vocabulary`, {
-        headers: { ...authHeader() },
+      const response = await api.get('/learning-service-api/v1/vocabulary', {
         params: {
           keyword: filter.keyword || undefined,
           jlptLevel: filter.jlptLevel || undefined,
@@ -83,9 +73,7 @@ class VocabularyService {
   // Get vocabulary by ID
   async getVocabularyById(id: string): Promise<VocabularyItem> {
     try {
-      const response = await axios.get(`${API_URL}/api/v1/vocabulary/${id}`, {
-        headers: { ...authHeader() }
-      })
+      const response = await api.get(`/learning-service-api/v1/vocabulary/${id}`)
       return response.data.data
     } catch (error) {
       console.error(`Error fetching vocabulary with ID ${id}:`, error)
@@ -96,9 +84,7 @@ class VocabularyService {
   // Get vocabulary by term
   async getVocabularyByTerm(term: string): Promise<VocabularyItem> {
     try {
-      const response = await axios.get(`${API_URL}/api/v1/vocabulary/term/${term}`, {
-        headers: { ...authHeader() }
-      })
+      const response = await api.get(`/learning-service-api/v1/vocabulary/term/${term}`)
       return response.data.data
     } catch (error) {
       console.error(`Error fetching vocabulary with term ${term}:`, error)
@@ -109,9 +95,7 @@ class VocabularyService {
   // Save vocabulary to user's notebook
   async saveVocabulary(id: string): Promise<VocabularyItem> {
     try {
-      const response = await axios.post(`${API_URL}/api/v1/vocabulary/${id}/save`, {}, {
-        headers: { ...authHeader() }
-      })
+      const response = await api.post(`/learning-service-api/v1/vocabulary/${id}/save`, {})
       return response.data
     } catch (error) {
       console.error(`Error saving vocabulary ${id}:`, error)
@@ -122,9 +106,7 @@ class VocabularyService {
   // Remove vocabulary from user's notebook
   async removeSavedVocabulary(id: string): Promise<VocabularyItem> {
     try {
-      const response = await axios.delete(`${API_URL}/api/v1/vocabulary/${id}/save`, {
-        headers: { ...authHeader() }
-      })
+      const response = await api.delete(`/learning-service-api/v1/vocabulary/${id}/save`)
       return response.data
     } catch (error) {
       console.error(`Error removing saved vocabulary ${id}:`, error)
@@ -135,8 +117,7 @@ class VocabularyService {
   // Get saved vocabulary
   async getSavedVocabulary(filter: VocabularyFilter): Promise<PagedResponse<VocabularyItem>> {
     try {
-      const response = await axios.get(`${API_URL}/api/v1/vocabulary/saved`, {
-        headers: { ...authHeader() },
+      const response = await api.get('/learning-service-api/v1/vocabulary/saved', {
         params: {
           keyword: filter.keyword || undefined,
           page: filter.page,
@@ -153,9 +134,7 @@ class VocabularyService {
 
   async getCategories(): Promise<any> {
     try {
-      const response = await axios.get(`${API_URL}/api/v1/vocabulary/categories`, {
-        headers: { ...authHeader() }
-      })
+      const response = await api.get('/learning-service-api/v1/vocabulary/categories')
       return response.data
     } catch (error) {
       console.error('Error fetching categories:', error)
@@ -165,9 +144,7 @@ class VocabularyService {
 
   async getJlptLevels(): Promise<any> {
     try {
-      const response = await axios.get(`${API_URL}/api/v1/vocabulary/jlpt-levels`, {
-        headers: { ...authHeader() }
-      })
+      const response = await api.get('/learning-service-api/v1/vocabulary/jlpt-levels')
       return response.data
     } catch (error) {
       console.error('Error fetching JLPT levels:', error)
@@ -177,9 +154,7 @@ class VocabularyService {
 
   async getTopics(): Promise<any> {
     try {
-      const response = await axios.get(`${API_URL}/api/v1/topics`, {
-        headers: { ...authHeader() }
-      })
+      const response = await api.get('/learning-service-api/v1/topics')
       return response.data
     } catch (error) {
       console.error('Error fetching topics:', error)
@@ -189,9 +164,7 @@ class VocabularyService {
 
   async getTopicsByCategory(categoryId: string): Promise<any> {
     try {
-      const response = await axios.get(`${API_URL}/api/v1/vocabulary/categories/${categoryId}/topics`, {
-        headers: { ...authHeader() }
-      })
+      const response = await api.get(`/learning-service-api/v1/vocabulary/categories/${categoryId}/topics`)
       return response.data
     } catch (error) {
       console.error(`Error fetching topics for category ${categoryId}:`, error)
@@ -201,9 +174,7 @@ class VocabularyService {
 
   async createVocabulary(vocabulary: any): Promise<any> {
     try {
-      const response = await axios.post(`${API_URL}/api/v1/vocabulary`, vocabulary, {
-        headers: { ...authHeader() }
-      })
+      const response = await api.post('/learning-service-api/v1/vocabulary', vocabulary)
       return response.data
     } catch (error) {
       console.error('Error creating vocabulary:', error)
@@ -213,9 +184,7 @@ class VocabularyService {
 
   async updateVocabulary(id: string, vocabulary: any): Promise<any> {
     try {
-      const response = await axios.put(`${API_URL}/api/v1/vocabulary/${id}`, vocabulary, {
-        headers: { ...authHeader() }
-      })
+      const response = await api.put(`/learning-service-api/v1/vocabulary/${id}`, vocabulary)
       return response.data
     } catch (error) {
       console.error(`Error updating vocabulary:`, error)

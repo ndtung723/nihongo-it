@@ -1,5 +1,4 @@
-import axios from 'axios';
-import authService from './auth.service';
+import api from '../utils/api';
 
 export interface FlashcardDTO {
   id: string;
@@ -29,11 +28,7 @@ class FlashcardService {
   // Get flashcards for a vocabulary item
   async getFlashcardsByVocabulary(vocabId: string): Promise<FlashcardDTO[]> {
     try {
-      const response = await axios.get(`/api/v1/flashcards/vocabulary/${vocabId}`, {
-        headers: {
-          Authorization: `Bearer ${authService.getToken()}`
-        }
-      });
+      const response = await api.get(`/learning-service-api/v1/flashcards/vocabulary/${vocabId}`);
 
       if (response.data?.data) {
         return response.data.data;
@@ -49,15 +44,7 @@ class FlashcardService {
   // Review a flashcard with a rating
   async reviewFlashcard(flashcardId: string, rating: number): Promise<ReviewResponse> {
     try {
-      const response = await axios.post(`/api/v1/flashcards/${flashcardId}/review`,
-        { rating },
-        {
-          headers: {
-            Authorization: `Bearer ${authService.getToken()}`
-          }
-        }
-      );
-
+      const response = await api.post(`/learning-service-api/v1/flashcards/${flashcardId}/review`, { rating });
       return response.data;
     } catch (error) {
       console.error('Error reviewing flashcard:', error);
@@ -68,14 +55,7 @@ class FlashcardService {
   // Create a flashcard from a vocabulary item
   async createFlashcardFromVocabulary(vocabId: string): Promise<FlashcardDTO> {
     try {
-      const response = await axios.post(`/api/v1/flashcards/vocabulary/${vocabId}`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${authService.getToken()}`
-          }
-        }
-      );
+      const response = await api.post(`/learning-service-api/v1/flashcards/vocabulary/${vocabId}`, {});
 
       if (response.data?.data) {
         return response.data.data;
@@ -91,11 +71,7 @@ class FlashcardService {
   // Get due cards for studying
   async getDueCards(): Promise<FlashcardDTO[]> {
     try {
-      const response = await axios.get('/api/v1/flashcards/due', {
-        headers: {
-          Authorization: `Bearer ${authService.getToken()}`
-        }
-      });
+      const response = await api.get('/learning-service-api/v1/flashcards/due');
 
       if (response.data?.data) {
         return response.data.data;
@@ -111,11 +87,7 @@ class FlashcardService {
   // Get study statistics
   async getStudyStatistics(): Promise<any> {
     try {
-      const response = await axios.get('/api/v1/flashcards/statistics', {
-        headers: {
-          Authorization: `Bearer ${authService.getToken()}`
-        }
-      });
+      const response = await api.get('/learning-service-api/v1/flashcards/statistics');
 
       if (response.data?.data) {
         return response.data.data;

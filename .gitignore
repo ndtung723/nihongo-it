@@ -99,3 +99,9 @@ db-backups/
 *.pps
 *.ppsx
 *.ppsm
+
+# Ignore audio files and resource directories
+services/ai-service/src/main/resources/example/
+services/ai-service/src/main/resources/vocabulary/
+services/ai-service/src/main/resources/conversation/
+*.mp3

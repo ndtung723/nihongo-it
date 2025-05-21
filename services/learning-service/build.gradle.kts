@@ -49,6 +49,9 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-api:0.11.5")
     implementation("io.jsonwebtoken:jjwt-impl:0.11.5")
     implementation("io.jsonwebtoken:jjwt-jackson:0.11.5")
+
+    // Add Kuromoji for Japanese text analysis
+    implementation("com.atilika.kuromoji:kuromoji-ipadic:0.9.0")
     
     // OpenAPI
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")

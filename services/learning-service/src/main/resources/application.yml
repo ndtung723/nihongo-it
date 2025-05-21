@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: 8088
 
 spring:
   application:
@@ -11,14 +11,14 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
     show-sql: false
   flyway:
-    enabled: true
+    enabled: false
     baseline-on-migrate: true
     locations: classpath:db/migration
 
@@ -30,6 +30,17 @@ eureka:
     register-with-eureka: true
   instance:
     prefer-ip-address: true
+    instance-id: ${spring.application.name}:${random.uuid}
+
+# Ribbon configuration for load balancing
+ribbon:
+  eureka:
+    enabled: true
+  ConnectTimeout: 5000
+  ReadTimeout: 5000
+  MaxAutoRetries: 1
+  MaxAutoRetriesNextServer: 1
+  OkToRetryOnAllOperations: true
 
 management:
   endpoints:
@@ -47,23 +58,18 @@ springdoc:
     enabled: true
     path: /v3/api-docs
 
-app:
-  ai-service-url: ${AI_SERVICE_URL:http://localhost:8082}
-  notification-service-url: ${NOTIFICATION_SERVICE_URL:http://localhost:8084}
+# JWT Configuration - Sử dụng cùng secret key với user-service để xác thực token
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 2592000000  # 30 days for language learning apps
 
-# Feign client configuration
-feign:
-  client:
-    config:
-      default:
-        connectTimeout: 5000
-        readTimeout: 5000
-        loggerLevel: full
 
+# Cấu hình logging
 logging:
   level:
     root: INFO
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
     com.example.learningservice: DEBUG
-    org.springframework.web: INFO 
+    org.springframework.web: INFO
+    org.springframework.security: INFO

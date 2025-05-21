@@ -151,7 +151,7 @@ async function generateFurigana() {
   loading.value = true
 
   try {
-    const response = await axios.get('/api/v1/furigana', {
+    const response = await axios.get('/learning-service-api/v1/furigana', {
       params: { text: japaneseText.value }
     })
 

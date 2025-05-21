@@ -1,24 +1,4 @@
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-
-// Create axios instance with authorization header interceptor
-const apiClient = axios.create({
-  baseURL: API_URL,
-  withCredentials: true
-});
-
-// Add a request interceptor to include the token in all requests
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+import api from '../utils/api';
 
 export interface LoginRequest {
   email: string;
@@ -103,7 +83,7 @@ export interface UpdateProfileResponse {
 class AuthService {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
-      const response = await apiClient.post('/api/v1/auth/login', credentials);
+      const response = await api.post('/user-service-api/v1/auth/login', credentials);
       const result = response.data;
 
       if (result.result === 'OK' && result.token) {
@@ -119,7 +99,7 @@ class AuthService {
 
   async signup(userData: SignupRequest): Promise<SignupResponse> {
     try {
-      const response = await apiClient.post('/api/v1/auth/signup', userData);
+      const response = await api.post('/user-service-api/v1/auth/signup', userData);
       return response.data;
     } catch (error) {
       console.error('Signup error:', error);
@@ -129,7 +109,7 @@ class AuthService {
 
   async getCurrentUser(): Promise<GetCurrentUserResponse> {
     try {
-      const response = await apiClient.get('/api/v1/auth/current');
+      const response = await api.get('/user-service-api/v1/auth/current');
       return response.data;
     } catch (error) {
       console.error('Get current user error:', error);
@@ -160,7 +140,7 @@ class AuthService {
     try {
       // Use the getCurrentUser endpoint to verify token validity
       // This endpoint should already exist in your backend
-      const response = await apiClient.get('/api/v1/auth/current', {
+      const response = await api.get('/user-service-api/v1/auth/current', {
         timeout: 3000 // Set timeout to detect server unavailability quickly
       });
 
@@ -175,7 +155,7 @@ class AuthService {
 
   async loginWithGoogle(tokenId: string): Promise<LoginResponse> {
     try {
-      const response = await apiClient.post('/api/v1/auth/google-login', { tokenId })
+      const response = await api.post('/user-service-api/v1/auth/google-login', { tokenId })
       const result = response.data
 
       if (result.result === 'OK' && result.token) {
@@ -191,7 +171,7 @@ class AuthService {
 
   async requestPasswordReset(email: string): Promise<PasswordResetResponse> {
     try {
-      const response = await apiClient.post('/api/v1/auth/forgot-password', { email } as PasswordResetRequest);
+      const response = await api.post('/user-service-api/v1/auth/forgot-password', { email } as PasswordResetRequest);
       return response.data;
     } catch (error) {
       console.error('Password reset request failed:', error);
@@ -201,7 +181,7 @@ class AuthService {
 
   async resetPassword(token: string, password: string): Promise<PasswordResetResponse> {
     try {
-      const response = await apiClient.post('/api/v1/auth/set-new-password', {
+      const response = await api.post('/user-service-api/v1/auth/set-new-password', {
         token,
         password,
         confirmPassword: password
@@ -215,7 +195,7 @@ class AuthService {
 
   async changePassword(request: ChangePasswordRequest): Promise<ChangePasswordResponse> {
     try {
-      const response = await apiClient.post('/api/v1/auth/change-password', request);
+      const response = await api.post('/user-service-api/v1/auth/change-password', request);
       return response.data;
     } catch (error) {
       console.error('Password change error:', error);
@@ -225,7 +205,7 @@ class AuthService {
 
   async updateProfile(request: UpdateProfileRequest): Promise<UpdateProfileResponse> {
     try {
-      const response = await apiClient.post('/api/v1/auth/update-profile', request);
+      const response = await api.post('/user-service-api/v1/auth/update-profile', request);
       return response.data;
     } catch (error) {
       console.error('Profile update error:', error);

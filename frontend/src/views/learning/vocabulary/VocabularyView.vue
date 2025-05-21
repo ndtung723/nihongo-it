@@ -130,7 +130,7 @@
         <p class="text-body-1 text-medium-emphasis mb-4">
           Hãy điều chỉnh bộ lọc tìm kiếm hoặc thêm từ vựng mới.
         </p>
-        <v-btn color="primary" prepend-icon="mdi-plus" @click="openAddDialog">
+        <v-btn color="primary" prepend-icon="mdi-plus" @click="router.push('/admin/vocabulary')">
           Thêm từ vựng
         </v-btn>
       </div>
@@ -853,7 +853,7 @@ const toggleChatGPT = (vocabId: string) => {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
     // Query the AI for vocabulary explanation
-    axios.post(`${apiUrl}/ai-service-api/v1/vocabulary/explain`, null, {
+    axios.post(`${apiUrl}/ai-service-api/v1/chat/vocabulary/explain`, null, {
       params: {
         term: vocabItem.term || '',
         pronunciation: vocabItem.pronunciation || '',
@@ -1030,7 +1030,7 @@ const sendChatMessage = async (vocabId: string) => {
 
     const vocabWord = vocabItem.term || '';
 
-    const response = await axios.post(`${apiUrl}/api/v1/ai/vocabulary/chat`, null, {
+    const response = await axios.post(`${apiUrl}/ai-service-api/v1/chat/vocabulary/chat`, null, {
       params: {
         vocabWord: vocabWord,
         userMessage: message

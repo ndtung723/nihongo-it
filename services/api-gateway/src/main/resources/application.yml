@@ -18,20 +18,16 @@ spring:
         - id: user-service
           uri: lb://user-service
           predicates:
-            - Path=/api/**, /api/v1/users/**, /api/v1/auth/**, /api/v1/roles/**, /ai-service-api/**
+            - Path=/user-service-api/**
           filters:
             - StripPrefix=0
 
-        # - id: learning-service
-        #   uri: lb://learning-service
-        #   predicates:
-        #     - Path=/api/learning/**
-        #   filters:
-        #     - RewritePath=/api/learning/(?<segment>.*), /$\{segment}
-        #     # - name: CircuitBreaker
-        #     #   args:
-        #     #     name: learningServiceCircuitBreaker
-        #     #     fallbackUri: forward:/fallback/learning
+        - id: learning-service
+          uri: lb://learning-service
+          predicates:
+            - Path=/learning-service-api/**
+          filters:
+            - StripPrefix=0
 
         # AI Service Route
         - id: ai-service
@@ -41,16 +37,12 @@ spring:
           filters:
             - StripPrefix=0
 
-        # - id: notification-service
-        #   uri: lb://notification-service
-        #   predicates:
-        #     - Path=/api/notification/**
-        #   filters:
-        #     - RewritePath=/api/notification/(?<segment>.*), /$\{segment}
-        #     # - name: CircuitBreaker
-        #     #   args:
-        #     #     name: notificationServiceCircuitBreaker
-        #     #     fallbackUri: forward:/fallback/notification
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/notification-service-api/**
+          filters:
+            - StripPrefix=0
 
 eureka:
   client:

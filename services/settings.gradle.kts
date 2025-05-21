@@ -1,4 +1,5 @@
-rootProject.name = "nihongo-it"
+rootProject.name = "nihongo-it" +
+        ""
 
 include(
     "api-gateway",

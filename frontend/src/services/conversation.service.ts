@@ -50,11 +50,11 @@ const conversationService = {
       params.append('search', search);
     }
 
-    return api.get(`/api/v1/conversations?${params.toString()}`);
+    return api.get(`/learning-service-api/v1/conversations?${params.toString()}`);
   },
 
   getConversationById(id: string): Promise<AxiosResponse<Conversation>> {
-    return api.get(`/api/v1/conversations/${id}`);
+    return api.get(`/learning-service-api/v1/conversations/${id}`);
   },
 
   getConversationsByJlptLevel(
@@ -66,7 +66,7 @@ const conversationService = {
     params.append('page', page.toString());
     params.append('size', size.toString());
 
-    return api.get(`/api/v1/conversations/jlpt/${level}?${params.toString()}`);
+    return api.get(`/learning-service-api/v1/conversations/jlpt/${level}?${params.toString()}`);
   },
 
   // Admin API endpoints
@@ -87,11 +87,11 @@ const conversationService = {
       params.append('search', search);
     }
 
-    return api.get(`/api/admin/conversations?${params.toString()}`);
+    return api.get(`/learning-service-api/v1/admin/conversations?${params.toString()}`);
   },
 
   adminGetConversationById(id: string): Promise<AxiosResponse<Conversation>> {
-    return api.get(`/api/admin/conversations/${id}`);
+    return api.get(`/learning-service-api/v1/admin/conversations/${id}`);
   },
 
   adminGetConversationsByJlptLevel(
@@ -103,19 +103,19 @@ const conversationService = {
     params.append('page', page.toString());
     params.append('size', size.toString());
 
-    return api.get(`/api/admin/conversations/jlpt/${level}?${params.toString()}`);
+    return api.get(`/learning-service-api/v1/admin/conversations/jlpt/${level}?${params.toString()}`);
   },
 
   adminCreateConversation(conversation: Conversation): Promise<AxiosResponse<Conversation>> {
-    return api.post('/api/admin/conversations', conversation);
+    return api.post('/learning-service-api/v1/admin/conversations', conversation);
   },
 
   adminUpdateConversation(id: string, conversation: Conversation): Promise<AxiosResponse<Conversation>> {
-    return api.put(`/api/admin/conversations/${id}`, conversation);
+    return api.put(`/learning-service-api/v1/admin/conversations/${id}`, conversation);
   },
 
   adminDeleteConversation(id: string): Promise<AxiosResponse<any>> {
-    return api.delete(`/api/admin/conversations/${id}`);
+    return api.delete(`/learning-service-api/v1/admin/conversations/${id}`);
   },
 
   // Utility functions
@@ -138,17 +138,17 @@ const conversationService = {
 
   // Lưu hội thoại vào danh sách của người dùng
   saveConversation(conversationId: string): Promise<AxiosResponse<any>> {
-    return api.post(`/api/v1/user/saved-conversations/${conversationId}`);
+    return api.post(`/user-service-api/v1/user/saved-conversations/${conversationId}`);
   },
 
   // Bỏ lưu hội thoại
   unsaveConversation(conversationId: string): Promise<AxiosResponse<any>> {
-    return api.delete(`/api/v1/user/saved-conversations/${conversationId}`);
+    return api.delete(`/user-service-api/v1/user/saved-conversations/${conversationId}`);
   },
 
   // Kiểm tra hội thoại đã được lưu hay chưa
   checkSavedConversation(conversationId: string): Promise<AxiosResponse<{ saved: boolean }>> {
-    return api.get(`/api/v1/user/saved-conversations/check/${conversationId}`);
+    return api.get(`/user-service-api/v1/user/saved-conversations/check/${conversationId}`);
   },
 
   // Lấy danh sách hội thoại đã lưu
@@ -157,7 +157,7 @@ const conversationService = {
     params.append('page', page.toString());
     params.append('size', size.toString());
 
-    return api.get(`/api/v1/user/saved-conversations?${params.toString()}`);
+    return api.get(`/user-service-api/v1/user/saved-conversations?${params.toString()}`);
   }
 };
 
