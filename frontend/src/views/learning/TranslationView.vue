@@ -199,6 +199,7 @@
 import { defineComponent, ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import authService from '@/services/auth.service'
+import api from '@/utils/api'
 
 interface TranslationHistoryItem {
   direction: string;
@@ -264,7 +265,6 @@ export default defineComponent({
         try {
           translationHistory.value = JSON.parse(savedHistory);
         } catch (error) {
-          console.error('Failed to parse translation history:', error);
         }
       }
     });
@@ -281,49 +281,30 @@ export default defineComponent({
       translating.value = true;
 
       try {
-        // Get the backend API URL
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-
-        // Get auth token (if available)
-        const authToken = authService.getToken();
-
-        // Create headers with authentication
-        const headers: Record<string, string> = {
-          'Content-Type': 'text/plain',
-          'Accept': 'application/json'
-        };
-
-        // Add authentication token if available
-        if (authToken) {
-          headers['Authorization'] = `Bearer ${authToken}`;
-        }
-
         // Choose endpoint based on GPT-4 selection
         const endpoint = useGpt4.value ? 'translate' : 'translate/economy';
 
-        // Call the translation API with auth headers
-        const response = await fetch(`${apiUrl}/api/v1/ai/${endpoint}?direction=${translationDirection.value}`, {
-          method: 'POST',
-          headers: headers,
-          body: sourceText.value
-        });
-
-        if (!response.ok) {
-          // Handle authentication errors specifically
-          if (response.status === 401 || response.status === 403) {
-            throw new Error('Bạn cần đăng nhập để sử dụng dịch vụ dịch thuật.');
+        // Call the translation API using axios instance
+        const response = await api.post(`/ai-service-api/v1/chat/${endpoint}?direction=${translationDirection.value}`,
+          sourceText.value,
+          {
+            headers: {
+              'Content-Type': 'text/plain',
+              'Accept': 'application/json'
+            }
           }
-          throw new Error(`Dịch thuật thất bại: ${response.statusText}`);
-        }
+        );
 
-        const data = await response.json();
-        translationResult.value = data.translation;
+        translationResult.value = response.data.translation;
 
         // Add to translation history with economy flag
         addToHistory();
-      } catch (error) {
-        console.error('Translation error:', error);
-        alert(error instanceof Error ? error.message : 'Dịch thuật thất bại. Vui lòng thử lại sau.');
+      } catch (error: any) {
+        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+          alert('Bạn cần đăng nhập để sử dụng dịch vụ dịch thuật.');
+        } else {
+          alert(error.message || 'Dịch thuật thất bại. Vui lòng thử lại sau.');
+        }
       } finally {
         translating.value = false;
       }
@@ -343,7 +324,6 @@ export default defineComponent({
           alert('Đã sao chép vào clipboard!');
         })
         .catch(err => {
-          console.error('Failed to copy text: ', err);
         });
     };
 

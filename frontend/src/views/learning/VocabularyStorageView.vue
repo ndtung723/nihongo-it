@@ -344,7 +344,6 @@ async function fetchSavedVocabulary() {
     await fetchFlashcardStates();
 
   } catch (error) {
-    console.error('Error fetching saved vocabulary:', error);
     errorMessage.value = 'Không thể tải dữ liệu từ vựng đã lưu.';
     toast.error('Không thể tải dữ liệu từ vựng đã lưu.', {
       position: 'top',
@@ -368,7 +367,6 @@ async function fetchFlashcardStates() {
         vocabFlashcardMap.value.set(vocab.vocabId, flashcards[0]);
       }
     } catch (error) {
-      console.error(`Error fetching flashcard for vocabulary ${vocab.vocabId}:`, error);
     }
   });
 
@@ -461,7 +459,6 @@ async function playAudio(item: VocabularyItem) {
       await audio.play();
     }
   } catch (error) {
-    console.error('Error generating or playing TTS audio:', error);
     toast.error('Không thể phát âm thanh. Vui lòng thử lại sau.', {
       position: 'top',
       duration: 3000
@@ -550,7 +547,6 @@ async function rateCard(rating: 'again' | 'hard' | 'good' | 'easy') {
       });
     }
   } catch (error) {
-    console.error('Error submitting flashcard rating:', error);
     toast.error('Không thể lưu đánh giá cho thẻ này. Vui lòng thử lại.', {
       position: 'top',
       duration: 3000

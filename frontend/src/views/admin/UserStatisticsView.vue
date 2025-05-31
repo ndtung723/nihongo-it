@@ -306,7 +306,6 @@ const fetchUserStatistics = async () => {
     let backendSortBy = sortBy.value;
 
     // No need for complex mapping as we're now using backend field names directly
-    console.log(`Sorting by: ${backendSortBy}, direction: ${sortDirection.value}`);
 
     const response = await statisticsService.getAllUserStatistics(
       pageIndex,
@@ -318,7 +317,6 @@ const fetchUserStatistics = async () => {
 
     // Handle the error response format from the backend
     if (response.result && response.result.status === 'NG') {
-      console.error('Backend error:', response.result.message);
       error.value = true;
       // Fallback to userId sorting if there's an error
       if (sortBy.value !== 'lastActive') {
@@ -334,9 +332,7 @@ const fetchUserStatistics = async () => {
     totalItems.value = data.totalItems || 0;
     totalPages.value = data.totalPages || 0;
 
-    console.log('User statistics:', data);
   } catch (err) {
-    console.error('Error fetching user statistics:', err);
     error.value = true;
   } finally {
     loading.value = false;

@@ -271,7 +271,6 @@ async function loadUserPreferences() {
       }
     }
   } catch (error) {
-    console.error('Error loading user preferences:', error)
     toast.error('Không thể tải thiết lập thông báo', {
       position: 'top'
     })
@@ -306,7 +305,6 @@ async function savePreferences() {
       position: 'top'
     })
   } catch (error) {
-    console.error('Error saving preferences:', error)
     toast.error('Không thể lưu thiết lập thông báo', {
       position: 'top'
     })

@@ -369,7 +369,6 @@ async function fetchTopics() {
   } catch (err: any) {
     error.value = err.response?.data?.message || 'Không thể tải danh sách chủ đề';
     $toast.error(error.value || 'Không thể tải danh sách chủ đề');
-    console.error('Lỗi khi tải danh sách chủ đề:', err);
     topics.value = [];
   } finally {
     loading.value = false;
@@ -381,7 +380,6 @@ async function fetchCategories() {
     const response = await categoryService.adminGetAllCategories();
     categories.value = response.data;
   } catch (err: any) {
-    console.error('Lỗi khi tải danh sách danh mục:', err);
     $toast.error('Không thể tải danh sách danh mục');
     categories.value = [];
   }
@@ -402,7 +400,6 @@ async function fetchTopicsByCategory() {
   } catch (err: any) {
     error.value = err.response?.data?.message || 'Không thể tải danh sách chủ đề';
     $toast.error(error.value || 'Không thể tải danh sách chủ đề');
-    console.error('Lỗi khi tải danh sách chủ đề theo danh mục:', err);
   } finally {
     loading.value = false;
   }
@@ -439,7 +436,6 @@ async function searchTopics() {
   } catch (err: any) {
     error.value = err.response?.data?.message || 'Không thể tìm kiếm chủ đề';
     $toast.error(error.value || 'Không thể tìm kiếm chủ đề');
-    console.error('Lỗi khi tìm kiếm chủ đề:', err);
   } finally {
     loading.value = false;
   }
@@ -514,7 +510,6 @@ async function saveTopic() {
   } catch (err: any) {
     error.value = err.response?.data?.message || 'Không thể lưu chủ đề';
     $toast.error(error.value || 'Không thể lưu chủ đề');
-    console.error('Lỗi khi lưu chủ đề:', err);
   }
 }
 
@@ -542,7 +537,6 @@ async function toggleTopicStatus() {
   } catch (err: any) {
     error.value = err.response?.data?.message || 'Không thể thay đổi trạng thái chủ đề';
     $toast.error(error.value || 'Không thể thay đổi trạng thái chủ đề');
-    console.error('Lỗi khi thay đổi trạng thái chủ đề:', err);
   }
 }
 
@@ -566,7 +560,6 @@ async function deleteTopic() {
   } catch (err: any) {
     error.value = err.response?.data?.message || 'Không thể xóa chủ đề';
     $toast.error(error.value || 'Không thể xóa chủ đề');
-    console.error('Lỗi khi xóa chủ đề:', err);
   }
 }
 

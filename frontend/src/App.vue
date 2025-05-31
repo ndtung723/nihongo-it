@@ -40,7 +40,6 @@ const error = ref<Error | null>(null)
 
 // Xử lý lỗi trong Suspense và NavigationDrawers
 onErrorCaptured((e: Error) => {
-  console.error('App error captured:', e)
   error.value = e
   return true // ngăn chặn lỗi lan truyền
 })

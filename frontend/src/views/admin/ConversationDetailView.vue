@@ -265,7 +265,6 @@ const fetchConversation = async (id: string) => {
     const response = await conversationService.adminGetConversationById(id);
     conversation.value = response.data;
   } catch (err) {
-    console.error('Error fetching conversation:', err);
     error.value = 'Không thể tải dữ liệu hội thoại. Vui lòng thử lại sau.';
   } finally {
     loading.value = false;

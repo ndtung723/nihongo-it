@@ -80,7 +80,6 @@ async function fetchDueCardCount() {
     const dueCards = await flashcardService.getDueCards()
     dueCardCount.value = dueCards.length
   } catch (error) {
-    console.error('Error fetching due cards:', error)
   }
 }
 

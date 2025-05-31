@@ -97,7 +97,6 @@ async function logout() {
     })
     router.push({ name: 'login' })
   } catch (error) {
-    console.error('Logout error:', error)
     toast.error('Có lỗi xảy ra khi đăng xuất', {
       position: 'top',
       duration: 3000

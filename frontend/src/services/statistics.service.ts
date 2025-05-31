@@ -99,7 +99,6 @@ class StatisticsService {
       });
       return response.data; // Return the raw data that includes both result and data
     } catch (error) {
-      console.error('Error fetching user statistics:', error);
       throw error;
     }
   }
@@ -110,7 +109,6 @@ class StatisticsService {
       const response = await api.get(`/learning-service-api/v1/admin/statistics/users/${userId}`);
       return response.data.data;
     } catch (error) {
-      console.error(`Error fetching statistics for user ${userId}:`, error);
       throw error;
     }
   }
@@ -121,7 +119,6 @@ class StatisticsService {
       const response = await api.get('/learning-service-api/v1/admin/statistics/overview');
       return response.data.data;
     } catch (error) {
-      console.error('Error fetching statistics overview:', error);
       throw error;
     }
   }

@@ -125,8 +125,7 @@
                           <span v-html="formatJapaneseWithHighlights(line.japanese, lineAnalysisResults[i])"></span>
                         </span>
                         <span v-else-if="showFurigana && line.furiganaTokens && Array.isArray(line.furiganaTokens) && line.furiganaTokens.length > 0"
-                          :title="`Furigana available: ${JSON.stringify(line.furiganaTokens)}`"
-                          @click="console.log('Furigana tokens:', line.furiganaTokens)">
+                          >
                           <ruby v-for="(token, tokenIndex) in line.furiganaTokens" :key="`${i}-${tokenIndex}`" class="ruby-text">
                             {{ token.text }}
                             <rt v-if="token.reading && token.isKanji">{{ token.reading }}</rt>
@@ -442,7 +441,6 @@ const toggleSave = async () => {
       });
     }
   } catch (error) {
-    console.error('Error toggling saved status:', error);
     toast.error('Không thể thay đổi trạng thái lưu. Vui lòng thử lại sau.', {
       position: 'top',
       duration: 3000
@@ -497,7 +495,6 @@ const playAudio = async (line: ConversationLine) => {
 
     await audio.play();
   } catch (error) {
-    console.error('Error generating or playing TTS audio:', error)
     isPlayingAudio.value = false;
 
     // Special handling for 401 errors
@@ -554,7 +551,6 @@ onMounted(() => {
   // Khởi tạo Speech Recognition Service nếu có cấu hình
   if (azureSpeechKey.value && azureSpeechRegion.value) {
     speechRecognitionService.initialize(azureSpeechKey.value, azureSpeechRegion.value);
-    console.log('Speech Recognition Service initialized');
   }
 })
 
@@ -598,8 +594,6 @@ const fetchConversationData = async () => {
           conversation.value.isSaved = savedResponse.data.saved;
         }
       } catch (error) {
-        console.error('Error checking saved status:', error);
-        // Không hiển thị thông báo lỗi cho người dùng vì đây không phải lỗi quan trọng
       }
     }
 
@@ -644,7 +638,6 @@ const fetchConversationData = async () => {
     await initializeFurigana();
 
   } catch (err) {
-    console.error('Error fetching conversation data:', err);
     error.value = 'Đã xảy ra lỗi khi tải dữ liệu hội thoại. Vui lòng thử lại sau.';
   } finally {
     loading.value = false;
@@ -722,8 +715,6 @@ const processRecording = async (index: number) => {
       lineCompletionStatus.value[index] = true;
     }
   } catch (err) {
-    console.error('Error processing recording:', err);
-
     // Xóa interim text nếu xử lý lỗi và không dùng Azure
     if (!speechRecognitionService.isServiceInitialized()) {
       interimText.value = '';
@@ -805,7 +796,6 @@ const startRecording = async (index: number) => {
         },
         // Xử lý lỗi - chỉ hiển thị khi đang ghi âm
         (error) => {
-          console.error('Speech recognition error:', error);
           // Chỉ hiển thị thông báo lỗi khi đang ghi âm
           if (isRecording.value && activeLineIndex.value === index) {
             if (error && error.includes && error.includes("No speech could be recognized")) {
@@ -888,7 +878,6 @@ const startRecording = async (index: number) => {
       }, 7000);
     }
   } catch (err) {
-    console.error('Error starting recording:', err);
     toast.error('Không thể truy cập microphone', {
       position: 'top',
       duration: 3000
@@ -903,7 +892,6 @@ const playRecordedAudio = (index: number) => {
     const audio = new Audio(recordedAudioUrls.value[index]);
     audio.onended = () => {};
     audio.onerror = () => {
-      console.error('Error playing recorded audio');
       toast.error('Không thể phát bản ghi âm', {
         position: 'top',
         duration: 3000
@@ -911,14 +899,12 @@ const playRecordedAudio = (index: number) => {
     };
 
     audio.play().catch(err => {
-      console.error('Error playing recorded audio:', err);
       toast.error('Không thể phát bản ghi âm', {
         position: 'top',
         duration: 3000
       });
     });
   } catch (err) {
-    console.error('Error playing recorded audio:', err);
     toast.error('Không thể phát bản ghi âm', {
       position: 'top',
       duration: 3000
@@ -1035,8 +1021,6 @@ const formatJapaneseWithHighlights = (text: string, analysis: SpeechAnalysisResu
       .replace(/\s+/g, '') // Loại bỏ khoảng trắng
       .split('');
 
-    console.log("Transcribed chars:", transcribedChars);
-
     if (transcribedChars.length > 0) {
       let formattedText = '';
       const originalChars = text.split('');
@@ -1083,7 +1067,6 @@ const formatJapaneseWithHighlights = (text: string, analysis: SpeechAnalysisResu
           // Tô màu xanh các từ đúng
           formattedText = formattedText.replace(regex, `<span style="color: #4CAF50; font-weight: bold;">${word}</span>`);
         } catch (e) {
-          console.error(`Error replacing word ${word}:`, e);
         }
       });
 
@@ -1295,7 +1278,6 @@ const stopRecording = async () => {
     try {
       await speechRecognitionService.stopRecognition();
     } catch (error) {
-      console.error('Error stopping speech recognition:', error);
     }
   }
 
@@ -1330,7 +1312,6 @@ const stopRecordingWithoutProcessing = () => {
       try {
         speechRecognitionService.stopRecognition();
       } catch (error) {
-        console.error('Error stopping speech recognition:', error);
       }
     }
 
@@ -1355,10 +1336,7 @@ const isLineVisible = (index: number) => {
 // Fetch furigana for Japanese text
 const fetchFurigana = async (text: string): Promise<FuriganaToken[]> => {
   try {
-    console.log('Fetching furigana for text:', text);
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-    console.log('API URL:', apiUrl);
-
     // Thêm token xác thực nếu có
     const authToken = authService.getToken();
     const headers: any = {};
@@ -1372,8 +1350,6 @@ const fetchFurigana = async (text: string): Promise<FuriganaToken[]> => {
       headers
     });
 
-    console.log('Furigana API response:', response.data);
-
     // Chuyển đổi dữ liệu API nếu cần
     if (Array.isArray(response.data)) {
       return response.data as FuriganaToken[];
@@ -1381,13 +1357,10 @@ const fetchFurigana = async (text: string): Promise<FuriganaToken[]> => {
       return response.data.tokens as FuriganaToken[];
     } else {
       // Fallback nếu API trả về định dạng khác
-      console.log('Using fallback furigana generation');
       return generateFallbackFurigana(text);
     }
   } catch (error) {
-    console.error('Error generating furigana:', error);
     // Return fallback formatting if API fails
-    console.log('API failed, using fallback furigana generation');
     return generateFallbackFurigana(text);
   }
 }
@@ -1396,27 +1369,19 @@ const fetchFurigana = async (text: string): Promise<FuriganaToken[]> => {
 const initializeFurigana = async () => {
   if (!conversation.value || !conversation.value.dialogue) return;
 
-  console.log('Initializing furigana for conversation lines...');
-
   for (let i = 0; i < conversation.value.dialogue.length; i++) {
     const line = conversation.value.dialogue[i];
     if (line.japanese) {
       try {
-        console.log(`Fetching furigana for line ${i}: ${line.japanese}`);
         const tokens = await fetchFurigana(line.japanese);
-        console.log(`Received furigana tokens:`, tokens);
-
         // Cập nhật dòng hội thoại với dữ liệu furigana
         // Sử dụng phương thức splice để thay đổi mảng gốc
         const updatedLine = { ...line, furiganaTokens: tokens };
         conversation.value.dialogue.splice(i, 1, updatedLine);
       } catch (err) {
-        console.error(`Error initializing furigana for line ${i}:`, err);
       }
     }
   }
-
-  console.log('Furigana initialization completed. Dialogue:', conversation.value.dialogue);
 }
 
 // Tạo dữ liệu furigana giả lập cho trường hợp API không hoạt động
@@ -1472,7 +1437,6 @@ onUnmounted(() => {
   // Cleanup Azure Speech Recognizer
   if (speechRecognitionService.isServiceInitialized()) {
     speechRecognitionService.stopRecognition().catch(error => {
-      console.error('Error stopping speech recognition on unmount:', error);
     });
   }
 })

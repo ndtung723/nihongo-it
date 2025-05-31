@@ -33,7 +33,6 @@ export const useVocabularyStore = defineStore('vocabulary', () => {
       await fetchRelatedTerms(vocabulary)
       return vocabulary
     } catch (err: any) {
-      console.error('Error fetching vocabulary details:', err)
       error.value = err.response?.data?.message || 'Failed to load vocabulary details'
       const toast = useToast()
       toast.error(error.value || 'Failed to load vocabulary details', {
@@ -56,7 +55,6 @@ export const useVocabularyStore = defineStore('vocabulary', () => {
       await fetchRelatedTerms(vocabulary)
       return vocabulary
     } catch (err: any) {
-      console.error('Error fetching vocabulary details:', err)
       error.value = err.response?.data?.message || 'Failed to load vocabulary details'
       const toast = useToast()
       toast.error(error.value || 'Failed to load vocabulary details', {
@@ -102,7 +100,6 @@ export const useVocabularyStore = defineStore('vocabulary', () => {
 
       return response
     } catch (err: any) {
-      console.error('Error fetching saved vocabulary:', err)
       error.value = err.response?.data?.message || 'Failed to load saved vocabulary'
       savedVocabulary.value = []
       totalSavedItems.value = 0
@@ -140,7 +137,6 @@ export const useVocabularyStore = defineStore('vocabulary', () => {
           .slice(0, 4) // Limit to 4 items
       }
     } catch (err) {
-      console.error('Error fetching related terms:', err)
       relatedVocabulary.value = []
       // Don't show error toast, this is not critical
     }
@@ -175,7 +171,6 @@ export const useVocabularyStore = defineStore('vocabulary', () => {
 
       return true
     } catch (err) {
-      console.error('Error toggling save status:', err)
       toast.error('Failed to update saved status', {
         position: 'top',
         duration: 3000
@@ -204,7 +199,6 @@ export const useVocabularyStore = defineStore('vocabulary', () => {
 
       return true
     } catch (err) {
-      console.error('Error removing saved item:', err)
       toast.error('Failed to remove item from saved list', {
         position: 'top',
         duration: 3000

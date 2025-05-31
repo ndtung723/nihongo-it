@@ -376,9 +376,7 @@ const fetchStatistics = async () => {
 
   try {
     stats.value = await flashcardService.getStudyStatistics();
-    console.log('Statistics:', stats.value);
   } catch (err) {
-    console.error('Error fetching statistics:', err);
     error.value = true;
   } finally {
     loading.value = false;
@@ -406,7 +404,6 @@ const fetchVocabularyStats = async () => {
         const flashcards = await flashcardService.getFlashcardsByVocabulary(vocab.vocabId);
         return { vocab, flashcards: flashcards.length > 0 ? flashcards[0] : null };
       } catch (error) {
-        console.error(`Error fetching flashcard for vocabulary ${vocab.vocabId}:`, error);
         return { vocab, flashcards: null };
       }
     });
@@ -459,7 +456,6 @@ const fetchVocabularyStats = async () => {
     };
 
   } catch (error) {
-    console.error('Error fetching vocabulary statistics:', error);
   } finally {
     vocabLoading.value = false;
   }

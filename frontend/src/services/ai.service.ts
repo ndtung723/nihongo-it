@@ -73,7 +73,6 @@ class AIService {
       });
       return response.data;
     } catch (error) {
-      console.error('Error checking TTS existence:', error);
       return { exists: false };
     }
   }
@@ -108,7 +107,6 @@ class AIService {
         return await this.getExistingTTSAudio(text, contentType);
       }
     } catch (error) {
-      console.log('Audio does not exist, generating new one');
     }
 
     // Tạo audio mới
@@ -206,7 +204,6 @@ class AIService {
           .trim();
         data = JSON.parse(cleanedString);
       } catch (error) {
-        console.error('Failed to parse explanation response:', error);
         return {
           explanation: data,
           examples: []
@@ -238,7 +235,6 @@ class AIService {
           .trim();
         data = JSON.parse(cleanedString);
       } catch (error) {
-        console.error('Failed to parse chat response:', error);
         return { message: data };
       }
     }
@@ -289,7 +285,6 @@ class AIService {
       // Mặc định trả về nội dung
       return { content: JSON.stringify(data) };
     } catch (error) {
-      console.error('Error fetching vocabulary explanation:', error);
       throw error;
     }
   }

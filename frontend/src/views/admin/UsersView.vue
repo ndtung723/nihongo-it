@@ -387,7 +387,6 @@ const loadUsers = async () => {
     totalPages.value = response.totalPages;
     totalItems.value = response.totalItems;
   } catch (error) {
-    console.error('Error loading users:', error);
     showSnackbar('Failed to load users', 'error');
   } finally {
     loading.value = false;
@@ -469,7 +468,6 @@ const saveUser = async () => {
     dialog.value.visible = false;
     loadUsers();
   } catch (error: any) {
-    console.error('Error saving user:', error);
     showSnackbar(error.response?.data?.message || 'Failed to save user', 'error');
   }
 };
@@ -495,7 +493,6 @@ const toggleUserStatus = (user: UserInfo) => {
         confirmDialog.value.visible = false;
         loadUsers();
       } catch (error: any) {
-        console.error('Error toggling user status:', error);
         showSnackbar(error.response?.data?.message || 'Failed to update user status', 'error');
       }
     },
@@ -527,7 +524,6 @@ const updateUserRole = async () => {
     showSnackbar('User role updated successfully');
     loadUsers();
   } catch (error: any) {
-    console.error('Error changing user role:', error);
     showSnackbar(error.response?.data?.message || 'Failed to change user role', 'error');
   }
 };

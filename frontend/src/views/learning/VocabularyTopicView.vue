@@ -475,7 +475,6 @@ const hasActiveFilters = computed(() => {
 // Watchers
 watch(topicParam, async (newValue) => {
   if (newValue) {
-    console.log(`Topic name changed to: ${newValue}`);
     await fetchTopicDetails();
     fetchVocabulary();
   }
@@ -483,7 +482,6 @@ watch(topicParam, async (newValue) => {
 
 watch([selectedJlptLevel, search], () => {
   if (topic.value) {
-    console.log("Filter criteria changed, fetching vocabulary");
     currentPage.value = 1; // Reset to first page when filters change
     fetchVocabulary();
   }
@@ -491,7 +489,6 @@ watch([selectedJlptLevel, search], () => {
 
 watch(currentPage, () => {
   if (topic.value) {
-    console.log(`Page changed to ${currentPage.value}, fetching vocabulary`);
     fetchVocabulary();
   }
 });
@@ -526,8 +523,6 @@ async function fetchTopicDetails() {
       const paramValue = topicParam.value;
       const decodedParam = decodeURIComponent(paramValue);
 
-      console.log(`Fetching topic details for: ${decodedParam}`);
-
       // Try finding the topic by ID first (backward compatibility)
       let foundTopic = topicsResponse.find(t => t.id === paramValue || t.topicId === paramValue);
 
@@ -540,7 +535,6 @@ async function fetchTopicDetails() {
       }
 
       if (foundTopic) {
-        console.log("Topic found:", foundTopic);
         topic.value = {
           id: foundTopic.id || foundTopic.topicId,
           name: foundTopic.name,
@@ -550,7 +544,6 @@ async function fetchTopicDetails() {
           vocabularyCount: foundTopic.vocabularyCount || 0
         }
       } else {
-        console.error(`Topic not found for parameter: ${paramValue}`);
         topic.value = null
         vocabularyItems.value = []
         toast.error('Topic not found', {
@@ -560,7 +553,6 @@ async function fetchTopicDetails() {
       }
     }
   } catch (error) {
-    console.error('Error fetching topic details:', error)
     toast.error('Failed to load topic details', {
       position: 'top',
       duration: 3000
@@ -577,7 +569,6 @@ async function fetchJlptLevels() {
     const response = await vocabularyService.getJlptLevels()
     jlptLevels.value = response
   } catch (error) {
-    console.error('Error fetching JLPT levels:', error)
     // Use default values if API call fails
     jlptLevels.value = ['N1', 'N2', 'N3', 'N4', 'N5']
   }
@@ -603,23 +594,18 @@ async function fetchVocabulary() {
       size: pageSize.value
     }
 
-    console.log("Fetching vocabulary with filter:", filter);
-
     const response = await vocabularyService.getVocabulary(filter)
 
     if (response && Array.isArray(response.content)) {
       vocabularyItems.value = response.content
       totalItems.value = response.totalElements
       totalPages.value = response.totalPages
-      console.log(`Loaded ${response.content.length} vocabulary items`);
     } else {
       vocabularyItems.value = []
       totalItems.value = 0
       totalPages.value = 0
-      console.log("No vocabulary items found or invalid response format");
     }
   } catch (error) {
-    console.error('Error fetching vocabulary:', error)
     toast.error('Failed to load vocabulary', {
       position: 'top',
       duration: 3000
@@ -653,7 +639,6 @@ async function toggleSave(item: VocabularyItem) {
     item.isSaved = !item.isSaved;
 
   } catch (error) {
-    console.error('Error toggling save status:', error);
     toast.error('Failed to update saved status', {
       position: 'top',
       duration: 3000
@@ -746,8 +731,6 @@ async function playAudio(item: VocabularyItem, isExample = false) {
       await audio.play()
     }
   } catch (error) {
-    console.error('Error generating or playing TTS audio:', error)
-
     // Special handling for 401 errors
     if (axios.isAxiosError(error) && error.response?.status === 401) {
       toast.error('TTS service requires authentication. Please log in again when convenient.', {
@@ -865,7 +848,6 @@ async function toggleChatGPT(vocabId: string) {
     const vocabItem = vocabularyItems.value.find(item => item.vocabId === vocabId)
 
     if (!vocabItem) {
-      console.error('Vocabulary item not found')
       loadingChatGPT.value = null
       return
     }
@@ -904,7 +886,6 @@ async function toggleChatGPT(vocabId: string) {
 
             data = JSON.parse(cleanedString)
           } catch (error) {
-            console.error('Failed to parse response as JSON:', error)
             // If parsing fails, create a fallback object
             data = {
               explanation: data, // Use the raw string as explanation
@@ -928,7 +909,6 @@ async function toggleChatGPT(vocabId: string) {
       }
     })
     .catch(error => {
-      console.error('Error fetching AI explanation:', error)
       toast.error('Failed to fetch AI explanation', {
         position: 'top',
         duration: 3000
@@ -1026,7 +1006,6 @@ async function sendChatMessage(vocabId: string) {
 
   const vocabItem = vocabularyItems.value.find(item => item.vocabId === vocabId)
   if (!vocabItem) {
-    console.error('Vocabulary item not found')
     return
   }
 
@@ -1076,8 +1055,6 @@ async function sendChatMessage(vocabId: string) {
 
         data = JSON.parse(cleanedString)
       } catch (error) {
-        console.error('Failed to parse chat response as JSON:', error)
-        // If parsing fails, create a fallback object with raw string as message
         data = {
           message: data
         }
@@ -1107,8 +1084,6 @@ async function sendChatMessage(vocabId: string) {
       animateTypingChatResponse(vocabId, responseMessage, vocabIndex, aiMessageIndex)
     }
   } catch (error) {
-    console.error('Error sending chat message:', error)
-
     toast.error('Failed to get AI response', {
       position: 'top',
       duration: 3000

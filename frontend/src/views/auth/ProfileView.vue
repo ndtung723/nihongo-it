@@ -309,7 +309,6 @@ const updateProfile = async (): Promise<void> => {
       })
     }
   } catch (error) {
-    console.error('Error updating profile:', error)
     toast.error('Không thể cập nhật hồ sơ. Vui lòng thử lại sau.', {
       position: 'top',
       duration: 3000

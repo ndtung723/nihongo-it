@@ -36,7 +36,6 @@ class FlashcardService {
 
       return [];
     } catch (error) {
-      console.error('Error fetching flashcards for vocabulary:', error);
       throw error;
     }
   }
@@ -47,7 +46,6 @@ class FlashcardService {
       const response = await api.post(`/learning-service-api/v1/flashcards/${flashcardId}/review`, { rating });
       return response.data;
     } catch (error) {
-      console.error('Error reviewing flashcard:', error);
       throw error;
     }
   }
@@ -63,7 +61,6 @@ class FlashcardService {
 
       throw new Error('Failed to create flashcard');
     } catch (error) {
-      console.error('Error creating flashcard from vocabulary:', error);
       throw error;
     }
   }
@@ -79,7 +76,6 @@ class FlashcardService {
 
       return [];
     } catch (error) {
-      console.error('Error fetching due cards:', error);
       throw error;
     }
   }
@@ -95,7 +91,6 @@ class FlashcardService {
 
       return {};
     } catch (error) {
-      console.error('Error fetching study statistics:', error);
       throw error;
     }
   }

@@ -455,7 +455,6 @@ const loadUser = async () => {
       notificationPreferences: response.notificationPreferences || 'email,app'
     };
   } catch (error: any) {
-    console.error('Error loading user:', error);
     error.value = error.response?.data?.message || 'Failed to load user details';
   } finally {
     loading.value = false;
@@ -498,7 +497,6 @@ const saveUser = async () => {
     editDialog.value.visible = false;
     loadUser(); // Reload user data
   } catch (error: any) {
-    console.error('Error updating user:', error);
     showSnackbar(error.response?.data?.message || 'Failed to update user', 'error');
   }
 };

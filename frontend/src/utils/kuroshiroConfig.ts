@@ -11,24 +11,15 @@ export async function createKuroshiro(): Promise<Kuroshiro> {
 
     // Configure the dictionary path properly for browser environments
     const dictPath = window.location.origin + '/dict';
-    console.log(`Initializing Kuroshiro with dictionary at: ${dictPath}`);
 
     // Create an analyzer with the browser-compatible path
     const analyzer = new KuromojiAnalyzer({ dictPath });
 
     // Initialize with the analyzer
     await kuroshiro.init(analyzer);
-    console.log('Kuroshiro initialization complete');
 
     return kuroshiro;
   } catch (error) {
-    console.error('Failed to initialize Kuroshiro:', error);
-
-    // Attempt to provide helpful diagnostics
-    if (error instanceof Error && error.message.includes('path.join')) {
-      console.error('This error is likely caused by path.join not being available in the browser.');
-      console.error('Solution: Use browser-compatible path concatenation instead of path.join');
-    }
 
     // Re-throw for the caller to handle
     throw error;

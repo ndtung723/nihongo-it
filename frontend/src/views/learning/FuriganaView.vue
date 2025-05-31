@@ -127,7 +127,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
+import api from '@/utils/api'
 
 // State
 const japaneseText = ref('日本語を勉強しています。')
@@ -151,14 +151,14 @@ async function generateFurigana() {
   loading.value = true
 
   try {
-    const response = await axios.get('/learning-service-api/v1/furigana', {
+    // Gọi API với instance api từ utils/api.ts đã cấu hình sẵn
+    const response = await api.get('/learning-service-api/v1/furigana', {
       params: { text: japaneseText.value }
-    })
+    });
 
     tokens.value = response.data
     showSnackbar('Furigana generated successfully', 'success')
   } catch (error) {
-    console.error('Error generating furigana:', error)
     showSnackbar('Failed to generate furigana. Please try again.', 'error')
   } finally {
     loading.value = false

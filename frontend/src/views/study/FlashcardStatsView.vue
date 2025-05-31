@@ -257,9 +257,7 @@ const fetchStatistics = async () => {
 
   try {
     stats.value = await flashcardService.getStudyStatistics();
-    console.log('Statistics:', stats.value);
   } catch (err) {
-    console.error('Error fetching statistics:', err);
     error.value = true;
   } finally {
     loading.value = false;

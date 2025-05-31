@@ -390,7 +390,6 @@ async function fetchDashboardData() {
 
     $toast.success('Dữ liệu dashboard đã được cập nhật');
   } catch (error) {
-    console.error('Lỗi khi tải dữ liệu dashboard:', error);
     errorMessage.value = 'Không thể tải dữ liệu dashboard. Vui lòng thử lại sau.';
     showError.value = true;
 
@@ -444,7 +443,6 @@ onMounted(async () => {
   try {
     await fetchDashboardData();
   } catch (error) {
-    console.error('Không thể kết nối tới API dashboard, đang tải dữ liệu mẫu:', error);
     loadSampleData();
     $toast.warning('Đang sử dụng dữ liệu mẫu');
   }

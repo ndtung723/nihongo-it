@@ -13,7 +13,6 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => {
     const hasToken = !!authService.getToken();
     const hasUser = !!user.value;
-    console.log('Auth state check:', { hasToken, hasUser });
     return hasToken;
   });
 
@@ -23,21 +22,17 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null;
 
     try {
-      console.log('Attempting login for:', credentials.email);
       const response = await authService.login(credentials);
 
       if (response.result === 'OK' && response.token) {
-        console.log('Login successful');
         await fetchCurrentUser();
         return true;
       } else {
         error.value = 'Invalid credentials';
-        console.error('Login response indicated failure:', response);
         return false;
       }
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Login failed. Please try again.';
-      console.error('Login error:', err);
       return false;
     } finally {
       loading.value = false;
@@ -49,12 +44,10 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null;
 
     try {
-      console.log('Attempting registration for:', userData.email);
       const response = await authService.signup(userData);
       return response.status === 'OK';
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Registration failed. Please try again.';
-      console.error('Registration error:', err);
       return false;
     } finally {
       loading.value = false;
@@ -72,12 +65,10 @@ export const useAuthStore = defineStore('auth', () => {
         return true;
       } else {
         user.value = null;
-        console.warn('Failed to get user data:', response);
         return false;
       }
     } catch (err: any) {
       user.value = null;
-      console.error('Error fetching user data:', err);
       return false;
     } finally {
       loading.value = false;
@@ -85,7 +76,6 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function logout() {
-    console.log('Logging out user');
     authService.removeToken();
     user.value = null;
   }
@@ -94,8 +84,6 @@ export const useAuthStore = defineStore('auth', () => {
   function initializeAuth() {
     if (authService.getToken()) {
       fetchCurrentUser();
-    } else {
-      console.log('No token found, not initializing auth');
     }
   }
 
@@ -104,21 +92,17 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null;
 
     try {
-      console.log('Attempting Google login with token');
       const response = await authService.loginWithGoogle(tokenId);
 
       if (response.result === 'OK' && response.token) {
-        console.log('Google login successful');
         await fetchCurrentUser();
         return true;
       } else {
         error.value = response.message || 'Google login failed';
-        console.error('Google login response indicated failure:', response);
         return false;
       }
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Google login failed. Please try again.';
-      console.error('Google login error:', err);
       return false;
     } finally {
       loading.value = false;
@@ -130,12 +114,10 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null;
 
     try {
-      console.log('Requesting password reset for:', email);
       const response = await authService.requestPasswordReset(email);
       return response.status === 'OK';
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Password reset request failed. Please try again.';
-      console.error('Password reset request error:', err);
       return false;
     } finally {
       loading.value = false;
@@ -147,12 +129,10 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null;
 
     try {
-      console.log('Resetting password with token');
       const response = await authService.resetPassword(token, password);
       return response.status === 'OK';
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Password reset failed. Please try again.';
-      console.error('Password reset error:', err);
       return false;
     } finally {
       loading.value = false;
@@ -164,12 +144,10 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null;
 
     try {
-      console.log('Changing password');
       const response = await authService.changePassword(request);
       return response.status === 'OK';
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Password change failed. Please try again.';
-      console.error('Password change error:', err);
       return false;
     } finally {
       loading.value = false;

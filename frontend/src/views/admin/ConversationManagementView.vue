@@ -319,7 +319,6 @@ onMounted(() => {
   fetchConversations();
   // Debug: Log token
   const token = localStorage.getItem('auth_token');
-  console.log('Current auth token:', token ? `${token.substring(0, 20)}...` : 'No token found');
 });
 
 // Computed
@@ -337,7 +336,6 @@ const fetchConversations = async () => {
     conversations.value = response.data.content || [];
   } catch (err) {
     error.value = 'Không thể tải dữ liệu, vui lòng thử lại sau.';
-    console.error('Error fetching conversations:', err);
   } finally {
     loading.value = false;
   }
@@ -349,7 +347,6 @@ const debouncedSearch = debounce(async () => {
     const response = await conversationService.adminGetConversations(0, 10, searchQuery.value);
     conversations.value = response.data.content || [];
   } catch (err) {
-    console.error('Error searching conversations:', err);
     toast.error('Lỗi tìm kiếm hội thoại');
   } finally {
     loading.value = false;
@@ -366,7 +363,6 @@ const fetchConversationsByLevel = async () => {
       fetchConversations();
     }
   } catch (err) {
-    console.error('Error filtering conversations by level:', err);
     toast.error('Lỗi lọc hội thoại theo trình độ');
   } finally {
     loading.value = false;
@@ -452,7 +448,6 @@ const saveConversation = async () => {
   } catch (err: any) {
     error.value = err.response?.data?.message || 'Không thể lưu hội thoại';
     toast.error(error.value || 'Không thể lưu hội thoại');
-    console.error('Lỗi khi lưu hội thoại:', err);
   } finally {
     loading.value = false;
   }
@@ -465,7 +460,6 @@ const confirmDelete = (item: Conversation) => {
 
 const deleteConversation = async () => {
   if (!deleteItem.value || !deleteItem.value.conversationId) {
-    console.error('Không thể xóa, conversationId không tồn tại');
     toast.error('Không thể xóa: ID hội thoại không tồn tại');
     return;
   }
@@ -473,18 +467,15 @@ const deleteConversation = async () => {
   const conversationId = deleteItem.value.conversationId; // Lưu ID để tránh TypeScript null check
 
   loading.value = true;
-  console.log('Bắt đầu xóa hội thoại với ID:', conversationId);
 
   try {
     // Gọi qua service
     await conversationService.adminDeleteConversation(conversationId);
 
-    console.log('Xóa hội thoại thành công');
     toast.success('Đã xóa hội thoại thành công');
     deleteDialog.value = false;
     fetchConversations();
   } catch (err: any) {
-    console.error('Chi tiết lỗi khi xóa hội thoại:', err);
     error.value = err.response?.data?.message || err.message || 'Không thể xóa hội thoại';
     toast.error(error.value || 'Không thể xóa hội thoại');
   } finally {

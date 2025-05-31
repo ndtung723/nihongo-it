@@ -332,7 +332,6 @@ const toggleSave = async () => {
     vocabulary.value.isSaved = !vocabulary.value.isSaved;
 
   } catch (error) {
-    console.error('Error toggling save status:', error);
     toast.error('Không thể cập nhật trạng thái lưu', {
       position: 'top',
       duration: 3000
@@ -348,7 +347,6 @@ const playAudio = async () => {
       const audio = new Audio(vocabulary.value.audioPath)
       await audio.play()
     } catch (err) {
-      console.error('Error playing audio:', err)
       toast.error('Không thể phát âm thanh', {
         position: 'top',
         duration: 3000
@@ -389,7 +387,6 @@ const playAudio = async () => {
     const audioBlob = await aiService.generateTTS(textToSpeak, 'vocabulary', 0.9, true);
     await aiService.playAudio(audioBlob);
   } catch (error) {
-    console.error('Error generating or playing TTS audio:', error)
 
     // Special handling for 401 errors
     if (axios.isAxiosError(error) && error.response?.status === 401) {
@@ -445,7 +442,6 @@ const playExampleAudio = async () => {
     const audioBlob = await aiService.generateTTS(textToSpeak, 'example', 1.0, true);
     await aiService.playAudio(audioBlob);
   } catch (error) {
-    console.error('Error generating or playing TTS audio:', error)
 
     // Special handling for 401 errors
     if (axios.isAxiosError(error) && error.response?.status === 401) {
@@ -497,7 +493,6 @@ const startRecording = async () => {
       })
     }
   } catch (err) {
-    console.error('Error starting recording:', err)
     toast.error('Không thể truy cập microphone', {
       position: 'top',
       duration: 3000
@@ -529,7 +524,6 @@ const playRecordedAudio = () => {
     }
 
     audio.onerror = () => {
-      console.error('Error playing recorded audio')
       isPlayingRecording.value = false
       toast.error('Không thể phát bản ghi âm', {
         position: 'top',
@@ -538,7 +532,6 @@ const playRecordedAudio = () => {
     }
 
     audio.play().catch(err => {
-      console.error('Error playing recorded audio:', err)
       isPlayingRecording.value = false
       toast.error('Không thể phát bản ghi âm', {
         position: 'top',
@@ -546,7 +539,6 @@ const playRecordedAudio = () => {
       })
     })
   } catch (err) {
-    console.error('Error playing recorded audio:', err)
     isPlayingRecording.value = false
     toast.error('Không thể phát bản ghi âm', {
       position: 'top',
@@ -589,10 +581,7 @@ const processRecording = async (audioBlob: Blob) => {
       hasScore.value = true;
     }
   } catch (err) {
-    console.error('Error processing recording:', err);
-
     // Fallback to mock data for testing if API fails
-    console.log('Using mock data due to API error');
     await new Promise(resolve => setTimeout(resolve, 1500));
 
     // Mock analysis with random score
@@ -661,7 +650,6 @@ const navigateBack = () => {
           // Apply it to our query params
           Object.assign(params, searchState);
         } catch (e) {
-          console.error('Error parsing saved search state:', e);
         }
       }
     }
@@ -684,7 +672,6 @@ onMounted(async () => {
       const response = await vocabularyService.getVocabularyByTerm(term)
       vocabulary.value = response
     } catch (err) {
-      console.error('Error loading vocabulary:', err)
       error.value = 'Không thể tải thông tin từ vựng'
     } finally {
       loading.value = false

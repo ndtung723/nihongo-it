@@ -92,7 +92,6 @@ class AuthService {
 
       return result;
     } catch (error) {
-      console.error('Login error:', error);
       return { result: 'NG' };
     }
   }
@@ -102,7 +101,6 @@ class AuthService {
       const response = await api.post('/user-service-api/v1/auth/signup', userData);
       return response.data;
     } catch (error) {
-      console.error('Signup error:', error);
       throw error;
     }
   }
@@ -112,7 +110,6 @@ class AuthService {
       const response = await api.get('/user-service-api/v1/auth/current');
       return response.data;
     } catch (error) {
-      console.error('Get current user error:', error);
       return { status: 'NG' };
     }
   }
@@ -147,7 +144,6 @@ class AuthService {
       // If we get a successful response with user data, the token is valid
       return response.data && response.data.status === 'OK';
     } catch (error) {
-      console.error('Token validation error:', error);
       // If server is down or token is invalid, return false
       return false;
     }
@@ -164,7 +160,6 @@ class AuthService {
 
       return result
     } catch (error) {
-      console.error('Google login error:', error)
       return { result: 'NG' }
     }
   }
@@ -174,7 +169,6 @@ class AuthService {
       const response = await api.post('/user-service-api/v1/auth/forgot-password', { email } as PasswordResetRequest);
       return response.data;
     } catch (error) {
-      console.error('Password reset request failed:', error);
       throw error;
     }
   }
@@ -188,7 +182,6 @@ class AuthService {
       });
       return response.data;
     } catch (error) {
-      console.error('Password reset error:', error);
       throw error;
     }
   }
@@ -198,7 +191,6 @@ class AuthService {
       const response = await api.post('/user-service-api/v1/auth/change-password', request);
       return response.data;
     } catch (error) {
-      console.error('Password change error:', error);
       throw error;
     }
   }
@@ -208,7 +200,6 @@ class AuthService {
       const response = await api.post('/user-service-api/v1/auth/update-profile', request);
       return response.data;
     } catch (error) {
-      console.error('Profile update error:', error);
       throw error;
     }
   }

@@ -29,7 +29,6 @@ export const requireAuth = async (
 
       if (connectionError) {
         // If it's a connection issue, let the user proceed - we'll handle 401 errors via interceptor if needed
-        console.warn('Network appears to be offline. Proceeding with caution.');
         return next();
       } else {
         // Otherwise assume the token is invalid, clear it, and redirect to login
@@ -45,7 +44,6 @@ export const requireAuth = async (
     }
   } catch (error) {
     // Error during validation, proceed anyway but may get 401 later
-    console.warn('Error validating token, proceeding with caution:', error);
     return next();
   }
 };

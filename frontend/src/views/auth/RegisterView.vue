@@ -217,7 +217,6 @@ export default class RegisterView extends Vue {
         })
       }
     } catch (error) {
-      console.error('Registration error:', error)
       this.toast.error('Registration failed. Please try again.', {
         position: 'top',
         duration: 5000

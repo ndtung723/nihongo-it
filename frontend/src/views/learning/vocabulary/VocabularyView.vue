@@ -530,17 +530,13 @@ const fetchVocabulary = async () => {
   loading.value = true;
 
   try {
-    console.log('Fetching vocabulary with filters:', filters);
     const response = await vocabularyService.getVocabulary(filters);
-    console.log('Vocabulary response:', response);
 
     if (response && Array.isArray(response.content)) {
       vocabulary.value = response.content;
       totalPages.value = response.totalPages;
       totalItems.value = response.totalElements;
-      console.log('Processed vocabulary items:', vocabulary.value.length);
     } else {
-      console.error('Invalid response format:', response);
       vocabulary.value = [];
       totalPages.value = 0;
       totalItems.value = 0;
@@ -550,7 +546,6 @@ const fetchVocabulary = async () => {
       });
     }
   } catch (error) {
-    console.error('Error fetching vocabulary:', error);
     vocabulary.value = [];
     totalPages.value = 0;
     totalItems.value = 0;
@@ -584,7 +579,6 @@ const fetchTopics = async () => {
   try {
     topics.value = await vocabularyService.getTopics();
   } catch (error) {
-    console.error('Error fetching topics:', error);
   }
 }
 
@@ -639,7 +633,6 @@ const toggleSave = async (item: VocabularyItem) => {
     item.isSaved = !item.isSaved;
 
   } catch (error) {
-    console.error('Error toggling save status:', error);
     toast.error('Failed to update saved status', {
       position: 'top',
       duration: 3000
@@ -761,7 +754,6 @@ const playAudio = async (audioPath: string | null, vocabItem?: VocabularyItem, i
       await audio.play();
     }
   } catch (error) {
-    console.error('Error generating or playing TTS audio:', error);
 
     // Special handling for 401 errors to prevent logout
     if (axios.isAxiosError(error) && error.response?.status === 401) {
@@ -839,7 +831,6 @@ const toggleChatGPT = (vocabId: string) => {
     const vocabItem = vocabulary.value.find(item => item.vocabId === vocabId);
 
     if (!vocabItem) {
-      console.error('Vocabulary item not found');
       loadingChatGPT.value = null;
       return;
     }
@@ -878,7 +869,6 @@ const toggleChatGPT = (vocabId: string) => {
 
             data = JSON.parse(cleanedString);
           } catch (error) {
-            console.error('Failed to parse response as JSON:', error);
             // If parsing fails, create a fallback object
             data = {
               explanation: data, // Use the raw string as explanation
@@ -902,7 +892,6 @@ const toggleChatGPT = (vocabId: string) => {
       }
     })
     .catch(error => {
-      console.error('Error fetching AI explanation:', error);
       toast.error('Failed to fetch AI explanation', {
         position: 'top',
         duration: 3000
@@ -1000,7 +989,6 @@ const sendChatMessage = async (vocabId: string) => {
 
   const vocabItem = vocabulary.value.find(item => item.vocabId === vocabId);
   if (!vocabItem) {
-    console.error('Vocabulary item not found');
     return;
   }
 
@@ -1050,7 +1038,6 @@ const sendChatMessage = async (vocabId: string) => {
 
         data = JSON.parse(cleanedString);
       } catch (error) {
-        console.error('Failed to parse chat response as JSON:', error);
         // If parsing fails, create a fallback object with raw string as message
         data = {
           message: data
@@ -1081,7 +1068,6 @@ const sendChatMessage = async (vocabId: string) => {
       animateTypingChatResponse(vocabId, responseMessage, vocabIndex, aiMessageIndex);
     }
   } catch (error) {
-    console.error('Error sending chat message:', error);
 
     toast.error('Failed to get AI response', {
       position: 'top',

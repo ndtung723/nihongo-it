@@ -51,14 +51,14 @@
       >
         Dịch thuật
       </v-btn>
-      <v-btn
+      <!-- <v-btn
         variant="text"
         :to="{ name: 'furigana' }"
         density="compact"
         class="mx-1 nav-btn"
       >
         Furigana
-      </v-btn>
+      </v-btn> -->
     </div>
 
     <!-- Mobile Menu Button -->

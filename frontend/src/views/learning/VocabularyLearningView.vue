@@ -269,11 +269,9 @@ async function fetchCategories() {
         }
       })
     } else {
-      console.error('Categories response is not an array:', response)
       categories.value = []
     }
   } catch (error) {
-    console.error('Error fetching categories:', error)
     toast.error('Failed to load categories', {
       position: 'top',
       duration: 3000
@@ -299,11 +297,9 @@ async function fetchTopics() {
         }
       })
     } else {
-      console.error('Topics response is not an array:', response)
       topics.value = []
     }
   } catch (error) {
-    console.error('Error fetching topics:', error)
     toast.error('Failed to load topics', {
       position: 'top',
       duration: 3000

@@ -61,6 +61,8 @@ check_port 8761  # Eureka Server
 check_port 8080  # API Gateway
 check_port 8086  # User Service
 check_port 8087  # AI Service
+check_port 8088  # Learning Service
+check_port 8089  # Notification Service
 
 # Create log directory
 mkdir -p "$PROJECT_ROOT/logs"
@@ -100,8 +102,22 @@ cd "$PROJECT_ROOT/services/ai-service"
 AI_SERVICE_PID=$!
 echo -e "${GREEN}AI Service started with PID: $AI_SERVICE_PID${NC}"
 
+# Build and start Learning Service
+echo -e "${GREEN}Building and starting Learning Service...${NC}"
+cd "$PROJECT_ROOT/services/learning-service"
+../gradlew bootRun > "$PROJECT_ROOT/logs/learning-service.log" 2>&1 &
+LEARNING_SERVICE_PID=$!
+echo -e "${GREEN}Learning Service started with PID: $LEARNING_SERVICE_PID${NC}"
+
+# Build and start Notification Service
+echo -e "${GREEN}Building and starting Notification Service...${NC}"
+cd "$PROJECT_ROOT/services/notification-service"
+../gradlew bootRun > "$PROJECT_ROOT/logs/notification-service.log" 2>&1 &
+NOTIFICATION_SERVICE_PID=$!
+echo -e "${GREEN}Notification Service started with PID: $NOTIFICATION_SERVICE_PID${NC}"
+
 # Save PIDs to file for later termination
-echo "$EUREKA_PID $API_GATEWAY_PID $USER_SERVICE_PID $AI_SERVICE_PID" > "$PROJECT_ROOT/logs/spring_pids.txt"
+echo "$EUREKA_PID $API_GATEWAY_PID $USER_SERVICE_PID $AI_SERVICE_PID $LEARNING_SERVICE_PID $NOTIFICATION_SERVICE_PID" > "$PROJECT_ROOT/logs/spring_pids.txt"
 
 # Show status information
 echo -e "\n${BLUE}=== Services Information ===${NC}"
@@ -109,8 +125,10 @@ echo -e "${GREEN}Eureka Server:${NC} http://localhost:8761"
 echo -e "${GREEN}API Gateway:${NC} http://localhost:8080"
 echo -e "${GREEN}User Service:${NC} http://localhost:8086"
 echo -e "${GREEN}AI Service:${NC} http://localhost:8087"
+echo -e "${GREEN}Learning Service:${NC} http://localhost:8088"
+echo -e "${GREEN}Notification Service:${NC} http://localhost:8089"
 echo -e "\n${YELLOW}Log files are available in the logs directory${NC}"
-echo -e "${YELLOW}PIDs: Eureka=$EUREKA_PID, API Gateway=$API_GATEWAY_PID, User Service=$USER_SERVICE_PID, AI Service=$AI_SERVICE_PID${NC}"
+echo -e "${YELLOW}PIDs: Eureka=$EUREKA_PID, API Gateway=$API_GATEWAY_PID, User Service=$USER_SERVICE_PID, AI Service=$AI_SERVICE_PID, Learning Service=$LEARNING_SERVICE_PID, Notification Service=$NOTIFICATION_SERVICE_PID${NC}"
 echo -e "\n${RED}To stop all services, press Ctrl+C or run: tools/stop-services.sh${NC}"
 
 # Keep script running to allow easy termination
@@ -119,7 +137,7 @@ echo -e "${BLUE}Services are running. Press Ctrl+C to stop all services.${NC}"
 # Wait indefinitely
 while true; do
     # Check if services are still running every 5 seconds
-    for pid in $EUREKA_PID $API_GATEWAY_PID $USER_SERVICE_PID $AI_SERVICE_PID; do
+    for pid in $EUREKA_PID $API_GATEWAY_PID $USER_SERVICE_PID $AI_SERVICE_PID $LEARNING_SERVICE_PID $NOTIFICATION_SERVICE_PID; do
         if ! ps -p $pid > /dev/null; then
             echo -e "${RED}Service with PID $pid has stopped unexpectedly.${NC}"
             echo -e "${YELLOW}Stopping all remaining services...${NC}"

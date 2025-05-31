@@ -172,7 +172,6 @@ const handleSubmit = async () => {
       isSuccess.value = true;
     }
   } catch (err: any) {
-    console.error('Password reset failed:', err);
   }
 };
 </script>

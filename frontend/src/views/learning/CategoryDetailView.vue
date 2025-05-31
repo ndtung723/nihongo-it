@@ -188,7 +188,6 @@ async function fetchCategoryDetails(slug: string) {
       }
     }
   } catch (error) {
-    console.error('Error fetching category details:', error)
     toast.error('Failed to load category details', {
       position: 'top',
       duration: 3000
@@ -219,7 +218,6 @@ async function fetchTopicsByCategory(categoryId: string) {
       topics.value = []
     }
   } catch (error) {
-    console.error(`Error fetching topics for category ${categoryId}:`, error)
     toast.error('Failed to load topics for this category', {
       position: 'top',
       duration: 3000
@@ -233,14 +231,12 @@ async function fetchJlptLevels() {
     const response = await vocabularyService.getJlptLevels()
     jlptLevels.value = response
   } catch (error) {
-    console.error('Error fetching JLPT levels:', error)
     // Use default values if API call fails
     jlptLevels.value = ['N1', 'N2', 'N3', 'N4', 'N5']
   }
 }
 
 function handleTopicSelect(topic: Topic) {
-  console.log("Selected topic:", topic);
 
   // Navigate to topic detail view with encoded topic name
   router.push({

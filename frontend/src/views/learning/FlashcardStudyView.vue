@@ -321,7 +321,6 @@ async function fetchDueCards() {
     currentCardIndex.value = 0
     isFlipped.value = false
   } catch (error) {
-    console.error('Error fetching due cards:', error)
     toast.error('Không thể tải thẻ ghi nhớ. Vui lòng thử lại sau.', {
       position: 'top'
     })
@@ -334,7 +333,6 @@ async function fetchStats() {
   try {
     stats.value = await flashcardService.getStudyStatistics()
   } catch (error) {
-    console.error('Error fetching study statistics:', error)
   }
 }
 
@@ -425,7 +423,6 @@ async function rateCard(rating: number) {
       await fetchStats()
     }
   } catch (error) {
-    console.error('Error submitting rating:', error)
     toast.error('Không thể lưu đánh giá. Vui lòng thử lại.', {
       position: 'top'
     })
@@ -479,7 +476,6 @@ async function playAudio(card: FlashcardDTO) {
       await audio.play();
       return; // Successfully played the audio, no need to generate TTS
     } catch (error) {
-      console.log('No pre-existing audio found, generating TTS...', error);
       // Continue to TTS generation if the audio file doesn't exist
     }
 
@@ -519,7 +515,6 @@ async function playAudio(card: FlashcardDTO) {
     };
     await audio.play();
   } catch (error) {
-    console.error('Error generating or playing audio:', error);
     toast.error('Không thể phát âm thanh. Vui lòng thử lại sau.', {
       position: 'top',
       duration: 3000
@@ -603,7 +598,6 @@ async function playExampleAudio(card: FlashcardDTO) {
     };
     await audio.play();
   } catch (error) {
-    console.error('Error generating or playing example audio:', error);
     toast.error('Không thể phát âm thanh ví dụ. Vui lòng thử lại sau.', {
       position: 'top',
       duration: 3000

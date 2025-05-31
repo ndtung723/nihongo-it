@@ -292,7 +292,6 @@ const playSampleAudio = async () => {
       });
 
       sampleAudio.value.addEventListener('error', (e) => {
-        console.error('Audio playback error:', e);
         error.value = "Lỗi khi phát âm thanh mẫu";
         isPlayingSample.value = false;
       });
@@ -322,32 +321,27 @@ const playSampleAudio = async () => {
           try {
             await sampleAudio.value.play();
           } catch (playError) {
-            console.error('Error playing audio:', playError);
             isPlayingSample.value = false;
             error.value = "Không thể phát âm thanh mẫu";
           }
         } else {
-          console.error('Sample audio element is null');
           error.value = "Lỗi phát âm thanh mẫu: audio element không tồn tại";
           isPlayingSample.value = false;
           URL.revokeObjectURL(objectUrl); // Clean up
         }
       } else {
-        console.error('Error fetching audio:', xhr.status);
         error.value = `Lỗi khi tải âm thanh mẫu: ${xhr.status}`;
         isPlayingSample.value = false;
       }
     };
 
     xhr.onerror = function() {
-      console.error('Network error fetching audio');
       error.value = "Lỗi kết nối khi tải âm thanh mẫu";
       isPlayingSample.value = false;
     };
 
     xhr.send();
   } catch (e) {
-    console.error('Error playing sample audio:', e);
     error.value = "Không thể phát âm thanh mẫu";
     isPlayingSample.value = false;
   }
@@ -382,7 +376,6 @@ const startRecording = async () => {
 
     // Kiểm tra xem Recorder có tồn tại không
     if (typeof window.Recorder === 'undefined') {
-      console.error('Recorder library is not loaded');
       error.value = 'Thư viện ghi âm không được tải. Vui lòng tải lại trang sau khi kết nối internet.';
       return;
     }
@@ -397,11 +390,9 @@ const startRecording = async () => {
 
     // Bắt đầu ghi âm
     recorder.record();
-    console.log('Đã bắt đầu ghi âm với sample rate:', audioContext.sampleRate);
 
     isRecording.value = true;
   } catch (e) {
-    console.error('Lỗi khi bắt đầu ghi âm:', e);
     error.value = 'Không thể bắt đầu ghi âm. Vui lòng cấp quyền sử dụng microphone.';
   }
 };
@@ -418,7 +409,6 @@ const stopRecording = async () => {
     isLoading.value = true;
 
     // Dừng ghi âm và lấy Blob WAV
-    console.log('Đang dừng ghi âm...');
 
     // Sử dụng Recorder.js API để dừng và lấy WAV blob
     recorder.stop();
@@ -429,7 +419,6 @@ const stopRecording = async () => {
       handleAudioBlob(blob);
     });
   } catch (e) {
-    console.error('Lỗi khi xử lý audio:', e);
     error.value = 'Lỗi khi xử lý audio: ' + (e instanceof Error ? e.message : String(e));
     isLoading.value = false;
   }
@@ -467,13 +456,10 @@ const handleAudioBlob = async (blob: Blob) => {
 
     // Kiểm tra kích thước blob
     if (!blob || blob.size < 1000) {
-      console.error('Audio blob quá nhỏ:', blob?.size);
       error.value = 'Không ghi được âm thanh. Vui lòng thử lại và nói to hơn.';
       isLoading.value = false;
       return;
     }
-
-    console.log('Đã tạo WAV blob thành công:', blob.size, 'bytes, type:', blob.type);
 
     // Verify authentication before proceeding
     const authToken = authService.getToken();
@@ -496,7 +482,6 @@ const handleAudioBlob = async (blob: Blob) => {
     formData.append('sample_id', getSampleId(sentence.value));
 
     // Gửi đến Java service endpoint thay vì Python trực tiếp
-    console.log('Đang gửi đến Java API Gateway:', sentence.value);
     try {
       const response = await fetch('http://localhost:8080/ai-service-api/v1/speech/analyze-audio-enhanced', {
         method: 'POST',
@@ -508,7 +493,6 @@ const handleAudioBlob = async (blob: Blob) => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null) || await response.text().catch(() => null) || `Error ${response.status}`;
-        console.error(`Lỗi server ${response.status}:`, errorData);
 
         if (response.status === 401) {
           error.value = 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.';
@@ -535,18 +519,15 @@ const handleAudioBlob = async (blob: Blob) => {
 
       // Xử lý kết quả
       const result = await response.json();
-      console.log('Kết quả phân tích:', result);
 
       // Ensure all scores in the result object are used directly without any fixed values
       analysis.value = result;
     } catch (e) {
-      console.error('Lỗi khi phân tích âm thanh:', e);
       error.value = e instanceof Error ? e.message : String(e);
     } finally {
       isLoading.value = false;
     }
   } catch (e) {
-    console.error('Lỗi khi xử lý audio:', e);
     error.value = 'Lỗi khi xử lý audio: ' + (e instanceof Error ? e.message : String(e));
     isLoading.value = false;
   }
@@ -568,7 +549,6 @@ watch(sentence, () => {
 onMounted(() => {
   // Kiểm tra nếu Recorder.js đã được tải
   if (typeof window.Recorder === 'undefined') {
-    console.warn('Recorder.js chưa được tải. Vui lòng đảm bảo thư viện đã được thêm vào.');
     error.value = 'Thư viện ghi âm chưa sẵn sàng. Vui lòng tải lại trang.';
   }
 
@@ -593,22 +573,16 @@ const checkBackendConnection = async () => {
 
     if (response.ok) {
       const data = await response.json();
-      console.log('Java server status:', data);
       if (data.status === 'healthy') {
-        console.log('Backend server is running properly');
       } else {
-        console.warn('Backend server reported unhealthy status');
         error.value = 'Server phân tích âm thanh có thể không hoạt động bình thường.';
       }
     } else if (response.status === 401) {
-      console.warn('Authentication required for backend connection');
       error.value = 'Vui lòng đăng nhập để sử dụng tính năng phân tích phát âm.';
     } else {
-      console.error('Cannot connect to Java server');
       error.value = 'Không thể kết nối tới server. Vui lòng kiểm tra nếu server đang chạy.';
     }
   } catch (e) {
-    console.error('Error checking backend connection:', e);
     error.value = 'Không thể kết nối tới server phân tích âm thanh. Vui lòng kiểm tra nếu server đang chạy.';
   }
 };
@@ -665,7 +639,6 @@ const playRecordedAudio = async () => {
       });
 
       recordedAudio.value.addEventListener('error', (e) => {
-        console.error('Lỗi phát bản ghi:', e);
         error.value = "Không thể phát bản ghi âm thanh";
         isPlayingRecording.value = false;
       });
@@ -676,7 +649,6 @@ const playRecordedAudio = async () => {
     isPlayingRecording.value = true;
     await recordedAudio.value.play();
   } catch (e) {
-    console.error('Lỗi khi phát bản ghi:', e);
     error.value = "Không thể phát bản ghi âm thanh";
     isPlayingRecording.value = false;
   }
@@ -723,19 +695,16 @@ const playWordTTS = async (audioUrl: string | null | undefined) => {
           URL.revokeObjectURL(objectUrl);
         };
       } else {
-        console.error('Error fetching TTS audio:', xhr.status);
         error.value = `Lỗi khi tải âm thanh mẫu: ${xhr.status}`;
       }
     };
 
     xhr.onerror = function() {
-      console.error('Network error fetching TTS audio');
       error.value = "Lỗi kết nối khi tải âm thanh mẫu";
     };
 
     xhr.send();
   } catch (e) {
-    console.error('Lỗi khi phát âm thanh TTS:', e);
     error.value = "Không thể phát âm thanh mẫu";
   }
 };

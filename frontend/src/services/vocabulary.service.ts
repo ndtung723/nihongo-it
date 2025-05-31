@@ -65,7 +65,6 @@ class VocabularyService {
       })
       return response.data
     } catch (error) {
-      console.error('Error fetching vocabulary:', error)
       throw error
     }
   }
@@ -76,7 +75,6 @@ class VocabularyService {
       const response = await api.get(`/learning-service-api/v1/vocabulary/${id}`)
       return response.data.data
     } catch (error) {
-      console.error(`Error fetching vocabulary with ID ${id}:`, error)
       throw error
     }
   }
@@ -87,7 +85,6 @@ class VocabularyService {
       const response = await api.get(`/learning-service-api/v1/vocabulary/term/${term}`)
       return response.data.data
     } catch (error) {
-      console.error(`Error fetching vocabulary with term ${term}:`, error)
       throw error
     }
   }
@@ -98,7 +95,6 @@ class VocabularyService {
       const response = await api.post(`/learning-service-api/v1/vocabulary/${id}/save`, {})
       return response.data
     } catch (error) {
-      console.error(`Error saving vocabulary ${id}:`, error)
       throw error
     }
   }
@@ -109,7 +105,6 @@ class VocabularyService {
       const response = await api.delete(`/learning-service-api/v1/vocabulary/${id}/save`)
       return response.data
     } catch (error) {
-      console.error(`Error removing saved vocabulary ${id}:`, error)
       throw error
     }
   }
@@ -127,7 +122,6 @@ class VocabularyService {
       })
       return response.data
     } catch (error) {
-      console.error('Error fetching saved vocabulary:', error)
       throw error
     }
   }
@@ -137,7 +131,6 @@ class VocabularyService {
       const response = await api.get('/learning-service-api/v1/vocabulary/categories')
       return response.data
     } catch (error) {
-      console.error('Error fetching categories:', error)
       throw error
     }
   }
@@ -147,7 +140,6 @@ class VocabularyService {
       const response = await api.get('/learning-service-api/v1/vocabulary/jlpt-levels')
       return response.data
     } catch (error) {
-      console.error('Error fetching JLPT levels:', error)
       throw error
     }
   }
@@ -157,7 +149,6 @@ class VocabularyService {
       const response = await api.get('/learning-service-api/v1/topics')
       return response.data
     } catch (error) {
-      console.error('Error fetching topics:', error)
       throw error
     }
   }
@@ -167,7 +158,6 @@ class VocabularyService {
       const response = await api.get(`/learning-service-api/v1/vocabulary/categories/${categoryId}/topics`)
       return response.data
     } catch (error) {
-      console.error(`Error fetching topics for category ${categoryId}:`, error)
       throw error
     }
   }
@@ -177,7 +167,6 @@ class VocabularyService {
       const response = await api.post('/learning-service-api/v1/vocabulary', vocabulary)
       return response.data
     } catch (error) {
-      console.error('Error creating vocabulary:', error)
       throw error
     }
   }
@@ -187,7 +176,6 @@ class VocabularyService {
       const response = await api.put(`/learning-service-api/v1/vocabulary/${id}`, vocabulary)
       return response.data
     } catch (error) {
-      console.error(`Error updating vocabulary:`, error)
       throw error
     }
   }

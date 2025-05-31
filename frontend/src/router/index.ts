@@ -437,7 +437,6 @@ router.beforeEach(async (to, from, next) => {
       if (to.meta.requiresAdmin) {
         // Check if user has admin role based on API response
         if (!responseData || !responseData.userInfo || responseData.userInfo.roleId !== 1) {
-          console.warn('Access denied: Admin role required');
           return next({ name: 'home' });
         }
       }
@@ -445,7 +444,6 @@ router.beforeEach(async (to, from, next) => {
       // User is authenticated and has required role
       return next();
     } catch (error) {
-      console.error('Authentication error:', error);
       // Error during validation - if network is down, let them proceed
       if (!window.navigator.onLine) {
         return next();

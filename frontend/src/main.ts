@@ -41,7 +41,6 @@ axios.interceptors.response.use(
   error => {
     // Handle 401 Unauthorized errors
     if (error.response && error.response.status === 401) {
-      console.log('Unauthorized access detected, checking request...');
 
       // Check if this is a TTS API request (which should not trigger logout)
       const isTtsRequest = error.config &&
@@ -50,12 +49,9 @@ axios.interceptors.response.use(
          error.config.url?.includes('/tts/'));
 
       if (isTtsRequest) {
-        console.log('TTS API unauthorized error - not logging out user');
         // Just return the error for TTS requests without logging out
         return Promise.reject(error);
       }
-
-      console.log('Non-TTS unauthorized access, redirecting to login');
 
       // Clear auth token and user data
       localStorage.removeItem('auth_token');

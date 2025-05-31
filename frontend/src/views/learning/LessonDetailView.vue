@@ -150,8 +150,6 @@ function updateDataRate() {
 
 function openLesson(lessonId: string) {
   // For demonstration, we'll just log the lesson ID
-  console.log(`Opening lesson ${lessonId}`)
-  // In a real app, this would navigate to the specific lesson content
   // router.push(`/learning/lesson/${courseId}/${lessonId}`)
 }
 

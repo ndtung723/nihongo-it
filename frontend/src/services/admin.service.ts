@@ -84,7 +84,6 @@ class AdminService {
       const response = await api.get('/learning-service-api/v1/admin/dashboard/stats');
       return response.data.data;
     } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
       throw error;
     }
   }
@@ -101,7 +100,6 @@ class AdminService {
       const response = await api.get('/user-service-api/v1/admin/users', { params });
       return response.data;
     } catch (error) {
-      console.error('Error fetching users:', error);
       throw error;
     }
   }
@@ -114,7 +112,6 @@ class AdminService {
       const response = await api.get(`/user-service-api/v1/admin/users/${userId}`);
       return response.data;
     } catch (error) {
-      console.error('Error fetching user:', error);
       throw error;
     }
   }
@@ -127,7 +124,6 @@ class AdminService {
       const response = await api.post('/user-service-api/v1/admin/users', userData);
       return response.data;
     } catch (error) {
-      console.error('Error creating user:', error);
       throw error;
     }
   }
@@ -140,7 +136,6 @@ class AdminService {
       const response = await api.put(`/user-service-api/v1/admin/users/${userId}`, userData);
       return response.data;
     } catch (error) {
-      console.error('Error updating user:', error);
       throw error;
     }
   }
@@ -153,7 +148,6 @@ class AdminService {
       const response = await api.delete(`/user-service-api/v1/admin/users/${userId}`);
       return response.data;
     } catch (error) {
-      console.error('Error deactivating user:', error);
       throw error;
     }
   }
@@ -166,7 +160,6 @@ class AdminService {
       const response = await api.put(`/user-service-api/v1/admin/users/${userId}/activate`);
       return response.data;
     } catch (error) {
-      console.error('Error activating user:', error);
       throw error;
     }
   }
@@ -181,7 +174,6 @@ class AdminService {
       });
       return response.data;
     } catch (error) {
-      console.error('Error changing user role:', error);
       throw error;
     }
   }
