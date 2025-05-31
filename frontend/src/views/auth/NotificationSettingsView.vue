@@ -195,7 +195,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useToast } from 'vue-toast-notification'
-import axios from 'axios'
+import userService from '@/services/user.service'
 import authService from '@/services/auth.service'
 
 const toast = useToast()
@@ -236,38 +236,36 @@ async function loadUserPreferences() {
   try {
     loading.value = true
 
-    // Get preferences from the backend
-    const response = await axios.get('/api/v1/user/preferences', {
-      headers: { Authorization: `Bearer ${authService.getToken()}` }
-    })
+    // Get preferences from the backend using userService
+    const response = await userService.getUserPreferences()
 
     // If preferences exist, set them
-    if (response.data) {
-      if (response.data.notificationPreferences) {
-        const notifPrefs = response.data.notificationPreferences.split(',').map((p: string) => p.trim())
+    if (response) {
+      if (response.notificationPreferences) {
+        const notifPrefs = response.notificationPreferences.split(',').map((p: string) => p.trim())
         channels.value.app = notifPrefs.includes('app')
         channels.value.email = notifPrefs.includes('email')
       }
 
-      if (response.data.reminderEnabled !== undefined) {
-        preferences.value.dueCards = response.data.reminderEnabled
+      if (response.reminderEnabled !== undefined) {
+        preferences.value.dueCards = response.reminderEnabled
       }
 
-      if (response.data.reminderTime) {
-        reminderTime.value = response.data.reminderTime
+      if (response.reminderTime) {
+        reminderTime.value = response.reminderTime
 
         // Parse the time values for the selectors
-        const [hour, minute] = response.data.reminderTime.split(':')
+        const [hour, minute] = response.reminderTime.split(':')
         timeHour.value = hour.padStart(2, '0')
         timeMinute.value = minute.padStart(2, '0')
       }
 
-      if (response.data.minCardThreshold !== undefined) {
-        minCardThreshold.value = response.data.minCardThreshold
+      if (response.minCardThreshold !== undefined) {
+        minCardThreshold.value = response.minCardThreshold
       }
 
-      if (response.data.leechNotificationsEnabled !== undefined) {
-        preferences.value.leechCards = response.data.leechNotificationsEnabled
+      if (response.leechNotificationsEnabled !== undefined) {
+        preferences.value.leechCards = response.leechNotificationsEnabled
       }
     }
   } catch (error) {
@@ -296,10 +294,8 @@ async function savePreferences() {
       leechNotificationsEnabled: preferences.value.leechCards
     }
 
-    // Send to the backend
-    await axios.put('/api/v1/user/preferences', userData, {
-      headers: { Authorization: `Bearer ${authService.getToken()}` }
-    })
+    // Send to the backend using userService
+    await userService.updateUserPreferences(userData)
 
     toast.success('Cài đặt thông báo đã được lưu', {
       position: 'top'

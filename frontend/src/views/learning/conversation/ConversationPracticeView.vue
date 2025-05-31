@@ -49,16 +49,6 @@
               class="mini-switch mr-2"
               inset
             ></v-switch>
-
-            <!-- <v-btn
-              :icon="conversation.isSaved ? 'mdi-bookmark' : 'mdi-bookmark-outline'"
-              size="small"
-              variant="text"
-              :color="conversation.isSaved ? 'warning' : undefined"
-              @click="toggleSave"
-              class="ml-1 action-btn"
-              :title="conversation.isSaved ? 'Bỏ lưu' : 'Lưu hội thoại'"
-            ></v-btn> -->
           </div>
         </v-card>
       </div>
@@ -245,16 +235,6 @@
             </template>
           </div>
 
-          <!-- Completion Message -->
-          <v-alert
-            v-if="isConversationCompleted"
-            type="success"
-            variant="tonal"
-            class="mt-4"
-          >
-            <div class="text-h6 mb-2">Chúc mừng bạn đã hoàn thành hội thoại!</div>
-            <p>Hãy tiếp tục luyện tập để cải thiện kỹ năng giao tiếp tiếng Nhật của bạn.</p>
-          </v-alert>
         </v-card-text>
       </v-card>
     </template>
@@ -335,8 +315,6 @@ const lineAnalysisResults = ref<(SpeechAnalysisResult | null)[]>([])
 const mediaRecorder = ref<MediaRecorder | null>(null)
 const audioChunks = ref<Blob[]>([])
 const isSilent = ref(false)
-const silenceTimeout = ref<number | null>(null)
-const silenceDetectionDuration = 2000 //  giây im lặng sau khi nói sẽ tự động gửi
 const hasSpoken = ref(false) // Biến để theo dõi xem người dùng đã nói gì chưa
 
 // Thêm trạng thái cho Furigana
@@ -657,19 +635,19 @@ const processRecording = async (index: number) => {
     }
 
     // Kiểm tra nếu đã có transcription từ Azure nhưng không liên quan đến nội dung
-    if (lineAnalysisResults.value[index]?.transcription) {
-      const transcription = lineAnalysisResults.value[index]?.transcription || '';
-      const referenceText = conversation.value?.dialogue[index]?.japanese || '';
+    // if (lineAnalysisResults.value[index]?.transcription) {
+    //   const transcription = lineAnalysisResults.value[index]?.transcription || '';
+    //   const referenceText = conversation.value?.dialogue[index]?.japanese || '';
 
-      // Kiểm tra xem transcription có liên quan đến referenceText không
-      // Nếu không chứa ký tự chung nào hoặc quá khác biệt, có thể là lỗi nhận dạng
-      const isUnrelatedTranscription = !hasCommonCharacters(transcription, referenceText);
+    //   // Kiểm tra xem transcription có liên quan đến referenceText không
+    //   // Nếu không chứa ký tự chung nào hoặc quá khác biệt, có thể là lỗi nhận dạng
+    //   const isUnrelatedTranscription = !hasCommonCharacters(transcription, referenceText);
 
-      if (isUnrelatedTranscription) {
-        isProcessing.value = false;
-        return; // Dừng và không gửi API
-      }
-    }
+    //   if (isUnrelatedTranscription) {
+    //     isProcessing.value = false;
+    //     return; // Dừng và không gửi API
+    //   }
+    // }
 
     // Verify authentication before proceeding
     const authToken = authService.getToken()
@@ -756,7 +734,7 @@ const hasCommonCharacters = (str1: string, str2: string, threshold: number = 0.1
   return ratio >= threshold;
 }
 
-// Cập nhật hàm startRecording để lưu trữ silenceRecorder
+// Cập nhật hàm startRecording
 const startRecording = async (index: number) => {
   try {
     // Reset recording state
@@ -794,19 +772,9 @@ const startRecording = async (index: number) => {
             }
           }
         },
-        // Xử lý lỗi - chỉ hiển thị khi đang ghi âm
+        // Xử lý lỗi - không tự động dừng khi có lỗi nữa
         (error) => {
-          // Chỉ hiển thị thông báo lỗi khi đang ghi âm
-          if (isRecording.value && activeLineIndex.value === index) {
-            if (error && error.includes && error.includes("No speech could be recognized")) {
-              toast.warning('Không nhận dạng được phát âm, vui lòng thử lại', {
-                position: 'top',
-                duration: 3000
-              });
-              stopRecording();
-              return;
-            }
-          }
+          console.error('Speech recognition error:', error);
         }
       );
     }
@@ -858,12 +826,12 @@ const startRecording = async (index: number) => {
 
       mediaRecorder.value.start();
       isRecording.value = true;
-      toast.info('Bắt đầu ghi âm - Hãy phát âm câu hội thoại', {
+      toast.info('Bắt đầu ghi âm - Hãy phát âm câu hội thoại và nhấn nút Dừng khi hoàn thành', {
         position: 'top',
-        duration: 2000
+        duration: 3000
       });
 
-      // Đặt thời gian tối đa cho phiên ghi âm là 7 giây
+      // Đặt thời gian tối đa cho phiên ghi âm là 7 giây, chỉ dừng nếu chưa nói gì
       setTimeout(() => {
         if (isRecording.value && mediaRecorder.value && mediaRecorder.value.state === 'recording') {
           if (!hasSpoken.value) {
@@ -872,8 +840,9 @@ const startRecording = async (index: number) => {
               position: 'top',
               duration: 2000
             });
+            stopRecording();
           }
-          stopRecording();
+          // Không còn dòng stopRecording() ở đây để chỉ dừng khi chưa nói
         }
       }, 7000);
     }
@@ -1271,20 +1240,15 @@ const startTypingNextLine = () => {
   }
 }
 
-// Cập nhật hàm stopRecording để đảm bảo dừng hoàn toàn nhận dạng
+// Cập nhật hàm stopRecording để xử lý silenceTimeout nếu cần
 const stopRecording = async () => {
   // Đảm bảo dừng nhận dạng trước khi dừng ghi âm
   if (speechRecognitionService.isServiceInitialized()) {
     try {
       await speechRecognitionService.stopRecognition();
     } catch (error) {
+      console.error('Error stopping speech recognition:', error);
     }
-  }
-
-  // Xóa timeout phát hiện im lặng
-  if (silenceTimeout.value !== null) {
-    clearTimeout(silenceTimeout.value);
-    silenceTimeout.value = null;
   }
 
   if (mediaRecorder.value && isRecording.value) {
@@ -1298,10 +1262,10 @@ const stopRecording = async () => {
   }
 }
 
-// Hàm dừng ghi âm nhưng không xử lý kết quả
+// Cập nhật hàm stopRecordingWithoutProcessing
 const stopRecordingWithoutProcessing = () => {
   if (mediaRecorder.value && isRecording.value) {
-    // Đặt một biến để chỉ ra rằng không nên xử lý kết quả
+    // Đặt biến isSilent để báo hiệu không xử lý kết quả
     isSilent.value = true;
 
     mediaRecorder.value.stop();
@@ -1312,13 +1276,8 @@ const stopRecordingWithoutProcessing = () => {
       try {
         speechRecognitionService.stopRecognition();
       } catch (error) {
+        console.error('Error stopping speech recognition:', error);
       }
-    }
-
-    // Xóa timeout phát hiện im lặng
-    if (silenceTimeout.value !== null) {
-      clearTimeout(silenceTimeout.value);
-      silenceTimeout.value = null;
     }
 
     // Stop all audio tracks

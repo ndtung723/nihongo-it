@@ -24,7 +24,7 @@
               class="search-field"
             ></v-text-field>
           </v-col>
-          <v-col cols="4" sm="9" md="6" class="d-flex align-center">
+          <!-- <v-col cols="4" sm="9" md="6" class="d-flex align-center">
             <v-btn
               variant="outlined"
               color="red"
@@ -35,7 +35,7 @@
             >
               Xóa
             </v-btn>
-          </v-col>
+          </v-col> -->
         </v-row>
       </v-card-text>
     </v-card>
