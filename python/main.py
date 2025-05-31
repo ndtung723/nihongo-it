@@ -57,7 +57,6 @@ CLEAN_REGEX = re.compile(f'[{re.escape(punctuation + JAPANESE_PUNCTUATION)}]|[^\
 
 # Flag for Kaldi availability (will be simulated since not installed)
 KALDI_AVAILABLE = False
-logger.warning("Kaldi not available, will use simulated phoneme analysis")
 
 async def count_syllables(text: str) -> int:
     """Đếm số âm tiết dựa trên hiragana."""
@@ -70,7 +69,6 @@ async def count_syllables(text: str) -> int:
     try:
         # Chuyển sang hiragana
         hira_text = await to_hiragana(text)
-        logger.info(f"Hiragana for syllable counting: {hira_text}")
         
         # Quy tắc đếm âm tiết trong tiếng Nhật:
         # 1. Mỗi kana (hiragana/katakana) là một âm tiết
@@ -98,10 +96,8 @@ async def count_syllables(text: str) -> int:
                     
             syllables += 1
             
-        logger.info(f"Counted {syllables} syllables in: {text}")
         return max(1, syllables)  # Ensure at least 1 syllable
     except Exception as e:
-        logger.error(f"Error counting syllables: {str(e)}")
         # Fallback: rough estimate based on character count
         return max(1, len(text.strip()) // 3)
 
@@ -111,7 +107,6 @@ async def to_hiragana(text: str) -> str:
         result = kakasi.convert(text)
         return ''.join(item['hira'] for item in result if 'hira' in item)
     except Exception as e:
-        logger.error(f"Error converting to hiragana: {str(e)}")
         return text
 
 async def clean_text(text: str) -> str:
@@ -131,13 +126,11 @@ async def tokenize_japanese(text: str) -> List[str]:
         if 'orig' in item and item['orig'].strip():
             words.append(item['orig'])
     
-    logger.info(f"Tokenized '{text}' into {len(words)} words: {words}")
     return words
 
 async def analyze_with_llm(original: str, transcription: str, phoneme_errors: List[Dict[str, str]] = None) -> Dict[str, Any]:
     """Use LLM to analyze semantic differences and identify auxiliary words with phoneme error details."""
     if not OPENAI_API_KEY:
-        logger.warning("OpenAI API key not set, using simulated LLM analysis")
         return {
             "incorrect_words": [],
             "auxiliary_words": ["ね", "よ", "な", "わ", "さ"],  # Common auxiliary particles
@@ -189,14 +182,11 @@ Return ONLY a JSON object with this structure:
         json_content = re.search(r'({.*})', content.replace('\n', ' '), re.DOTALL)
         if json_content:
             result = json.loads(json_content.group(1))
-            logger.info(f"LLM analysis successful with phoneme details")
             return result
         else:
-            logger.error(f"Failed to extract JSON from LLM response: {content}")
             return {"incorrect_words": [], "auxiliary_words": [], "personalized_feedback": ""}
             
     except Exception as e:
-        logger.error(f"Error in LLM analysis: {str(e)}")
         return {
             "incorrect_words": [],
             "auxiliary_words": ["ね", "よ", "な", "わ", "さ"],
@@ -214,14 +204,10 @@ async def get_expected_phonemes(text: str) -> List[str]:
 
 async def simulate_phoneme_analysis(audio_path: str, original_text: str, transcription: str) -> List[Dict[str, str]]:
     """Simulate phoneme analysis based on transcription and original text with improved phonetic awareness."""
-    logger.info(f"Enhanced phoneme analysis for original: '{original_text}', transcription: '{transcription}'")
     
     # Chuyển văn bản gốc và transcription về hiragana
     orig_hira = await to_hiragana(original_text)
     trans_hira = await to_hiragana(transcription)
-    
-    logger.info(f"Original hiragana: '{orig_hira}'")
-    logger.info(f"Transcription hiragana: '{trans_hira}'")
     
     phoneme_errors = []
     
@@ -442,7 +428,6 @@ async def generate_personalized_feedback(words: List[Dict],
 
 async def compare_words(original: str, transcription: str) -> List[Dict]:
     """Basic word comparison between original and transcribed text."""
-    logger.info(f"Basic comparison between original: '{original}' and transcription: '{transcription}'")
     
     orig_words = await tokenize_japanese(original)
     trans_words = await tokenize_japanese(transcription)
@@ -454,9 +439,6 @@ async def compare_words(original: str, transcription: str) -> List[Dict]:
     trans_hiragana = {}
     for word in trans_words:
         trans_hiragana[word] = await to_hiragana(word)
-    
-    logger.info(f"Original words: {orig_words}")
-    logger.info(f"Transcription words: {trans_words}")
     
     result_words = []
     
@@ -479,8 +461,6 @@ async def compare_words(original: str, transcription: str) -> List[Dict]:
 
 async def compare_words_enhanced(original: str, transcription: str) -> tuple:
     """Enhanced word comparison using hiragana normalization."""
-    logger.info(f"Enhanced comparison between original: '{original}' and transcription: '{transcription}'")
-    
     orig_words = await tokenize_japanese(original)
     trans_words = await tokenize_japanese(transcription)
     
@@ -491,9 +471,6 @@ async def compare_words_enhanced(original: str, transcription: str) -> tuple:
     trans_hiragana = {}
     for word in trans_words:
         trans_hiragana[word] = await to_hiragana(word)
-    
-    logger.info(f"Original words with hiragana: {orig_hiragana}")
-    logger.info(f"Transcription words with hiragana: {trans_hiragana}")
     
     llm_analysis = await analyze_with_llm(original, transcription)
     auxiliary_words = set(llm_analysis.get("auxiliary_words", []))
@@ -583,13 +560,10 @@ async def compare_words_enhanced(original: str, transcription: str) -> tuple:
 async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
     """Analyze audio features and return basic analysis results with improved scoring."""
     try:
-        # Phân tích pitch với Librosa
-        logger.info("Analyzing pitch...")
         
         # Check audio energy first to validate audio quality
         audio_rms = np.sqrt(np.mean(user_y**2))
         audio_energy = np.sum(user_y**2)
-        logger.info(f"Audio energy check: RMS={audio_rms:.6f}, total energy={audio_energy:.6f}")
         
         # Initialize default values
         intonation_score = 0
@@ -600,7 +574,6 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
         
         # Check if audio has enough energy to analyze
         if audio_rms < 0.01:
-            logger.warning(f"Audio energy too low for pitch analysis: RMS={audio_rms:.6f}")
             intonation = "Không thể phân tích ngữ điệu (âm thanh quá yếu)"
         else:
             # Extract pitch values from audio using librosa
@@ -611,7 +584,6 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
             if len(pitch_values) > 0:
                 pitch_mean = np.mean(pitch_values)
                 pitch_std = np.std(pitch_values)
-                logger.info(f"Extracted {len(pitch_values)} pitch points, mean={pitch_mean:.2f}Hz, std={pitch_std:.2f}Hz")
                 
                 # Analyze pitch contour for more detailed intonation information
                 user_pitch_contour = None
@@ -632,11 +604,9 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
                         valid_indices = ~np.isnan(user_f0) & voiced_flag
                         if np.any(valid_indices):
                             user_pitch_contour = user_f0[valid_indices]
-                            logger.info(f"User pitch contour extracted: {len(user_pitch_contour)} points")
                             
                             # Only continue if we have enough pitch points
                             if len(user_pitch_contour) < 5:
-                                logger.warning(f"Too few pitch points detected: {len(user_pitch_contour)}")
                                 user_pitch_contour = None
                         else:
                             logger.warning("No valid pitch points detected in audio")
@@ -660,15 +630,12 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
                             # Log sample pitch statistics
                             sample_pitch_mean = np.mean(sample_pitch_contour) if len(sample_pitch_contour) > 0 else 0
                             sample_pitch_std = np.std(sample_pitch_contour) if len(sample_pitch_contour) > 0 else 0
-                            logger.info(f"Sample pitch contour extracted: {len(sample_pitch_contour)} points, mean={sample_pitch_mean:.2f}Hz, std={sample_pitch_std:.2f}Hz")
                 except Exception as e:
                     logger.error(f"Error extracting pitch contours: {str(e)}")
                     
                 # Calculate intonation score based on comparison with sample or sensible defaults
                 if (sample_pitch_contour is not None and len(sample_pitch_contour) > 10 and 
                     user_pitch_contour is not None and len(user_pitch_contour) > 10):
-                    logger.info("Using sample comparison for intonation analysis")
-                    
                     # Calculate sample statistics
                     sample_pitch_mean = np.mean(sample_pitch_contour)
                     sample_pitch_std = np.std(sample_pitch_contour)
@@ -698,25 +665,15 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
                         
                         # Use the appropriate pitch mean for display
                         pitch_mean = user_pitch_mean
-                        
-                        # Log detailed comparison
-                        logger.info(f"Intonation comparison - Mean: user={user_pitch_mean:.2f}Hz vs sample={sample_pitch_mean:.2f}Hz, score={mean_score}")
-                        logger.info(f"Intonation comparison - Std: user={user_pitch_std:.2f}Hz vs sample={sample_pitch_std:.2f}Hz, score={std_score}")
-                        logger.info(f"Intonation comparison - Range: user={user_pitch_range:.2f}Hz vs sample={sample_pitch_range:.2f}Hz, score={range_score}")
-                        logger.info(f"Final intonation score (sample-based): {intonation_score}")
                     else:
-                        logger.warning(f"User pitch outside human voice range: {user_pitch_mean:.2f}Hz")
                         intonation_score = 0
                         intonation = "Không thể phân tích ngữ điệu (cao độ không hợp lệ)"
                 else:
-                    logger.info("Using default ranges for intonation analysis (no sample or extraction failed)")
                     # Check if pitch_mean is realistic - should be between 50-500Hz for human voice
                     if pitch_mean < 50:
-                        logger.warning(f"Extremely low pitch detected: {pitch_mean:.2f}Hz, likely a recording issue")
                         intonation_score = 0
                         intonation = "Không thể phân tích ngữ điệu (cao độ quá thấp)"
                     elif pitch_mean > 500:
-                        logger.warning(f"Extremely high pitch detected: {pitch_mean:.2f}Hz, likely a recording issue")
                         intonation_score = 0
                         intonation = "Không thể phân tích ngữ điệu (cao độ quá cao)"
                     # For normal human voice ranges (adjusted to be more lenient)
@@ -738,7 +695,6 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
                             # Too high
                             intonation_score = int(max(10, 50 - (pitch_mean - 400) / 10))
             else:
-                logger.warning("No pitch values extracted from audio")
                 intonation_score = 0
                 intonation = "Không thể phân tích ngữ điệu (không phát hiện cao độ)"
         
@@ -756,14 +712,11 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
             else:
                 intonation = "Cần điều chỉnh cao độ"
         
-        logger.info(f"Pitch analysis: mean={pitch_mean:.2f}Hz, score={intonation_score}, result='{intonation}'")
-        
         # Add pitch contour data for visualization
         user_pitch_data = user_pitch_contour.tolist() if user_pitch_contour is not None and len(user_pitch_contour) > 0 else []
         sample_pitch_data = sample_pitch_contour.tolist() if sample_pitch_contour is not None and len(sample_pitch_contour) > 0 else []
 
         # Phân tích formant với Parselmouth
-        logger.info("Analyzing formants...")
         try:
             snd = parselmouth.Sound(np.array(user_y), sr)
             formants = snd.to_formant_burg()
@@ -780,16 +733,12 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
                     sample_f1_values = [sample_formants.get_value_at_time(1, t) for t in sample_formants.ts() 
                                        if not np.isnan(sample_formants.get_value_at_time(1, t))]
                     sample_f1_mean = np.mean(sample_f1_values) if sample_f1_values else None
-                    logger.info(f"Sample F1 mean: {sample_f1_mean:.2f}Hz")
                 except Exception as e:
-                    logger.error(f"Error analyzing sample formants: {str(e)}")
                     sample_f1_mean = None
                     sample_f1_values = []
             
             # Calculate clarity score based on sample if available
             if sample_f1_mean is not None and sample_f1_mean > 0:
-                logger.info(f"Using sample comparison for clarity analysis: user F1={f1_mean:.2f}Hz, sample F1={sample_f1_mean:.2f}Hz")
-                
                 # Calculate the difference ratio between user and sample F1
                 f1_diff_ratio = min(1.0, abs(f1_mean - sample_f1_mean) / max(sample_f1_mean, 1))
                 
@@ -801,9 +750,6 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
                     # Even with poor match, give minimum baseline score
                     clarity_score = max(30, clarity_score)
             else:
-                # Fallback to original method when no sample is available
-                logger.info(f"Using default ranges for clarity analysis: F1={f1_mean:.2f}Hz")
-                
                 # Use typical optimal ranges for Japanese vowels
                 # Optimal range for F1 in Japanese is ~450-650Hz with ideal at 550Hz
                 if 450 <= f1_mean <= 650:
@@ -831,7 +777,6 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
             clarity_score = max(0, min(100, clarity_score))
             
         except Exception as e:
-            logger.error(f"Error in formant analysis: {str(e)}")
             f1_mean = 500
             clarity_score = 50
             f1_values = []
@@ -853,29 +798,22 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
             else:
                 clarity = "Cần cải thiện độ rõ khi phát âm"
         
-        logger.info(f"Formant analysis: F1 mean={f1_mean:.2f}, score={clarity_score}, status='{clarity}'")
-
         # Phân tích nhịp điệu (REMOVED)
-        logger.info("Rhythm analysis has been removed")
         rhythm_score = 0
         rhythm = "Không áp dụng"
         onsets = []
         expected_syllables = 0
 
         # So sánh văn bản
-        logger.info("Comparing text...")
         try:
             # First check if we have valid transcription text
             if not transcription or transcription.strip() == "":
-                logger.warning("Empty transcription received, setting text score to 0")
                 text_score = 0
                 has_text_match = False
             else:
                 # Clean texts for comparison
                 transcription_clean = await clean_text(transcription)
                 original_clean = await clean_text(sentence)
-                
-                logger.info(f"Comparing cleaned texts: '{original_clean}' vs '{transcription_clean}'")
                 
                 if len(original_clean) > 0 and len(transcription_clean) > 0:
                     # Calculate similarity using character-by-character comparison
@@ -895,20 +833,16 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
                         text_score = 0
                         has_text_match = False
                     
-                    logger.info(f"Text similarity analysis: matches={matches}/{max_length}, length_diff={length_diff}, score={text_score}%")
                 else:
-                    logger.warning("One or both cleaned texts are empty")
                     text_score = 0
                     has_text_match = False
                 
         except Exception as e:
-            logger.error(f"Error comparing text: {str(e)}")
             text_score = 0
             has_text_match = False
         
         # Reset intonation and clarity scores if there's no text match
         if not has_text_match:
-            logger.warning("No text match detected, resetting intonation and clarity scores to 0")
             intonation_score = 0
             intonation = "Không thể phân tích ngữ điệu (không khớp văn bản)"
             clarity_score = 0
@@ -922,9 +856,7 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
         try:
             # If text score is 0 (no match), the overall score should be zero
             if text_score == 0:
-                logger.warning("Text score is 0, setting overall score to 0")
                 score = 0
-                logger.info("Final score (no text match): 0")
             else:
                 # Regular score calculation when there's some text match
                 # Calculate the final score based on the component scores - without rhythm
@@ -941,8 +873,6 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
                 # Ensure score is within valid range
                 score = max(0, min(100, score))
                 
-                logger.info(f"Final score: {score} (text={text_score}, intonation={intonation_score}, clarity={clarity_score})")
-            
             # Generate appropriate feedback based on score
             if score == 0:
                 feedback = "Không thể đánh giá - không nhận diện được văn bản khớp với câu mẫu."
@@ -962,7 +892,6 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
                 feedback = "Phát âm xuất sắc!"
             
         except Exception as e:
-            logger.error(f"Error calculating score: {str(e)}")
             score = 0
             feedback = "Không thể tính điểm - hãy thử lại."
 
@@ -998,7 +927,6 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
         }
 
     except Exception as e:
-        logger.error(f"Error in formant analysis: {str(e)}")
         f1_mean = 500
         clarity_score = 50
         f1_values = []
@@ -1020,29 +948,22 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
             else:
                 clarity = "Cần cải thiện độ rõ khi phát âm"
         
-        logger.info(f"Formant analysis: F1 mean={f1_mean:.2f}, score={clarity_score}, status='{clarity}'")
-
         # Phân tích nhịp điệu (REMOVED)
-        logger.info("Rhythm analysis has been removed")
         rhythm_score = 0
         rhythm = "Không áp dụng"
         onsets = []
         expected_syllables = 0
 
         # So sánh văn bản
-        logger.info("Comparing text...")
         try:
             # First check if we have valid transcription text
             if not transcription or transcription.strip() == "":
-                logger.warning("Empty transcription received, setting text score to 0")
                 text_score = 0
                 has_text_match = False
             else:
                 # Clean texts for comparison
                 transcription_clean = await clean_text(transcription)
                 original_clean = await clean_text(sentence)
-                
-                logger.info(f"Comparing cleaned texts: '{original_clean}' vs '{transcription_clean}'")
                 
                 if len(original_clean) > 0 and len(transcription_clean) > 0:
                     # Calculate similarity using character-by-character comparison
@@ -1062,20 +983,16 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
                         text_score = 0
                         has_text_match = False
                     
-                    logger.info(f"Text similarity analysis: matches={matches}/{max_length}, length_diff={length_diff}, score={text_score}%")
                 else:
-                    logger.warning("One or both cleaned texts are empty")
                     text_score = 0
                     has_text_match = False
                 
         except Exception as e:
-            logger.error(f"Error comparing text: {str(e)}")
             text_score = 0
             has_text_match = False
         
         # Reset intonation and clarity scores if there's no text match
         if not has_text_match:
-            logger.warning("No text match detected, resetting intonation and clarity scores to 0")
             intonation_score = 0
             intonation = "Không thể phân tích ngữ điệu (không khớp văn bản)"
             clarity_score = 0
@@ -1089,9 +1006,7 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
         try:
             # If text score is 0 (no match), the overall score should be zero
             if text_score == 0:
-                logger.warning("Text score is 0, setting overall score to 0")
                 score = 0
-                logger.info("Final score (no text match): 0")
             else:
                 # Regular score calculation when there's some text match
                 # Calculate the final score based on the component scores - without rhythm
@@ -1108,8 +1023,6 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
                 # Ensure score is within valid range
                 score = max(0, min(100, score))
                 
-                logger.info(f"Final score: {score} (text={text_score}, intonation={intonation_score}, clarity={clarity_score})")
-            
             # Generate appropriate feedback based on score
             if score == 0:
                 feedback = "Không thể đánh giá - không nhận diện được văn bản khớp với câu mẫu."
@@ -1129,7 +1042,6 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
                 feedback = "Phát âm xuất sắc!"
             
         except Exception as e:
-            logger.error(f"Error calculating score: {str(e)}")
             score = 0
             feedback = "Không thể tính điểm - hãy thử lại."
 
@@ -1169,8 +1081,6 @@ async def analyze_audio_enhanced(user_audio: UploadFile,
                             reference_text: str = Form(None)):
     """Enhanced audio analysis with LLM, hiragana normalization, and phoneme analysis."""
     
-    logger.info(f"Enhanced analysis request with reference text: '{reference_text}', sample_id: '{sample_id}'")
-    
     user_audio_path = None
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as user_temp:
@@ -1179,24 +1089,18 @@ async def analyze_audio_enhanced(user_audio: UploadFile,
             user_audio_path = user_temp.name
             user_audio.file.seek(0)
             
-        logger.info(f"Created temporary audio file: {user_audio_path}")
-        
         sample_audio_path = None
         if sample_id:
             sample_path = f"../nihongo-it-backend/src/main/resources/samples/{sample_id}.wav"
             if os.path.exists(sample_path):
-                logger.info(f"Found sample audio: {sample_path}")
                 sample_audio_path = sample_path
             else:
-                logger.warning(f"Sample audio not found: {sample_path}")
                 sample_audio_path = None
                 
         if not reference_text:
-            logger.warning("No reference text provided, will use empty string")
             reference_text = ""
             
         try:
-            logger.info(f"Trying to transcribe audio with Whisper API from: {user_audio_path}")
             with open(user_audio_path, "rb") as audio_file:
                 response = client.audio.transcriptions.create(
                     model="whisper-1",
@@ -1204,27 +1108,20 @@ async def analyze_audio_enhanced(user_audio: UploadFile,
                     language="ja"
                 )
                 transcription = response.text
-                logger.info(f"Transcription successful: {transcription}")
         except Exception as e:
-            logger.error(f"Error during Whisper transcription: {str(e)}")
             transcription = reference_text
-            logger.info(f"Using fallback transcription: {transcription}")
 
-        logger.info("Loading user audio...")
+
         try:
             user_y, sr = librosa.load(user_audio_path, sr=16000)
-            logger.info(f"Loaded audio with sr={sr}, length={len(user_y)}")
         except Exception as e:
-            logger.error(f"Error loading audio with librosa: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Cannot read audio file: {str(e)}")
             
         sample_y = None
         if sample_audio_path and os.path.exists(sample_audio_path):
             try:
                 sample_y, _ = librosa.load(sample_audio_path, sr=sr)
-                logger.info(f"Loaded sample audio with length={len(sample_y)}")
             except Exception as e:
-                logger.error(f"Error loading sample audio: {str(e)}")
                 sample_y = None
                 
         result = await analyze_audio_features(user_y, sr, sample_y, reference_text, transcription)
@@ -1235,7 +1132,6 @@ async def analyze_audio_enhanced(user_audio: UploadFile,
             hiragana_map[word] = await to_hiragana(word)
         
         phoneme_errors = await simulate_phoneme_analysis(user_audio_path, reference_text, transcription)
-        logger.info(f"Found {len(phoneme_errors)} phoneme errors")
         
         llm_result = await analyze_with_llm(reference_text, transcription, phoneme_errors)
         
@@ -1254,9 +1150,6 @@ async def analyze_audio_enhanced(user_audio: UploadFile,
             
         return result
     except Exception as e:
-        logger.error(f"Error in enhanced analysis: {str(e)}")
-        logger.error(traceback.format_exc())
-        
         if user_audio_path and os.path.exists(user_audio_path):
             try:
                 os.unlink(user_audio_path)
@@ -1277,13 +1170,9 @@ async def analyze_audio(user_audio: UploadFile, sample_audio: UploadFile, senten
             size = len(user_audio_content)
             user_audio.file.seek(0)
         
-        logger.info(f"Received audio file: {filename}, content_type: {content_type}, size: {size}")
-        
         file_extension = os.path.splitext(filename)[1].lower()
         if not file_extension:
             file_extension = ".webm"
-        
-        logger.info(f"File extension: {file_extension}")
         
         suffix = file_extension if file_extension in ['.mp3', '.wav', '.webm'] else '.webm'
         
@@ -1291,10 +1180,8 @@ async def analyze_audio(user_audio: UploadFile, sample_audio: UploadFile, senten
             user_content = await user_audio.read()
             
             if not user_content:
-                logger.error("Empty audio file")
                 raise HTTPException(status_code=400, detail="File âm thanh rỗng")
                 
-            logger.info(f"Audio content size: {len(user_content)} bytes")
             user_temp.write(user_content)
             user_audio_path = user_temp.name
 
@@ -1303,7 +1190,6 @@ async def analyze_audio(user_audio: UploadFile, sample_audio: UploadFile, senten
             user_wav_path = user_audio_path.replace(suffix, '.wav')
             try:
                 import subprocess
-                logger.info(f"Converting {user_audio_path} to {user_wav_path}")
                 
                 process = subprocess.run([
                     "ffmpeg", "-y", "-i", user_audio_path, 
@@ -1311,21 +1197,8 @@ async def analyze_audio(user_audio: UploadFile, sample_audio: UploadFile, senten
                     "-v", "info", user_wav_path
                 ], check=True, capture_output=True, text=True)
                 
-                logger.info(f"Conversion output: {process.stdout}")
-                if process.stderr:
-                    logger.info(f"Conversion errors: {process.stderr}")
-                    
-                if os.path.exists(user_wav_path):
-                    logger.info(f"Converted audio to WAV: {user_wav_path}, size: {os.path.getsize(user_wav_path)} bytes")
-                else:
-                    logger.error(f"Conversion failed, WAV file missing")
-                    raise Exception("Audio conversion failed")
-                    
             except Exception as e:
-                logger.error(f"Error converting audio: {str(e)}")
                 user_wav_path = user_audio_path
-        else:
-            logger.info(f"Using WAV file directly, no conversion needed: {user_wav_path}")
 
         sample_audio_path = ""
         if sample_audio and sample_audio.filename:
@@ -1338,13 +1211,10 @@ async def analyze_audio(user_audio: UploadFile, sample_audio: UploadFile, senten
                     sample_temp.write(sample_content)
                     sample_audio_path = sample_temp.name
                 
-                logger.info(f"Sample audio saved to: {sample_audio_path}")
             except Exception as e:
-                logger.error(f"Error processing sample audio: {str(e)}")
                 sample_audio_path = ""
 
         try:
-            logger.info(f"Trying to transcribe audio with Whisper API from: {user_wav_path}")
             with open(user_wav_path, "rb") as audio_file:
                 response = client.audio.transcriptions.create(
                     model="whisper-1",
@@ -1352,21 +1222,14 @@ async def analyze_audio(user_audio: UploadFile, sample_audio: UploadFile, senten
                     language="ja"
                 )
                 transcription = response.text
-                logger.info(f"Transcription successful: {transcription}")
         except Exception as e:
-            logger.error(f"Error during Whisper transcription: {str(e)}")
             transcription = sentence
-            logger.info(f"Using fallback transcription: {transcription}")
 
-        words = await compare_words(sentence, transcription)
-        logger.info(f"Word comparison completed with {len(words)} words analyzed")
+        await compare_words(sentence, transcription)
 
-        logger.info("Tải âm thanh người dùng...")
         try:
             user_y, sr = librosa.load(user_wav_path, sr=16000)
-            logger.info(f"Loaded audio with sr={sr}, length={len(user_y)}")
         except Exception as e:
-            logger.error(f"Error loading audio with librosa: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Không thể đọc file âm thanh: {str(e)}")
 
         result = await analyze_audio_features(user_y, sr, None, sentence, transcription)
@@ -1374,11 +1237,9 @@ async def analyze_audio(user_audio: UploadFile, sample_audio: UploadFile, senten
         if user_wav_path and os.path.exists(user_wav_path):
             os.unlink(user_wav_path)
 
-        logger.info(f"Returning analysis result with score: {result.get('score', 'unknown')}")
         return result
 
     except Exception as e:
-        logger.error(f"Lỗi phân tích âm thanh: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Lỗi phân tích âm thanh: {str(e)}")
 
 @app.post("/analyze", response_class=JSONResponse)
@@ -1388,15 +1249,9 @@ async def analyze_endpoint(
     sample: UploadFile = File(None)
 ):
     try:
-        logger.info(f"Received basic analyze request with sentence: {sentence}")
-        logger.info(f"Audio file: {audio.filename if audio else 'None'}, Sample file: {sample.filename if sample else 'None'}")
-        
         result = await analyze_audio(audio, sample, sentence)
-        logger.info(f"Basic analysis completed, score: {result.get('score', 'unknown')}")
         return JSONResponse(content=result)
     except Exception as e:
-        logger.error(f"Error in basic analyze endpoint: {str(e)}")
-        logger.error(traceback.format_exc())
         if DEBUG_MODE:
             return JSONResponse(
                 status_code=500,
@@ -1418,9 +1273,6 @@ async def analyze_enhanced_endpoint(
     sample_id: str = Form(None)
 ):
     try:
-        logger.info(f"Received enhanced analyze request with reference_text: {reference_text}, sample_id: {sample_id}")
-        logger.info(f"Audio file: {file.filename if file else 'None'}")
-        
         content_type = file.content_type or ""
         if not content_type.startswith("audio/"):
             logger.warning(f"Suspicious content type: {content_type}, filename: {file.filename}")
@@ -1428,8 +1280,6 @@ async def analyze_enhanced_endpoint(
         try:
             file_size = len(await file.read())
             await file.seek(0)
-            logger.info(f"File size: {file_size} bytes")
-            
             if file_size < 1000:
                 return JSONResponse(
                     status_code=400,
@@ -1439,17 +1289,13 @@ async def analyze_enhanced_endpoint(
             logger.error(f"Error checking file size: {str(e)}")
         
         result = await analyze_audio_enhanced(file, sample_id, reference_text)
-        logger.info(f"Enhanced analysis completed, score: {result.get('score', 'unknown')}")
         return JSONResponse(content=result)
     except HTTPException as e:
-        logger.error(f"HTTP exception in enhanced analyze endpoint: {str(e)}")
         return JSONResponse(
             status_code=e.status_code,
             content={"detail": str(e.detail)}
         )
     except Exception as e:
-        logger.error(f"Error in enhanced analyze endpoint: {str(e)}")
-        logger.error(traceback.format_exc())
         if DEBUG_MODE:
             return JSONResponse(
                 status_code=500,
@@ -1466,7 +1312,6 @@ async def analyze_enhanced_endpoint(
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    logger.error(f"Validation error: {str(exc)}")
     return JSONResponse(
         status_code=422,
         content={"detail": "Validation error", "errors": exc.errors()},
@@ -1474,9 +1319,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Unexpected error: {str(exc)}")
-    logger.error(traceback.format_exc())
-    
     if DEBUG_MODE:
         return JSONResponse(
             status_code=500,
@@ -1562,12 +1404,10 @@ async def get_sample_audio(sample_id: str, format: str = "wav"):
     sample_path = f"../speech-java/src/main/resources/samples/{sample_id}.{format}"
     
     if not os.path.exists(sample_path):
-        logger.error(f"Sample audio file not found: {sample_path}")
         raise HTTPException(status_code=404, detail=f"Sample audio file not found: {sample_id}")
     
     content_type = "audio/wav" if format == "wav" else "audio/mpeg"
     
-    logger.info(f"Serving sample audio file: {sample_path}")
     return FileResponse(
         path=sample_path,
         media_type=content_type,
@@ -1581,7 +1421,6 @@ async def analyze_direct_sample(sample_id: str):
     sample_path = f"../speech-java/src/main/resources/samples/{sample_id}.wav"
     
     if not os.path.exists(sample_path):
-        logger.error(f"Sample file not found: {sample_path}")
         raise HTTPException(status_code=404, detail=f"Sample file not found: {sample_id}")
     
     sentences = {
@@ -1593,10 +1432,7 @@ async def analyze_direct_sample(sample_id: str):
     
     sentence = sentences.get(sample_id)
     if not sentence:
-        logger.error(f"No sentence mapping for sample ID: {sample_id}")
         raise HTTPException(status_code=404, detail=f"No sentence mapping for sample ID: {sample_id}")
-    
-    logger.info(f"Analyzing sample directly: {sample_path}")
     
     try:
         class MockUploadFile:
@@ -1620,8 +1456,6 @@ async def analyze_direct_sample(sample_id: str):
         return result
         
     except Exception as e:
-        logger.error(f"Error in direct analysis: {str(e)}")
-        logger.error(traceback.format_exc())
         if DEBUG_MODE:
             raise HTTPException(status_code=500, detail={
                 "message": f"Analysis error: {str(e)}",
@@ -1667,7 +1501,6 @@ async def health_check():
             }
         )
     except Exception as e:
-        logger.error(f"Health check failed: {str(e)}")
         return JSONResponse(
             status_code=500,
             content={"status": "unhealthy", "detail": str(e)}

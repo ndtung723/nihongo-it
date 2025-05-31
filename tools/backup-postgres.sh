@@ -39,12 +39,8 @@ if [ $? -eq 0 ] && [ -s "$BACKUP_FILE" ]; then
     echo -e "${GREEN}Backup completed successfully!${NC}"
     echo -e "${BLUE}Backup file:${NC} $BACKUP_FILE"
     
-    # Compress the backup file
-    gzip "$BACKUP_FILE"
-    echo -e "${GREEN}Backup compressed:${NC} $BACKUP_FILE.gz"
-    
     # Remove backups older than 30 days
-    find "$BACKUP_DIR" -name "nihongo_it_backup_*.sql.gz" -type f -mtime +30 -exec rm {} \;
+    find "$BACKUP_DIR" -name "nihongo_it_backup_*.sql" -type f -mtime +30 -exec rm {} \;
     echo -e "${YELLOW}Removed backups older than 30 days${NC}"
 else
     echo -e "${RED}Backup failed or created empty file${NC}"

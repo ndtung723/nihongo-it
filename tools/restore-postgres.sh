@@ -19,7 +19,7 @@ show_help() {
     echo -e "  $0 <backup_file>"
     echo -e ""
     echo -e "${BLUE}Example:${NC}"
-    echo -e "  $0 db-backups/nihongo_it_backup_20230520_120000.sql.gz"
+    echo -e "  $0 db-backups/nihongo_it_backup_20230520_120000.sql"
     echo -e ""
     echo -e "${YELLOW}Note: This will overwrite the current database!${NC}"
 }
