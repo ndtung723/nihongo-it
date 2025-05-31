@@ -58,49 +58,6 @@ CLEAN_REGEX = re.compile(f'[{re.escape(punctuation + JAPANESE_PUNCTUATION)}]|[^\
 # Flag for Kaldi availability (will be simulated since not installed)
 KALDI_AVAILABLE = False
 
-async def count_syllables(text: str) -> int:
-    """Đếm số âm tiết dựa trên hiragana."""
-    if not text or not text.strip():
-        return 0
-        
-    # Loại bỏ dấu câu
-    text = re.sub(r'[、。！？,.!?]', '', text)
-    
-    try:
-        # Chuyển sang hiragana
-        hira_text = await to_hiragana(text)
-        
-        # Quy tắc đếm âm tiết trong tiếng Nhật:
-        # 1. Mỗi kana (hiragana/katakana) là một âm tiết
-        # 2. Trừ các kí tự đặc biệt (ゃ, ゅ, ょ, っ) không được tính riêng
-        # 3. Các chữ kanji được tính dựa trên cách đọc (đã được chuyển sang hiragana)
-        special_chars = {'ゃ', 'ゅ', 'ょ', 'ッ', 'っ', 'ァ', 'ィ', 'ゥ', 'ェ', 'ォ', 'ぁ', 'ぃ', 'ぅ', 'ぇ', 'ぉ'}
-        
-        # Đếm số âm tiết
-        syllables = 0
-        skip_next = False
-        for i, char in enumerate(hira_text):
-            if skip_next:
-                skip_next = False
-                continue
-                
-            if char in special_chars:
-                continue
-                
-            # Kiểm tra nếu kí tự hiện tại là n (ん) cuối câu hoặc trước phụ âm (không phải y, w)
-            if char == 'ん' and i < len(hira_text) - 1:
-                next_char = hira_text[i+1]
-                # ん không phải một âm tiết riêng nếu nó đứng trước các phụ âm thuộc nhóm n, m, p, b (na, ma, pa, ba...)
-                if next_char in {'な', 'に', 'ぬ', 'ね', 'の', 'ま', 'み', 'む', 'め', 'も', 'ぱ', 'ぴ', 'ぷ', 'ぺ', 'ぽ', 'ば', 'び', 'ぶ', 'べ', 'ぼ'}:
-                    skip_next = True
-                    
-            syllables += 1
-            
-        return max(1, syllables)  # Ensure at least 1 syllable
-    except Exception as e:
-        # Fallback: rough estimate based on character count
-        return max(1, len(text.strip()) // 3)
-
 async def to_hiragana(text: str) -> str:
     """Convert text to hiragana for normalization."""
     try:
@@ -128,37 +85,17 @@ async def tokenize_japanese(text: str) -> List[str]:
     
     return words
 
-async def analyze_with_llm(original: str, transcription: str, phoneme_errors: List[Dict[str, str]] = None) -> Dict[str, Any]:
-    """Use LLM to analyze semantic differences and identify auxiliary words with phoneme error details."""
-    if not OPENAI_API_KEY:
-        return {
-            "incorrect_words": [],
-            "auxiliary_words": ["ね", "よ", "な", "わ", "さ"],  # Common auxiliary particles
-            "personalized_feedback": "Cần cải thiện phát âm của một số từ. Hãy luyện tập thêm nhé!"
-        }
-    
+async def analyze_with_llm(original: str, transcription: str) -> Dict[str, Any]:
     try:
-        # Prepare phoneme error information for LLM
-        phoneme_info = ""
-        if phoneme_errors and len(phoneme_errors) > 0:
-            phoneme_info = "Danh sách lỗi phoneme:\n"
-            for error in phoneme_errors:
-                if "error_type" in error and "phonetic_error" in error:
-                    phoneme_info += f"- {error['phonetic_error']} (loại: {error['error_type']})\n"
-                else:
-                    phoneme_info += f"- Vị trí {error.get('index', '?')}: Mong muốn '{error.get('expected', '?')}', thực tế '{error.get('actual', '?')}'\n"
-
         prompt = f"""
 Analyze these two Japanese sentences:
 - Original: '{original}'
 - Transcription: '{transcription}'
 
-{phoneme_info}
-
 Identify:
 1. Words that are incorrect or different
 2. Auxiliary words/particles (like ね, よ) that don't affect the core meaning
-3. Brief pronunciation suggestions in Vietnamese, incorporating phoneme error details when relevant
+3. Brief pronunciation suggestions in Vietnamese
 
 Return ONLY a JSON object with this structure:
 {{
@@ -171,7 +108,7 @@ Return ONLY a JSON object with this structure:
 """
         # Call OpenAI API
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",  # Can use gpt-4 for better results if available
+            model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3,
             max_tokens=500
@@ -193,238 +130,39 @@ Return ONLY a JSON object with this structure:
             "personalized_feedback": "Cần cải thiện phát âm. Hãy thử lại nhé!"
         }
 
-async def get_expected_phonemes(text: str) -> List[str]:
-    """Get expected phonemes from text (simulated using hiragana)."""
-    result = kakasi.convert(text)
-    phonemes = []
-    for item in result:
-        hira = item['hira']
-        phonemes.extend(list(hira))  # Each hiragana character is treated as a phoneme (simplified)
-    return phonemes
-
-async def simulate_phoneme_analysis(audio_path: str, original_text: str, transcription: str) -> List[Dict[str, str]]:
-    """Simulate phoneme analysis based on transcription and original text with improved phonetic awareness."""
-    
-    # Chuyển văn bản gốc và transcription về hiragana
-    orig_hira = await to_hiragana(original_text)
-    trans_hira = await to_hiragana(transcription)
-    
-    phoneme_errors = []
-    
-    # Thực hiện so sánh theo chuỗi phoneme với các đặc điểm ngữ âm
-    # Sử dụng giải thuật Longest Common Subsequence (LCS) để căn chỉnh
-    m, n = len(orig_hira), len(trans_hira)
-    
-    # Tạo ma trận LCS
-    lcs = [[0 for _ in range(n+1)] for _ in range(m+1)]
-    for i in range(1, m+1):
-        for j in range(1, n+1):
-            if orig_hira[i-1] == trans_hira[j-1]:
-                lcs[i][j] = lcs[i-1][j-1] + 1
-            else:
-                lcs[i][j] = max(lcs[i-1][j], lcs[i][j-1])
-    
-    # Lấy chuỗi căn chỉnh từ ma trận LCS
-    i, j = m, n
-    alignment = []
-    
-    while i > 0 and j > 0:
-        if orig_hira[i-1] == trans_hira[j-1]:
-            alignment.append((i-1, j-1, orig_hira[i-1], trans_hira[j-1], True))  # Match
-            i -= 1
-            j -= 1
-        elif lcs[i-1][j] >= lcs[i][j-1]:
-            alignment.append((i-1, None, orig_hira[i-1], None, False))  # Deletion
-            i -= 1
-        else:
-            alignment.append((None, j-1, None, trans_hira[j-1], False))  # Insertion
-            j -= 1
-            
-    # Xử lý phần đầu còn lại
-    while i > 0:
-        alignment.append((i-1, None, orig_hira[i-1], None, False))
-        i -= 1
-        
-    while j > 0:
-        alignment.append((None, j-1, None, trans_hira[j-1], False))
-        j -= 1
-        
-    # Đảo ngược alignment để có thứ tự từ đầu đến cuối
-    alignment.reverse()
-    
-    # Tạo danh sách các lỗi phoneme
-    for idx, (orig_idx, trans_idx, orig_ph, trans_ph, is_match) in enumerate(alignment):
-        if not is_match:
-            # Xác định loại lỗi
-            if orig_ph is None:
-                # Thêm phoneme (trong transcription mà không có trong bản gốc)
-                phoneme_errors.append({
-                    "index": idx,
-                    "expected": "none",
-                    "actual": trans_ph,
-                    "error_type": "addition"
-                })
-            elif trans_ph is None:
-                # Thiếu phoneme (trong bản gốc nhưng không có trong transcription)
-                phoneme_errors.append({
-                    "index": idx,
-                    "expected": orig_ph,
-                    "actual": "missing",
-                    "error_type": "omission"
-                })
-            else:
-                # Thay thế phoneme (khác nhau giữa bản gốc và transcription)
-                phoneme_errors.append({
-                    "index": idx,
-                    "expected": orig_ph,
-                    "actual": trans_ph,
-                    "error_type": "substitution",
-                    # Phân loại cặp nhầm lẫn phoneme dựa trên các đặc điểm ngữ âm
-                    "phonetic_error": categorize_phonetic_error(orig_ph, trans_ph)
-                })
-    
-    return phoneme_errors
-
-def categorize_phonetic_error(expected: str, actual: str) -> str:
-    """Phân loại lỗi phoneme dựa trên đặc điểm ngữ âm."""
-    # Các nhóm phoneme tiếng Nhật dễ nhầm lẫn
-    similar_groups = {
-        "vowel_confusion": [
-            {"a": "あ", "i": "い", "u": "う", "e": "え", "o": "お"},
-        ],
-        "consonant_pairs": [
-            {"k-g": ["か", "が"], "s-z": ["さ", "ざ"], "t-d": ["た", "だ"], "h-b": ["は", "ば"], "h-p": ["は", "ぱ"]},
-        ],
-        "small_ya_yu_yo": [
-            {"ya": "ゃ", "yu": "ゅ", "yo": "ょ"},
-        ],
-        "long_short_vowel": [
-            {"a": "あ", "aa": "ああ"}, {"i": "い", "ii": "いい"}, 
-            {"u": "う", "uu": "うう"}, {"e": "え", "ee": "ええ"}, 
-            {"o": "お", "oo": "おお"},
-        ],
-        "n_confusion": [
-            {"n": "ん"},
-        ],
-        "tsu_confusion": [
-            {"tsu": "つ", "small_tsu": "っ"},
-        ]
-    }
-    
-    # Xác định lỗi dựa trên so sánh phoneme
-    if expected == "し" and actual == "す" or expected == "す" and actual == "し":
-        return "Nhầm lẫn giữa 'shi' và 'su'"
-    elif expected in "しゃしゅしょ" and actual in "しゃしゅしょ" and expected != actual:
-        return f"Nhầm lẫn trong nhóm 'sha/shu/sho': '{expected}' và '{actual}'"
-    elif expected in "ちゃちゅちょ" and actual in "ちゃちゅちょ" and expected != actual:
-        return f"Nhầm lẫn trong nhóm 'cha/chu/cho': '{expected}' và '{actual}'"
-    elif expected in "じゃじゅじょ" and actual in "じゃじゅじょ" and expected != actual:
-        return f"Nhầm lẫn trong nhóm 'ja/ju/jo': '{expected}' và '{actual}'"
-    elif expected == "つ" and actual == "す" or expected == "す" and actual == "つ":
-        return "Nhầm lẫn giữa 'tsu' và 'su'"
-    elif expected == "ふ" and actual == "は" or expected == "は" and actual == "ふ":
-        return "Nhầm lẫn giữa 'fu' và 'ha'"
-    elif expected == "お" and actual == "を" or expected == "を" and actual == "お":
-        return "Nhầm lẫn giữa 'o' và 'wo'"
-    elif expected == "へ" and actual == "え" or expected == "え" and actual == "へ":
-        return "Nhầm lẫn giữa 'he' và 'e'"
-    elif "ゃ" in expected and "ゃ" not in actual:
-        return "Thiếu âm 'ya' nhỏ (ゃ)"
-    elif "ゅ" in expected and "ゅ" not in actual:
-        return "Thiếu âm 'yu' nhỏ (ゅ)"
-    elif "ょ" in expected and "ょ" not in actual:
-        return "Thiếu âm 'yo' nhỏ (ょ)"
-    elif "っ" in expected and "っ" not in actual:
-        return "Thiếu âm 'tsu' nhỏ (っ)"
-    elif "ん" in expected and "ん" not in actual:
-        return "Thiếu âm 'n' (ん)"
-    else:
-        return f"Phát âm sai: Mong muốn '{expected}', đã phát âm '{actual}'"
-
-async def combine_phoneme_errors_with_words(words: List[Dict], 
-                                          phoneme_errors: List[Dict],
-                                          hiragana_map: Dict[str, str]) -> List[Dict]:
-    """Combine phoneme error information with word analysis results."""
-    if not phoneme_errors:
-        return words
-    
-    # Build phoneme to word mapping
-    word_phoneme_map = {}
-    current_pos = 0
-    
-    for word, hira in hiragana_map.items():
-        word_phoneme_map[word] = {
-            "start": current_pos,
-            "end": current_pos + len(hira) - 1,
-            "hiragana": hira
-        }
-        current_pos += len(hira)
-    
-    # Process each phoneme error and associate with words
-    for error in phoneme_errors:
-        idx = error.get("index", -1)
-        if idx < 0:
-            continue
-            
-        # Find which word contains this phoneme position
-        for word in words:
-            word_text = word["text"]
-            if word_text not in word_phoneme_map:
-                continue
-                
-            word_range = word_phoneme_map[word_text]
-            if word_range["start"] <= idx <= word_range["end"]:
-                # This word contains the phoneme error
-                error_details = ""
-                
-                # Get specific error details based on error type
-                if "error_type" in error and "phonetic_error" in error:
-                    error_details = error["phonetic_error"]
-                else:
-                    expected = error.get("expected", "?")
-                    actual = error.get("actual", "?")
-                    if actual == "missing":
-                        error_details = f"Thiếu âm '{expected}'"
-                    elif expected == "none":
-                        error_details = f"Thêm âm thừa '{actual}'"
-                    else:
-                        error_details = f"Phát âm '{expected}' thành '{actual}'"
-                
-                # Enhance suggestion with phoneme error info
-                base_suggestion = word.get("suggestion", "")
-                if base_suggestion:
-                    if error_details not in base_suggestion:  # Avoid duplication
-                        word["suggestion"] = f"{error_details}. {base_suggestion}"
-                else:
-                    word["suggestion"] = f"{error_details}. Hãy luyện tập phát âm '{word_text}' chuẩn hơn."
-                
-                # Mark as incorrect
-                word["isCorrect"] = False
-                break
-    
-    return words
-
 async def generate_personalized_feedback(words: List[Dict], 
                                        sentence: str, 
                                        transcription: str, 
                                        llm_result: Dict) -> str:
     """Generate personalized feedback based on LLM analysis."""
     
-    # If LLM already provided personalized feedback, use it
+    # Always use AI feedback from LLM
     if "personalized_feedback" in llm_result and llm_result["personalized_feedback"]:
         return llm_result["personalized_feedback"]
         
-    # Otherwise, build a simple feedback message
-    incorrect_words = [w["text"] for w in words if not w.get("isCorrect", True)]
-    auxiliary_words = llm_result.get("auxiliary_words", [])
-    
-    if not incorrect_words:
-        return "Phát âm rất tốt! Tiếp tục luyện tập để duy trì khả năng phát âm tốt nhé!"
-    elif len(incorrect_words) == 1:
-        return f"Phát âm của bạn khá tốt. Chỉ cần chú ý cách phát âm từ '{incorrect_words[0]}' là hoàn hảo!"
-    else:
-        words_to_improve = ", ".join([f"'{w}'" for w in incorrect_words[:3]])
-        return f"Hãy tập trung vào cách phát âm các từ: {words_to_improve}. Tiếp tục luyện tập nhé!"
+    # If no AI feedback, call LLM again specifically for feedback
+    try:
+        prompt = f"""
+Phân tích phát âm tiếng Nhật:
+- Câu gốc: '{sentence}'
+- Câu đã nói: '{transcription}'
+
+Hãy đưa ra phản hồi khuyến khích và gợi ý cải thiện bằng tiếng Việt (tối đa 2 câu).
+"""
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+            max_tokens=200
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        # Fallback generic message
+        incorrect_words = [w["text"] for w in words if not w.get("isCorrect", True)]
+        if not incorrect_words:
+            return "Phát âm rất tốt! Tiếp tục luyện tập để duy trì khả năng phát âm tốt nhé!"
+        else:
+            return "Hãy tiếp tục luyện tập để cải thiện phát âm. Bạn đang tiến bộ tốt!"
 
 async def compare_words(original: str, transcription: str) -> List[Dict]:
     """Basic word comparison between original and transcribed text."""
@@ -460,7 +198,7 @@ async def compare_words(original: str, transcription: str) -> List[Dict]:
     return result_words
 
 async def compare_words_enhanced(original: str, transcription: str) -> tuple:
-    """Enhanced word comparison using hiragana normalization."""
+    """Enhanced word comparison using hiragana normalization and LCS algorithm."""
     orig_words = await tokenize_japanese(original)
     trans_words = await tokenize_japanese(transcription)
     
@@ -1077,26 +815,40 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
         }
 
 async def analyze_audio_enhanced(user_audio: UploadFile, 
-                            sample_id: str = Form(None),
-                            reference_text: str = Form(None)):
-    """Enhanced audio analysis with LLM, hiragana normalization, and phoneme analysis."""
+                            reference_text: str = Form(None),
+                            type: str = Form(None)):
+    """Enhanced audio analysis with LLM and hiragana normalization."""
     
     user_audio_path = None
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as user_temp:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as user_temp:
             user_content = await user_audio.read()
             user_temp.write(user_content)
             user_audio_path = user_temp.name
             user_audio.file.seek(0)
             
         sample_audio_path = None
-        if sample_id:
-            sample_path = f"../nihongo-it-backend/src/main/resources/samples/{sample_id}.wav"
-            if os.path.exists(sample_path):
+        if type:
+            # Determine sample path based on type
+            if type == "conversation":
+                sample_path = f"/home/tufng/Desktop/DATN/nihongo-it/services/ai-service/src/main/resources/conversation/{reference_text}.mp3"
+            elif type == "vocabulary":
+                sample_path = f"/home/tufng/Desktop/DATN/nihongo-it/services/ai-service/src/main/resources/vocabulary/{reference_text}.mp3"
+            else:
+                sample_path = None
+            
+            logger.info(f"Type: {type}, Reference text: {reference_text}")
+            logger.info(f"Constructed sample path: {sample_path}")
+           
+            if sample_path and os.path.exists(sample_path):
                 sample_audio_path = sample_path
+                logger.info(f"Sample file found: {sample_audio_path}")
             else:
                 sample_audio_path = None
-                
+                logger.info(f"Sample file NOT found at: {sample_path}")
+        else:
+            logger.info("No type provided, skipping sample audio")
+            
         if not reference_text:
             reference_text = ""
             
@@ -1126,23 +878,12 @@ async def analyze_audio_enhanced(user_audio: UploadFile,
                 
         result = await analyze_audio_features(user_y, sr, sample_y, reference_text, transcription)
             
-        orig_words = await tokenize_japanese(reference_text)
-        hiragana_map = {}
-        for word in orig_words:
-            hiragana_map[word] = await to_hiragana(word)
-        
-        phoneme_errors = await simulate_phoneme_analysis(user_audio_path, reference_text, transcription)
-        
-        llm_result = await analyze_with_llm(reference_text, transcription, phoneme_errors)
-        
-        words, _, _ = await compare_words_enhanced(reference_text, transcription)
-        
-        enhanced_words = await combine_phoneme_errors_with_words(words, phoneme_errors, hiragana_map)
+        words, _, llm_result = await compare_words_enhanced(reference_text, transcription)
         
         personalized_feedback = await generate_personalized_feedback(
-            enhanced_words, reference_text, transcription, llm_result)
+            words, reference_text, transcription, llm_result)
         
-        result["words"] = enhanced_words
+        result["words"] = words
         result["personalizedFeedback"] = personalized_feedback
         
         if user_audio_path and os.path.exists(user_audio_path):
@@ -1158,119 +899,11 @@ async def analyze_audio_enhanced(user_audio: UploadFile,
                 
         raise HTTPException(status_code=500, detail=f"Enhanced analysis error: {str(e)}")
 
-async def analyze_audio(user_audio: UploadFile, sample_audio: UploadFile, sentence: str):
-    try:
-        filename = user_audio.filename or "speech.webm"
-        content_type = user_audio.content_type or "audio/webm"
-        
-        try:
-            size = await user_audio.tell()
-        except (AttributeError, NotImplementedError):
-            user_audio_content = await user_audio.read()
-            size = len(user_audio_content)
-            user_audio.file.seek(0)
-        
-        file_extension = os.path.splitext(filename)[1].lower()
-        if not file_extension:
-            file_extension = ".webm"
-        
-        suffix = file_extension if file_extension in ['.mp3', '.wav', '.webm'] else '.webm'
-        
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as user_temp:
-            user_content = await user_audio.read()
-            
-            if not user_content:
-                raise HTTPException(status_code=400, detail="File âm thanh rỗng")
-                
-            user_temp.write(user_content)
-            user_audio_path = user_temp.name
-
-        user_wav_path = user_audio_path
-        if suffix != '.wav':
-            user_wav_path = user_audio_path.replace(suffix, '.wav')
-            try:
-                import subprocess
-                
-                process = subprocess.run([
-                    "ffmpeg", "-y", "-i", user_audio_path, 
-                    "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1",
-                    "-v", "info", user_wav_path
-                ], check=True, capture_output=True, text=True)
-                
-            except Exception as e:
-                user_wav_path = user_audio_path
-
-        sample_audio_path = ""
-        if sample_audio and sample_audio.filename:
-            try:
-                sample_extension = os.path.splitext(sample_audio.filename)[1].lower()
-                sample_suffix = sample_extension if sample_extension in ['.mp3', '.wav', '.webm'] else '.wav'
-                
-                with tempfile.NamedTemporaryFile(delete=False, suffix=sample_suffix) as sample_temp:
-                    sample_content = await sample_audio.read()
-                    sample_temp.write(sample_content)
-                    sample_audio_path = sample_temp.name
-                
-            except Exception as e:
-                sample_audio_path = ""
-
-        try:
-            with open(user_wav_path, "rb") as audio_file:
-                response = client.audio.transcriptions.create(
-                    model="whisper-1",
-                    file=audio_file,
-                    language="ja"
-                )
-                transcription = response.text
-        except Exception as e:
-            transcription = sentence
-
-        await compare_words(sentence, transcription)
-
-        try:
-            user_y, sr = librosa.load(user_wav_path, sr=16000)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Không thể đọc file âm thanh: {str(e)}")
-
-        result = await analyze_audio_features(user_y, sr, None, sentence, transcription)
-            
-        if user_wav_path and os.path.exists(user_wav_path):
-            os.unlink(user_wav_path)
-
-        return result
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Lỗi phân tích âm thanh: {str(e)}")
-
-@app.post("/analyze", response_class=JSONResponse)
-async def analyze_endpoint(
-    audio: UploadFile = File(...),
-    sentence: str = Form(...),
-    sample: UploadFile = File(None)
-):
-    try:
-        result = await analyze_audio(audio, sample, sentence)
-        return JSONResponse(content=result)
-    except Exception as e:
-        if DEBUG_MODE:
-            return JSONResponse(
-                status_code=500,
-                content={
-                    "detail": f"Basic analysis error: {str(e)}",
-                    "traceback": traceback.format_exc()
-                }
-            )
-        else:
-            return JSONResponse(
-                status_code=500,
-                content={"detail": f"Basic analysis error: {str(e)}"}
-            )
-
 @app.post("/analyze-audio-enhanced", response_class=JSONResponse)
 async def analyze_enhanced_endpoint(
     file: UploadFile = File(...),
     reference_text: str = Form(...),
-    sample_id: str = Form(None)
+    type: str = Form(None)
 ):
     try:
         content_type = file.content_type or ""
@@ -1288,7 +921,7 @@ async def analyze_enhanced_endpoint(
         except Exception as e:
             logger.error(f"Error checking file size: {str(e)}")
         
-        result = await analyze_audio_enhanced(file, sample_id, reference_text)
+        result = await analyze_audio_enhanced(file, reference_text, type)
         return JSONResponse(content=result)
     except HTTPException as e:
         return JSONResponse(
@@ -1331,179 +964,6 @@ async def general_exception_handler(request: Request, exc: Exception):
         return JSONResponse(
             status_code=500,
             content={"detail": "Internal server error - enable DEBUG_MODE for details"},
-        )
-
-@app.get("/analyze")
-async def analyze_get():
-    """Provide information about the analyze endpoint"""
-    return JSONResponse(
-        content={
-            "message": "Sử dụng phương thức POST cho endpoint này. Tham số yêu cầu: 'audio' (file), 'sentence' (text)",
-            "endpoint": "/analyze",
-            "method": "POST",
-            "required_params": ["audio", "sentence"],
-            "optional_params": ["sample"]
-        }
-    )
-
-@app.get("/test-libraries")
-async def test_libraries():
-    """Test all libraries to verify they're working properly"""
-    
-    results = {}
-    
-    try:
-        results["openai"] = {"status": "ok", "version": getattr(OpenAI, "__version__", "unknown")}
-    except Exception as e:
-        results["openai"] = {"status": "error", "message": str(e)}
-    
-    try:
-        results["librosa"] = {"status": "ok", "version": librosa.__version__}
-    except Exception as e:
-        results["librosa"] = {"status": "error", "message": str(e)}
-    
-    try:
-        results["parselmouth"] = {"status": "ok", "version": parselmouth.__version__}
-    except Exception as e:
-        results["parselmouth"] = {"status": "error", "message": str(e)}
-    
-    try:
-        results["aubio"] = {"status": "ok", "version": aubio.__version__}
-    except Exception as e:
-        results["aubio"] = {"status": "error", "message": str(e)}
-    
-    try:
-        results["numpy"] = {"status": "ok", "version": np.__version__}
-    except Exception as e:
-        results["numpy"] = {"status": "error", "message": str(e)}
-    
-    try:
-        sample_path = "../speech-java/src/main/resources/samples/hello_friend.wav"
-        if os.path.exists(sample_path):
-            y, sr = librosa.load(sample_path)
-            results["audio_loading"] = {
-                "status": "ok", 
-                "file": sample_path,
-                "length": len(y),
-                "sr": sr
-            }
-        else:
-            results["audio_loading"] = {"status": "error", "message": f"File not found: {sample_path}"}
-    except Exception as e:
-        results["audio_loading"] = {"status": "error", "message": str(e), "traceback": traceback.format_exc()}
-    
-    return results
-
-@app.get("/sample-audio/{sample_id}")
-async def get_sample_audio(sample_id: str, format: str = "wav"):
-    """Serve a sample audio file for playback in the frontend."""
-    
-    if format not in ["wav", "mp3"]:
-        format = "wav"
-    
-    sample_path = f"../speech-java/src/main/resources/samples/{sample_id}.{format}"
-    
-    if not os.path.exists(sample_path):
-        raise HTTPException(status_code=404, detail=f"Sample audio file not found: {sample_id}")
-    
-    content_type = "audio/wav" if format == "wav" else "audio/mpeg"
-    
-    return FileResponse(
-        path=sample_path,
-        media_type=content_type,
-        filename=f"{sample_id}.{format}"
-    )
-
-@app.get("/analyze-direct-sample/{sample_id}")
-async def analyze_direct_sample(sample_id: str):
-    """Analyze a specific sample file directly"""
-    
-    sample_path = f"../speech-java/src/main/resources/samples/{sample_id}.wav"
-    
-    if not os.path.exists(sample_path):
-        raise HTTPException(status_code=404, detail=f"Sample file not found: {sample_id}")
-    
-    sentences = {
-        "today_library": "今日、図書館で本を借りました。",
-        "hello_friend": "こんにちは、友達！",
-        "weather_good": "今日の天気はとても良いですね。",
-        "japanese_study": "日本語を勉強することは楽しいです。"
-    }
-    
-    sentence = sentences.get(sample_id)
-    if not sentence:
-        raise HTTPException(status_code=404, detail=f"No sentence mapping for sample ID: {sample_id}")
-    
-    try:
-        class MockUploadFile:
-            def __init__(self, path, filename):
-                self.path = path
-                self.filename = filename
-                self.content_type = "audio/wav"
-                self.size = os.path.getsize(path)
-                self.file = None
-                
-            async def read(self):
-                with open(self.path, "rb") as f:
-                    return f.read()
-                
-            async def tell(self):
-                return self.size
-                
-        mock_file = MockUploadFile(sample_path, f"{sample_id}.wav")
-        
-        result = await analyze_audio(mock_file, None, sentence)
-        return result
-        
-    except Exception as e:
-        if DEBUG_MODE:
-            raise HTTPException(status_code=500, detail={
-                "message": f"Analysis error: {str(e)}",
-                "traceback": traceback.format_exc()
-            })
-        else:
-            raise HTTPException(status_code=500, detail=f"Analysis error: {str(e)}")
-
-@app.get("/health", response_class=JSONResponse)
-async def health_check():
-    """Simple health check endpoint to verify the API is working."""
-    try:
-        lib_checks = {
-            "librosa": librosa.__version__,
-            "parselmouth": parselmouth.__version__,
-            "aubio": getattr(aubio, "__version__", "unknown"),
-            "openai": getattr(OpenAI, "__version__", "unknown")
-        }
-        
-        openai_status = "unavailable"
-        try:
-            if OPENAI_API_KEY:
-                response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[{"role": "user", "content": "Say 'ok' in one word"}],
-                    max_tokens=1
-                )
-                if response.choices and response.choices[0].message:
-                    openai_status = "available"
-                else:
-                    openai_status = "connected but no valid response"
-            else:
-                openai_status = "no API key"
-        except Exception as e:
-            openai_status = f"error: {str(e)}"
-            
-        return JSONResponse(
-            content={
-                "status": "healthy",
-                "libraries": lib_checks,
-                "openai_status": openai_status,
-                "debug_mode": DEBUG_MODE
-            }
-        )
-    except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"status": "unhealthy", "detail": str(e)}
         )
 
 if __name__ == "__main__":

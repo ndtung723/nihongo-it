@@ -161,14 +161,12 @@ class AIService {
   /**
    * Phân tích phát âm từ file audio
    */
-  async analyzeSpeech(audioBlob: Blob, referenceText: string, sampleId?: string): Promise<SpeechAnalysisResult> {
+  async analyzeSpeech(audioBlob: Blob, referenceText: string, type: string): Promise<SpeechAnalysisResult> {
     const formData = new FormData();
-    formData.append('file', audioBlob, 'recording.wav');
+    formData.append('file', audioBlob, 'recording.mp3');
     formData.append('reference_text', referenceText);
 
-    if (sampleId) {
-      formData.append('sample_id', sampleId);
-    }
+    formData.append('type', type);
 
     const response = await api.post('/ai-service-api/v1/speech/analyze-audio-enhanced', formData);
     return response.data;

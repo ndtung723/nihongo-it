@@ -479,7 +479,7 @@ const startRecording = async () => {
       }
 
       mediaRecorder.value.onstop = () => {
-        const audioBlob = new Blob(audioChunks.value, { type: 'audio/wav' })
+        const audioBlob = new Blob(audioChunks.value, { type: 'audio/mp3' })
         recordedAudioBlob.value = audioBlob
         recordedAudio.value = URL.createObjectURL(audioBlob)
         processRecording(audioBlob)
@@ -566,7 +566,7 @@ const processRecording = async (audioBlob: Blob) => {
       const term = vocabulary.value.term;
 
       // Use AI service to analyze speech
-      const analysis = await aiService.analyzeSpeech(audioBlob, term, term);
+      const analysis = await aiService.analyzeSpeech(audioBlob, term, 'vocabulary');
 
       // Process response
       pronounciationScore.value = Math.round(analysis.score);

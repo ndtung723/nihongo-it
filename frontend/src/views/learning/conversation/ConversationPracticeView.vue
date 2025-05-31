@@ -670,13 +670,13 @@ const processRecording = async (index: number) => {
 
     // Get reference text
     const referenceText = conversation.value.dialogue[index].japanese;
-    const sampleId = `conversation_${index}`;
+    const type = 'conversation'
 
     // Use AI service to analyze speech
     const analysis = await aiService.analyzeSpeech(
       recordedAudioBlobs.value[index] as Blob,
       referenceText,
-      sampleId
+      type,
     );
 
     // Process response
@@ -807,7 +807,7 @@ const startRecording = async (index: number) => {
           return;
         }
 
-        const audioBlob = new Blob(audioChunks.value, { type: 'audio/wav' });
+        const audioBlob = new Blob(audioChunks.value, { type: 'audio/mp3' });
 
         // Kiểm tra kích thước blob để xác định có âm thanh không
         if (audioBlob.size < 1000) {
