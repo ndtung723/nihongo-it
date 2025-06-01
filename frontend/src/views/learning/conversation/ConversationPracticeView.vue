@@ -292,6 +292,18 @@ interface SpeechAnalysisResult {
   transcription?: string;
   words?: WordAnalysis[];
   personalizedFeedback?: string;
+  textAnalysis?: {
+    originalStructure?: {
+      tokens?: {
+        original: string;
+        isCorrect: boolean;
+        position: {
+          start: number;
+          end: number;
+        };
+      }[];
+    };
+  };
 }
 
 // Router
@@ -634,21 +646,6 @@ const processRecording = async (index: number) => {
       interimText.value = '';
     }
 
-    // Kiểm tra nếu đã có transcription từ Azure nhưng không liên quan đến nội dung
-    // if (lineAnalysisResults.value[index]?.transcription) {
-    //   const transcription = lineAnalysisResults.value[index]?.transcription || '';
-    //   const referenceText = conversation.value?.dialogue[index]?.japanese || '';
-
-    //   // Kiểm tra xem transcription có liên quan đến referenceText không
-    //   // Nếu không chứa ký tự chung nào hoặc quá khác biệt, có thể là lỗi nhận dạng
-    //   const isUnrelatedTranscription = !hasCommonCharacters(transcription, referenceText);
-
-    //   if (isUnrelatedTranscription) {
-    //     isProcessing.value = false;
-    //     return; // Dừng và không gửi API
-    //   }
-    // }
-
     // Verify authentication before proceeding
     const authToken = authService.getToken()
     if (!authToken) {
@@ -709,6 +706,72 @@ const processRecording = async (index: number) => {
   } finally {
     isProcessing.value = false;
   }
+}
+
+// Hàm định dạng văn bản tiếng Nhật với các từ được tô màu
+const formatJapaneseWithHighlights = (text: string, analysis: SpeechAnalysisResult): string => {
+  if (!analysis || !analysis.textAnalysis || !analysis.textAnalysis.originalStructure) {
+    return text;
+  }
+
+  try {
+    const tokens = analysis.textAnalysis.originalStructure.tokens;
+    if (!tokens || !Array.isArray(tokens)) {
+      return text;
+    }
+
+    // Tạo bản sao của văn bản gốc để xử lý
+    let formattedText = text;
+
+    // Sắp xếp tokens theo vị trí từ cuối về đầu để tránh việc thay đổi vị trí khi replace
+    const sortedTokens = [...tokens].sort((a, b) => b.position.start - a.position.start);
+
+    // Duyệt qua từng token và highlight dựa trên isCorrect
+    sortedTokens.forEach(token => {
+      const { original, isCorrect, position } = token;
+
+      // Kiểm tra xem token có trong văn bản không
+      if (position && position.start >= 0 && position.end <= text.length) {
+        const tokenText = text.substring(position.start, position.end);
+
+        // Chỉ highlight nếu token text khớp với original
+        if (tokenText === original) {
+          let replacement;
+
+          if (isCorrect) {
+            // Tô màu xanh cho từ đúng
+            replacement = `<span style="color: #4CAF50; font-weight: bold; background-color: rgba(76, 175, 80, 0.1); padding: 1px 2px; border-radius: 3px;">${original}</span>`;
+          } else {
+            // Tô màu đỏ cho từ sai
+            replacement = `<span style="color: #F44336; font-weight: bold; background-color: rgba(244, 67, 54, 0.1); padding: 1px 2px; border-radius: 3px; text-decoration: underline wavy #F44336;">${original}</span>`;
+          }
+
+          // Thay thế token trong văn bản
+          formattedText = formattedText.substring(0, position.start) +
+                         replacement +
+                         formattedText.substring(position.end);
+        }
+      }
+    });
+
+    return formattedText;
+
+  } catch (error) {
+    console.error('Error in formatJapaneseWithHighlights:', error);
+    return text;
+  }
+}
+
+// Hàm escape RegExp để tránh lỗi khi tìm kiếm các ký tự đặc biệt
+const escapeRegExp = (string: string): string => {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Navigation function
+const navigateBack = () => {
+  router.push({
+    name: 'conversationLearning'
+  });
 }
 
 // Thêm hàm kiểm tra ký tự chung giữa 2 chuỗi tiếng Nhật
@@ -844,7 +907,7 @@ const startRecording = async (index: number) => {
           }
           // Không còn dòng stopRecording() ở đây để chỉ dừng khi chưa nói
         }
-      }, 7000);
+      }, 15000);
     }
   } catch (err) {
     toast.error('Không thể truy cập microphone', {
@@ -966,95 +1029,6 @@ const markAsComplete = (index: number) => {
       duration: 3000
     });
   }
-}
-
-const navigateBack = () => {
-  router.push({
-    name: 'conversationLearning'
-  });
-}
-
-// Hàm định dạng văn bản tiếng Nhật với các từ được tô màu
-const formatJapaneseWithHighlights = (text: string, analysis: SpeechAnalysisResult): string => {
-  if (!analysis) {
-    return text;
-  }
-
-  //
-
-  // Cách 2: Sử dụng transcription để tìm các phần phát âm được
-  if (analysis.transcription) {
-    // Thực hiện phân tích từng ký tự trong transcription và highlight
-    // vào văn bản gốc nếu tìm thấy ký tự trùng khớp
-    const transcribedChars = analysis.transcription
-      .replace(/\s+/g, '') // Loại bỏ khoảng trắng
-      .split('');
-
-    if (transcribedChars.length > 0) {
-      let formattedText = '';
-      const originalChars = text.split('');
-
-      // Map mỗi ký tự trong văn bản gốc
-      originalChars.forEach(char => {
-        if (transcribedChars.includes(char)) {
-          // Ký tự này đã được phát âm
-          formattedText += `<span style="color: #4CAF50; font-weight: bold;">${char}</span>`;
-        } else {
-          // Ký tự này không được phát âm hoặc phát âm sai
-          formattedText += char;
-        }
-      });
-
-      return formattedText;
-    }
-  }
-
-  // Cách 1: Dựa trên danh sách words từ API
-  else if(analysis.words && analysis.words.length > 0) {
-    // Tạo bản sao của chuỗi gốc
-    let formattedText = text;
-
-    // Bắt đầu với việc dò tìm các từ đúng
-    const correctWords: string[] = [];
-    analysis.words.forEach(word => {
-      if (word.isCorrect) {
-        correctWords.push(word.text);
-      }
-    });
-
-    // Tìm và tô màu tất cả các phần đúng
-    if (correctWords.length > 0) {
-      // Sắp xếp từ dài đến ngắn để tránh trùng lặp khi thay thế
-      correctWords.sort((a, b) => b.length - a.length);
-
-      correctWords.forEach(word => {
-        try {
-          // Chuyển đổi các chữ cái đặc biệt sang mã regexp
-          const escapedWord = escapeRegExp(word);
-          // Tạo regex với cờ u để hỗ trợ Unicode
-          const regex = new RegExp(escapedWord, 'gu');
-          // Tô màu xanh các từ đúng
-          formattedText = formattedText.replace(regex, `<span style="color: #4CAF50; font-weight: bold;">${word}</span>`);
-        } catch (e) {
-        }
-      });
-
-      return formattedText;
-    }
-  }
-
-  // Phương pháp dự phòng: nếu không có dữ liệu chi tiết, dùng điểm số để quyết định
-  // Nếu điểm cao (>70), tô xanh toàn bộ, nếu không thì không tô
-  if (analysis.score > 70) {
-    return `<span style="color: #4CAF50; font-weight: bold;">${text}</span>`;
-  }
-
-  return text;
-}
-
-// Hàm escape RegExp để tránh lỗi khi tìm kiếm các ký tự đặc biệt
-const escapeRegExp = (string: string): string => {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 // Scroll tới tin nhắn mới nhất với hiệu ứng mượt hơn
@@ -1257,7 +1231,7 @@ const stopRecording = async () => {
 
     // Stop all audio tracks
     if (audioStream) {
-      audioStream.getTracks().forEach(track => track.stop());
+      audioStream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
     }
   }
 }
@@ -1282,7 +1256,7 @@ const stopRecordingWithoutProcessing = () => {
 
     // Stop all audio tracks
     if (audioStream) {
-      audioStream.getTracks().forEach(track => track.stop());
+      audioStream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
     }
   }
 }

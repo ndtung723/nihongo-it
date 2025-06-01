@@ -24,47 +24,6 @@ class SpeechAnalysisService {
                 .build()
     }
 
-
-    /**
-     * Process and enhance the analysis results if needed
-     */
-    private fun processAnalysisResults(response: Map<String, Any>): Map<String, Any> {
-        try {
-            // Ensure all required fields are present
-            val processedResponse = response.toMutableMap()
-            
-            // Ensure words array has expected properties
-            @Suppress("UNCHECKED_CAST")
-            val words = processedResponse["words"] as? List<Map<String, Any>> ?: emptyList()
-            
-            // Log summary of word analysis
-            val correctWords = words.count { it["isCorrect"] as? Boolean ?: false }
-            val incorrectWords = words.size - correctWords
-            logger.info("Word analysis summary: ${words.size} total words, $correctWords correct, $incorrectWords incorrect")
-            
-            // Log personalized feedback if present
-            val personalizedFeedback = processedResponse["personalizedFeedback"] as? String
-            if (personalizedFeedback != null) {
-                logger.info("Personalized feedback provided: ${personalizedFeedback.take(50)}...")
-            } else {
-                // Add default personalized feedback if not present
-                val score = processedResponse["score"] as? Number ?: 0
-                val defaultFeedback = if (score.toInt() > 80) {
-                    "Phát âm tốt! Tiếp tục luyện tập để hoàn thiện hơn."
-                } else {
-                    "Cần cải thiện phát âm của một số từ. Hãy tập trung vào các từ được đánh dấu đỏ."
-                }
-                processedResponse["personalizedFeedback"] = defaultFeedback
-                logger.info("Added default personalized feedback")
-            }
-            
-            return processedResponse
-        } catch (e: Exception) {
-            logger.error("Error processing analysis results", e)
-            return response // Return original response if processing fails
-        }
-    }
-
     /**
      * Enhanced audio analysis that forwards to Python service
      */
@@ -100,13 +59,12 @@ class SpeechAnalysisService {
 
             logger.info("Received enhanced analysis response from Python service")
             
-            // Process the results if needed
-            return processAnalysisResults(response)
+            // Return the response directly without any modifications
+            return response
         } catch (e: Exception) {
             logger.error("Error in enhanced analysis: ${e.message}")
             throw RuntimeException("Lỗi khi thực hiện phân tích nâng cao: ${e.message}")
         }
-
     }
 
 } 
