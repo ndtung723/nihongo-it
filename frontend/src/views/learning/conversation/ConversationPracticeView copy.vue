@@ -213,7 +213,7 @@
                               {{ pronunciationScores[i] }}
                             </v-chip>
                           </template>
-                          {{ getDetailedFeedback(i) }}
+                          {{ getVietnameseFeedback(pronunciationScores[i]) }}
                         </v-tooltip>
                       </div>
                     </div>
@@ -407,16 +407,6 @@ const getVietnameseFeedback = (score: number): string => {
   } else {
     return 'Cần cải thiện'
   }
-}
-
-// Hàm mới để lấy feedback chi tiết từ analysis results
-const getDetailedFeedback = (lineIndex: number): string => {
-  const analysisResult = lineAnalysisResults.value[lineIndex]
-  if (analysisResult && analysisResult.feedback) {
-    return analysisResult.feedback
-  }
-  // Fallback to simple feedback if no detailed feedback available
-  return getVietnameseFeedback(pronunciationScores.value[lineIndex] || 0)
 }
 
 const toggleSave = async () => {
@@ -917,7 +907,7 @@ const startRecording = async (index: number) => {
           }
           // Không còn dòng stopRecording() ở đây để chỉ dừng khi chưa nói
         }
-      }, 15000);
+      }, 7000);
     }
   } catch (err) {
     toast.error('Không thể truy cập microphone', {

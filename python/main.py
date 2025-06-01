@@ -220,11 +220,7 @@ async def generate_personalized_feedback(words: List[Dict],
                                        text_score: int = 0) -> str:
     """Generate intelligent personalized feedback based on detailed analysis."""
     
-    # Always try to use AI feedback from LLM first if available
-    if "personalized_feedback" in llm_result and llm_result["personalized_feedback"]:
-        return llm_result["personalized_feedback"]
-        
-    # Analyze the specific issues for detailed feedback
+    # Analyze the specific issues for detailed feedback first
     try:
         # Get detailed analysis of what went wrong
         incorrect_words = [w["text"] for w in words if not w.get("isCorrect", True)]
@@ -237,86 +233,126 @@ async def generate_personalized_feedback(words: List[Dict],
         missing_words = [token for token in original_tokens if token not in transcription_tokens]
         extra_words = [token for token in transcription_tokens if token not in original_tokens]
         
+        # Calculate percentages for better analysis
+        total_words = len(original_tokens)
+        correct_percentage = len(correct_words) / total_words * 100 if total_words > 0 else 0
+        
         # Determine primary issues
         issues = []
         strengths = []
         suggestions = []
         
-        # Analyze text accuracy issues
-        if text_score < 30:
+        # Analyze text accuracy issues with more detail
+        if text_score < 20:
             if not transcription.strip():
                 issues.append("không nhận diện được âm thanh")
-                suggestions.append("hãy nói to và rõ ràng hơn")
-            elif len(transcription_tokens) < len(original_tokens) / 2:
-                issues.append("thiếu nhiều từ trong câu")
-                suggestions.append(f"hãy đọc đầy đủ câu '{sentence}'")
+                suggestions.append("hãy nói to và rõ ràng hơn, đảm bảo micro hoạt động tốt")
             else:
-                issues.append("phát âm chưa chính xác")
+                issues.append("phát âm sai hoàn toàn")
+                suggestions.append("hãy nghe lại câu mẫu và luyện tập từng từ")
+        elif text_score < 40:
+            if len(transcription_tokens) < len(original_tokens) / 2:
+                issues.append("thiếu quá nhiều từ trong câu")
+                suggestions.append("hãy đọc chậm và đầy đủ từng từ trong câu")
+            else:
+                issues.append("phát âm sai nhiều từ")
                 if incorrect_words:
-                    suggestions.append(f"chú ý phát âm các từ: {', '.join(incorrect_words[:2])}")
+                    suggestions.append(f"tập trung luyện phát âm: {', '.join(incorrect_words[:3])}")
         elif text_score < 70:
             if missing_words:
-                issues.append(f"thiếu từ '{missing_words[0]}'")
-                suggestions.append(f"nhớ phát âm từ '{missing_words[0]}' trong câu")
+                issues.append(f"thiếu {len(missing_words)} từ")
+                suggestions.append(f"nhớ phát âm đầy đủ, đặc biệt từ '{missing_words[0]}'")
             if incorrect_words:
-                issues.append(f"phát âm chưa chuẩn")
-                suggestions.append(f"luyện tập phát âm '{incorrect_words[0]}'")
+                issues.append(f"phát âm chưa chuẩn {len(incorrect_words)} từ")
+                suggestions.append(f"cải thiện phát âm từ '{incorrect_words[0]}'")
+        elif text_score < 90:
+            if incorrect_words:
+                issues.append("một vài từ chưa chuẩn")
+                suggestions.append(f"hoàn thiện phát âm từ '{incorrect_words[0]}'")
+            else:
+                strengths.append("phát âm từ ngữ rất tốt")
         else:
-            strengths.append("phát âm từ ngữ tốt")
+            strengths.append("phát âm từ ngữ xuất sắc")
             
-        # Analyze intonation issues
-        if intonation_score < 50:
-            issues.append("ngữ điệu chưa tự nhiên")
-            suggestions.append("nghe và bắt chước ngữ điệu tiếng Nhật")
+        # Analyze intonation issues with more detail
+        if intonation_score < 30:
+            issues.append("ngữ điệu chưa đúng")
+            suggestions.append("nghe và bắt chước ngữ điệu tiếng Nhật từ audio mẫu")
+        elif intonation_score < 50:
+            issues.append("ngữ điệu cần cải thiện")
+            suggestions.append("chú ý cao độ và nhấn mạnh khi nói")
         elif intonation_score < 70:
-            suggestions.append("cải thiện ngữ điệu để tự nhiên hơn")
-        else:
+            suggestions.append("tiếp tục cải thiện ngữ điệu để tự nhiên hơn")
+        elif intonation_score < 90:
             strengths.append("ngữ điệu khá tốt")
-            
-        # Analyze clarity issues  
-        if clarity_score < 50:
-            issues.append("độ rõ chưa tốt")
-            suggestions.append("mở miệng rõ ràng khi phát âm")
-        elif clarity_score < 70:
-            suggestions.append("phát âm rõ ràng hơn")
         else:
-            strengths.append("phát âm rõ ràng")
+            strengths.append("ngữ điệu tuyệt vời")
+            
+        # Analyze clarity issues with more detail
+        if clarity_score < 30:
+            issues.append("độ rõ kém")
+            suggestions.append("mở miệng rộng hơn và phát âm từng âm tiết rõ ràng")
+        elif clarity_score < 50:
+            issues.append("độ rõ chưa tốt")
+            suggestions.append("chú ý vị trí lưỡi và môi khi phát âm")
+        elif clarity_score < 70:
+            suggestions.append("phát âm rõ ràng hơn nữa")
+        elif clarity_score < 90:
+            strengths.append("phát âm khá rõ ràng")
+        else:
+            strengths.append("phát âm rất rõ ràng")
 
-        # Build intelligent feedback
+        # Build intelligent feedback with more variety
         feedback_parts = []
         
-        # Start with encouragement if there are strengths
-        if strengths:
-            feedback_parts.append(f"Tốt lắm! {', '.join(strengths)}.")
-        elif score > 0:
-            feedback_parts.append("Bạn đã cố gắng rất tốt!")
+        # Start with encouragement based on performance
+        if score >= 90:
+            feedback_parts.append("Xuất sắc!")
+        elif score >= 75:
+            feedback_parts.append("Rất tốt!")
+        elif score >= 60:
+            feedback_parts.append("Khá tốt!")
+        elif score >= 40:
+            feedback_parts.append("Bạn đã cố gắng!")
         else:
-            feedback_parts.append("Đừng nản lòng, hãy thử lại!")
+            feedback_parts.append("Đừng nản lòng!")
             
-        # Add specific issues and suggestions
+        # Add strengths if any
+        if strengths:
+            feedback_parts.append(f"{', '.join(strengths)}.")
+            
+        # Add main issues and suggestions
         if issues and suggestions:
             main_issue = issues[0]
             main_suggestion = suggestions[0]
-            feedback_parts.append(f"Cần cải thiện {main_issue}, {main_suggestion}.")
+            feedback_parts.append(f"Cần cải thiện {main_issue} - {main_suggestion}.")
             
             # Add second suggestion if available and different
             if len(suggestions) > 1 and suggestions[1] != main_suggestion:
-                feedback_parts.append(f"Ngoài ra, {suggestions[1]}.")
+                feedback_parts.append(f"{suggestions[1]}.")
         elif suggestions:
-            feedback_parts.append(f"Gợi ý: {suggestions[0]}.")
+            feedback_parts.append(f"{suggestions[0]}.")
+            
+        # Add encouragement to continue
+        if score >= 70:
+            feedback_parts.append("Tiếp tục phát huy!")
+        elif score >= 40:
+            feedback_parts.append("Hãy luyện tập thêm!")
+        else:
+            feedback_parts.append("Đừng bỏ cuộc, bạn sẽ tiến bộ!")
             
         # Combine all parts
         final_feedback = " ".join(feedback_parts)
         
-        # Fallback to LLM if our analysis is too short
-        if len(final_feedback) < 50:
+        # Ensure we have meaningful feedback
+        if len(final_feedback) < 30:
             return await generate_llm_feedback(sentence, transcription, score, intonation_score, clarity_score, text_score, incorrect_words, missing_words)
             
         return final_feedback
         
     except Exception as e:
         logger.error(f"Error generating intelligent feedback: {e}")
-        # Fallback to LLM
+        # Final fallback to LLM
         return await generate_llm_feedback(sentence, transcription, score, intonation_score, clarity_score, text_score, [], [])
 
 async def generate_llm_feedback(sentence: str, transcription: str, score: int, intonation_score: int, 
@@ -897,28 +933,22 @@ async def compare_words_enhanced(original: str, transcription: str) -> tuple:
     # Use token-level comparison instead of the old SequenceMatcher
     token_comparison = await compare_token_arrays(original_tokens, transcription_tokens)
     
-    # Also get LLM analysis for additional insights
+    # Also get LLM analysis for additional insights (but don't use suggestions)
     llm_analysis = await analyze_with_llm(original, transcription)
     auxiliary_words = set(llm_analysis.get("auxiliary_words", []))
-    incorrect_map = {item["word"]: item for item in llm_analysis.get("incorrect_words", [])}
     
-    # Create enhanced words based on token comparison
+    # Create enhanced words based on token comparison only
     enhanced_words = []
     matched_tokens = set(token_comparison["matched_tokens"])
     
     for token in original_tokens:
         is_correct = token in matched_tokens
         
-        # Check if LLM has specific suggestions for this word
-        if token in incorrect_map and not is_correct:
-            suggestion = incorrect_map[token].get("suggestion", f"Cần chú ý phát âm '{token}' rõ ràng hơn")
-        else:
-            suggestion = None if is_correct else f"Cần chú ý phát âm '{token}' rõ ràng hơn"
-        
+        # Don't use LLM suggestions - let generate_personalized_feedback handle this
         enhanced_words.append({
             "text": token,
             "isCorrect": is_correct,
-            "suggestion": suggestion
+            "suggestion": None  # Always None, feedback will be generated separately
         })
     
     # Create hiragana mapping for compatibility
@@ -926,9 +956,11 @@ async def compare_words_enhanced(original: str, transcription: str) -> tuple:
     for token in original_tokens:
         orig_hiragana[token] = token  # Already in hiragana from process_text_to_tokens
     
-    # Add token comparison metrics to LLM analysis
+    # Add token comparison metrics to LLM analysis (but remove suggestions)
     llm_analysis["token_similarity_ratio"] = token_comparison["similarity_ratio"]
     llm_analysis["matched_tokens"] = token_comparison["matched_tokens"]
+    # Remove personalized_feedback to force using generate_personalized_feedback
+    llm_analysis["personalized_feedback"] = ""
     
     logger.info(f"Token similarity ratio: {token_comparison['similarity_ratio']:.3f}")
     logger.info(f"Original tokens: {token_comparison['original_tokens']}")
@@ -1079,7 +1111,7 @@ async def get_original_sentence_structure(original: str) -> dict:
                 "end": token_end
             },
             "isCorrect": True,  # Default, will be updated during comparison
-            "suggestion": None
+            "suggestion": None  # No default suggestions
         }
         
         sentence_structure.append(token_info)
@@ -1117,21 +1149,21 @@ async def compare_words_with_structure(original: str, transcription: str) -> dic
         if hiragana_token in enhanced_word_map:
             word_result = enhanced_word_map[hiragana_token]
             token_info["isCorrect"] = word_result["isCorrect"]
-            token_info["suggestion"] = word_result["suggestion"]
+            token_info["suggestion"] = None  # Don't use LLM suggestions
         else:
             # Check if this token appears in any of the enhanced words
             found_match = False
             for word in enhanced_words:
                 if hiragana_token in word["text"] or word["text"] in hiragana_token:
                     token_info["isCorrect"] = word["isCorrect"]
-                    token_info["suggestion"] = word["suggestion"]
+                    token_info["suggestion"] = None  # Don't use LLM suggestions
                     found_match = True
                     break
             
             if not found_match:
                 # Token not found in transcription - mark as incorrect
                 token_info["isCorrect"] = False
-                token_info["suggestion"] = f"Token '{token_info['original']}' not found in transcription"
+                token_info["suggestion"] = None  # Don't use LLM suggestions
     
     return {
         "original_structure": original_structure,
