@@ -9,17 +9,15 @@ from fastapi.exceptions import RequestValidationError
 from openai import OpenAI
 import librosa
 import parselmouth
-import aubio
 import numpy as np
-from scipy.spatial.distance import euclidean
-from fastdtw import fastdtw
 from string import punctuation
 import soundfile as sf
 import tempfile
 from dotenv import load_dotenv
-import pykakasi
 import re
 from typing import Optional, Dict, List, Any, Union
+import mojimoji
+import difflib
 
 # Load environment variables from .env file
 load_dotenv()
@@ -27,6 +25,40 @@ load_dotenv()
 # Debug mode (set to True for detailed error responses)
 DEBUG_MODE = os.getenv("DEBUG_MODE", "False").lower() in ("true", "1", "t")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+
+# Sample audio configuration
+SAMPLE_AUDIO_BASE_PATH = os.getenv("SAMPLE_AUDIO_BASE_PATH", "services/ai-service/src/main/resources")
+PROJECT_ROOT_PATH = os.getenv("PROJECT_ROOT_PATH", "")
+
+def get_project_root() -> str:
+    """Get the project root path, auto-detect if not configured."""
+    if PROJECT_ROOT_PATH:
+        return PROJECT_ROOT_PATH
+    
+    # Auto-detect project root by looking for common project files
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Go up directories until we find project root indicators
+    while current_dir != os.path.dirname(current_dir):  # Not at filesystem root
+        # Check for common project root indicators
+        if any(os.path.exists(os.path.join(current_dir, indicator)) for indicator in 
+               ['services', 'pom.xml', '.git', 'package.json', 'README.md']):
+            return current_dir
+        current_dir = os.path.dirname(current_dir)
+    
+    # Fallback to current directory's parent
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+def get_sample_audio_path(audio_type: str, reference_text: str) -> str:
+    """Build sample audio file path dynamically."""
+    project_root = get_project_root()
+    sample_path = os.path.join(
+        project_root,
+        SAMPLE_AUDIO_BASE_PATH,
+        audio_type,
+        f"{reference_text}.mp3"
+    )
+    return sample_path
 
 app = FastAPI()
 
@@ -48,22 +80,59 @@ logger = logging.getLogger(__name__)
 # Khởi tạo Open AI API key
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# Khởi tạo pykakasi cho tokenization tiếng Nhật
-kakasi = pykakasi.kakasi()
+# Try to import SudachiPy for advanced tokenization
+try:
+    from sudachipy import tokenizer
+    from sudachipy import dictionary
+    SUDACHI_AVAILABLE = True
+    logger.info("SudachiPy imported successfully - using advanced tokenization")
+except ImportError:
+    SUDACHI_AVAILABLE = False
+    logger.error("SudachiPy not available - this is required for the enhanced API")
+    raise ImportError("SudachiPy is required for the enhanced API. Please install it with: pip install sudachipy sudachidict_core")
+
+# Initialize SudachiPy tokenizer
+try:
+    sudachi_tokenizer = dictionary.Dictionary().create()
+    logger.info("SudachiPy tokenizer initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize SudachiPy tokenizer: {e}")
+    raise RuntimeError("Failed to initialize SudachiPy tokenizer")
 
 # Regex để loại bỏ dấu câu và ký tự đặc biệt tiếng Nhật
 JAPANESE_PUNCTUATION = '、。！？；：「」『』・〜'
-CLEAN_REGEX = re.compile(f'[{re.escape(punctuation + JAPANESE_PUNCTUATION)}]|[^\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\sA-Za-z0-9]')
+CLEAN_REGEX = re.compile(f'[{re.escape(punctuation + JAPANESE_PUNCTUATION)}]|[^\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FFF\\sA-Za-z0-9]')
 
-# Flag for Kaldi availability (will be simulated since not installed)
-KALDI_AVAILABLE = False
+async def katakana_to_hiragana(text: str) -> str:
+    """Convert katakana to hiragana."""
+    result = ""
+    for char in text:
+        if '\u30A1' <= char <= '\u30FA':  # Katakana range
+            # Convert to hiragana by subtracting 0x60
+            result += chr(ord(char) - 0x60)
+        else:
+            result += char
+    return result
 
 async def to_hiragana(text: str) -> str:
-    """Convert text to hiragana for normalization."""
+    """Convert text to hiragana for normalization using SudachiPy."""
     try:
-        result = kakasi.convert(text)
-        return ''.join(item['hira'] for item in result if 'hira' in item)
+        mode = tokenizer.Tokenizer.SplitMode.C
+        tokens = sudachi_tokenizer.tokenize(text, mode)
+        
+        hiragana_parts = []
+        for token in tokens:
+            reading = token.reading_form()
+            # Convert katakana reading to hiragana
+            hiragana_reading = await katakana_to_hiragana(reading)
+            hiragana_parts.append(hiragana_reading)
+        
+        result = ''.join(hiragana_parts)
+        logger.debug(f"SudachiPy hiragana conversion: '{text}' -> '{result}'")
+        return result
+        
     except Exception as e:
+        logger.error(f"Hiragana conversion failed: {e}")
         return text
 
 async def clean_text(text: str) -> str:
@@ -71,19 +140,30 @@ async def clean_text(text: str) -> str:
     return CLEAN_REGEX.sub('', text)
 
 async def tokenize_japanese(text: str) -> List[str]:
-    """Chia câu tiếng Nhật thành danh sách từ."""
+    """Enhanced Japanese tokenization using SudachiPy."""
     cleaned_text = await clean_text(text)
     if not cleaned_text:
         return []
     
-    result = kakasi.convert(cleaned_text)
-    words = []
+    try:
+        # Use mode C for detailed tokenization
+        mode = tokenizer.Tokenizer.SplitMode.C
+        tokens = sudachi_tokenizer.tokenize(cleaned_text, mode)
+        
+        words = []
+        for token in tokens:
+            surface = token.surface()
+            # Skip punctuation and empty tokens
+            if surface.strip() and not re.match(r'^[^\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]+$', surface):
+                words.append(surface)
     
-    for item in result:
-        if 'orig' in item and item['orig'].strip():
-            words.append(item['orig'])
-    
-    return words
+        logger.debug(f"SudachiPy tokenization: '{cleaned_text}' -> {words}")
+        return words
+        
+    except Exception as e:
+        logger.error(f"Tokenization failed: {e}")
+        # Last resort: split by common particles and basic characters
+        return [char for char in cleaned_text if char.strip()]
 
 async def analyze_with_llm(original: str, transcription: str) -> Dict[str, Any]:
     try:
@@ -108,7 +188,7 @@ Return ONLY a JSON object with this structure:
 """
         # Call OpenAI API
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3,
             max_tokens=500
@@ -133,171 +213,219 @@ Return ONLY a JSON object with this structure:
 async def generate_personalized_feedback(words: List[Dict], 
                                        sentence: str, 
                                        transcription: str, 
-                                       llm_result: Dict) -> str:
-    """Generate personalized feedback based on LLM analysis."""
+                                       llm_result: Dict,
+                                       score: int = 0,
+                                       intonation_score: int = 0,
+                                       clarity_score: int = 0,
+                                       text_score: int = 0) -> str:
+    """Generate intelligent personalized feedback based on detailed analysis."""
     
-    # Always use AI feedback from LLM
+    # Always try to use AI feedback from LLM first if available
     if "personalized_feedback" in llm_result and llm_result["personalized_feedback"]:
         return llm_result["personalized_feedback"]
         
-    # If no AI feedback, call LLM again specifically for feedback
+    # Analyze the specific issues for detailed feedback
     try:
+        # Get detailed analysis of what went wrong
+        incorrect_words = [w["text"] for w in words if not w.get("isCorrect", True)]
+        correct_words = [w["text"] for w in words if w.get("isCorrect", True)]
+        
+        # Analyze missing words (in original but not in transcription)
+        original_tokens = await process_text_to_tokens(sentence)
+        transcription_tokens = await process_text_to_tokens(transcription)
+        
+        missing_words = [token for token in original_tokens if token not in transcription_tokens]
+        extra_words = [token for token in transcription_tokens if token not in original_tokens]
+        
+        # Determine primary issues
+        issues = []
+        strengths = []
+        suggestions = []
+        
+        # Analyze text accuracy issues
+        if text_score < 30:
+            if not transcription.strip():
+                issues.append("không nhận diện được âm thanh")
+                suggestions.append("hãy nói to và rõ ràng hơn")
+            elif len(transcription_tokens) < len(original_tokens) / 2:
+                issues.append("thiếu nhiều từ trong câu")
+                suggestions.append(f"hãy đọc đầy đủ câu '{sentence}'")
+            else:
+                issues.append("phát âm chưa chính xác")
+                if incorrect_words:
+                    suggestions.append(f"chú ý phát âm các từ: {', '.join(incorrect_words[:2])}")
+        elif text_score < 70:
+            if missing_words:
+                issues.append(f"thiếu từ '{missing_words[0]}'")
+                suggestions.append(f"nhớ phát âm từ '{missing_words[0]}' trong câu")
+            if incorrect_words:
+                issues.append(f"phát âm chưa chuẩn")
+                suggestions.append(f"luyện tập phát âm '{incorrect_words[0]}'")
+        else:
+            strengths.append("phát âm từ ngữ tốt")
+            
+        # Analyze intonation issues
+        if intonation_score < 50:
+            issues.append("ngữ điệu chưa tự nhiên")
+            suggestions.append("nghe và bắt chước ngữ điệu tiếng Nhật")
+        elif intonation_score < 70:
+            suggestions.append("cải thiện ngữ điệu để tự nhiên hơn")
+        else:
+            strengths.append("ngữ điệu khá tốt")
+            
+        # Analyze clarity issues  
+        if clarity_score < 50:
+            issues.append("độ rõ chưa tốt")
+            suggestions.append("mở miệng rõ ràng khi phát âm")
+        elif clarity_score < 70:
+            suggestions.append("phát âm rõ ràng hơn")
+        else:
+            strengths.append("phát âm rõ ràng")
+
+        # Build intelligent feedback
+        feedback_parts = []
+        
+        # Start with encouragement if there are strengths
+        if strengths:
+            feedback_parts.append(f"Tốt lắm! {', '.join(strengths)}.")
+        elif score > 0:
+            feedback_parts.append("Bạn đã cố gắng rất tốt!")
+        else:
+            feedback_parts.append("Đừng nản lòng, hãy thử lại!")
+            
+        # Add specific issues and suggestions
+        if issues and suggestions:
+            main_issue = issues[0]
+            main_suggestion = suggestions[0]
+            feedback_parts.append(f"Cần cải thiện {main_issue}, {main_suggestion}.")
+            
+            # Add second suggestion if available and different
+            if len(suggestions) > 1 and suggestions[1] != main_suggestion:
+                feedback_parts.append(f"Ngoài ra, {suggestions[1]}.")
+        elif suggestions:
+            feedback_parts.append(f"Gợi ý: {suggestions[0]}.")
+            
+        # Combine all parts
+        final_feedback = " ".join(feedback_parts)
+        
+        # Fallback to LLM if our analysis is too short
+        if len(final_feedback) < 50:
+            return await generate_llm_feedback(sentence, transcription, score, intonation_score, clarity_score, text_score, incorrect_words, missing_words)
+            
+        return final_feedback
+        
+    except Exception as e:
+        logger.error(f"Error generating intelligent feedback: {e}")
+        # Fallback to LLM
+        return await generate_llm_feedback(sentence, transcription, score, intonation_score, clarity_score, text_score, [], [])
+
+async def generate_llm_feedback(sentence: str, transcription: str, score: int, intonation_score: int, 
+                               clarity_score: int, text_score: int, incorrect_words: List[str], 
+                               missing_words: List[str]) -> str:
+    """Generate feedback using LLM with detailed context."""
+    try:
+        # Create comprehensive prompt for better AI feedback
         prompt = f"""
-Phân tích phát âm tiếng Nhật:
+Phân tích phát âm tiếng Nhật chi tiết và đưa ra phản hồi khuyến khích:
+
+THÔNG TIN PHÂN TÍCH:
 - Câu gốc: '{sentence}'
 - Câu đã nói: '{transcription}'
+- Điểm tổng: {score}/100
+- Điểm văn bản: {text_score}/100 (độ chính xác từ ngữ)
+- Điểm ngữ điệu: {intonation_score}/100 (cao độ, nhấn mạnh)
+- Điểm độ rõ: {clarity_score}/100 (phát âm rõ ràng)
 
-Hãy đưa ra phản hồi khuyến khích và gợi ý cải thiện bằng tiếng Việt (tối đa 2 câu).
+PHÂN TÍCH CHI TIẾT:
+- Từ phát âm sai: {incorrect_words if incorrect_words else 'Không có'}
+- Từ bị thiếu: {missing_words if missing_words else 'Không có'}
+
+YÊU CẦU PHẢN HỒI:
+1. Bắt đầu bằng lời khuyến khích tích cực
+2. Chỉ ra cụ thể 1-2 lỗi chính cần cải thiện (dựa trên phân tích trên)
+3. Đưa ra gợi ý thực tế để cải thiện
+4. Tối đa 3 câu, bằng tiếng Việt
+5. Tập trung vào điểm mạnh và lời khuyên cụ thể
+
+Ví dụ phản hồi tốt:
+- "Tuyệt vời! Bạn đã phát âm đúng hầu hết các từ. Hãy chú ý phát âm từ 'がくせい' rõ ràng hơn và cải thiện ngữ điệu để tự nhiên hơn. Tiếp tục luyện tập, bạn đang tiến bộ rất tốt!"
 """
+        
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3,
-            max_tokens=200
+            max_tokens=400  # Increased for more detailed feedback
         )
         return response.choices[0].message.content.strip()
+        
     except Exception as e:
-        # Fallback generic message
-        incorrect_words = [w["text"] for w in words if not w.get("isCorrect", True)]
-        if not incorrect_words:
-            return "Phát âm rất tốt! Tiếp tục luyện tập để duy trì khả năng phát âm tốt nhé!"
-        else:
-            return "Hãy tiếp tục luyện tập để cải thiện phát âm. Bạn đang tiến bộ tốt!"
+        logger.error(f"Error generating LLM feedback: {e}")
 
-async def compare_words(original: str, transcription: str) -> List[Dict]:
-    """Basic word comparison between original and transcribed text."""
+async def analyze_audio_enhanced(user_audio: UploadFile, 
+                            reference_text: str = Form(None),
+                            type: str = Form(None)):
+    """Enhanced audio analysis with integrated audio features analysis and LLM comparison."""
     
-    orig_words = await tokenize_japanese(original)
-    trans_words = await tokenize_japanese(transcription)
-    
-    orig_hiragana = {}
-    for word in orig_words:
-        orig_hiragana[word] = await to_hiragana(word)
-    
-    trans_hiragana = {}
-    for word in trans_words:
-        trans_hiragana[word] = await to_hiragana(word)
-    
-    result_words = []
-    
-    for i, orig_word in enumerate(orig_words):
-        orig_hira = orig_hiragana[orig_word]
-        
-        found = False
-        for trans_word, trans_hira in trans_hiragana.items():
-            if orig_hira == trans_hira:
-                found = True
-                break
-        
-        result_words.append({
-            "text": orig_word,
-            "isCorrect": found,
-            "suggestion": None if found else f"Cần chú ý phát âm '{orig_word}' rõ ràng hơn"
-        })
-    
-    return result_words
-
-async def compare_words_enhanced(original: str, transcription: str) -> tuple:
-    """Enhanced word comparison using hiragana normalization and LCS algorithm."""
-    orig_words = await tokenize_japanese(original)
-    trans_words = await tokenize_japanese(transcription)
-    
-    orig_hiragana = {}
-    for word in orig_words:
-        orig_hiragana[word] = await to_hiragana(word)
-    
-    trans_hiragana = {}
-    for word in trans_words:
-        trans_hiragana[word] = await to_hiragana(word)
-    
-    llm_analysis = await analyze_with_llm(original, transcription)
-    auxiliary_words = set(llm_analysis.get("auxiliary_words", []))
-    incorrect_map = {item["word"]: item for item in llm_analysis.get("incorrect_words", [])}
-    
-    result_words = []
-    i, j = 0, 0
-    
-    while i < len(orig_words):
-        orig_word = orig_words[i]
-        orig_hira = orig_hiragana[orig_word]
-        
-        if j >= len(trans_words):
-            suggestion = None
-            if orig_word in incorrect_map:
-                suggestion = incorrect_map[orig_word].get("suggestion")
-            result_words.append({
-                "text": orig_word, 
-                "isCorrect": False, 
-                "suggestion": suggestion or f"Từ này không được phát âm. Hãy chú ý phát âm '{orig_word}'."
-            })
-            i += 1
-            continue
-        
-        trans_word = trans_words[j]
-        trans_hira = trans_hiragana[trans_word]
-        
-        if orig_hira == trans_hira:
-            result_words.append({
-                "text": orig_word,
-                "isCorrect": True,
-                "suggestion": None
-            })
-            i += 1
-            j += 1
-        else:
-            if trans_word in auxiliary_words:
-                j += 1
-                continue
-            
-            found_match = False
-            for look_ahead in range(1, min(3, len(trans_words) - j)):
-                if orig_hira == trans_hiragana[trans_words[j + look_ahead]]:
-                    for k in range(look_ahead):
-                        result_words.append({
-                            "text": trans_words[j + k],
-                            "isCorrect": False,
-                            "suggestion": f"Từ này không cần thiết trong câu."
-                        })
-                    result_words.append({
-                        "text": orig_word,
-                        "isCorrect": True,
-                        "suggestion": None
-                    })
-                    i += 1
-                    j += look_ahead + 1
-                    found_match = True
-                    break
-            
-            if not found_match:
-                suggestion = None
-                if orig_word in incorrect_map:
-                    suggestion = incorrect_map[orig_word].get("suggestion")
-                result_words.append({
-                    "text": orig_word,
-                    "isCorrect": False,
-                    "suggestion": suggestion or f"Cần phát âm rõ '{orig_word}'."
-                })
-                i += 1
-                j += 1
-    
-    while j < len(trans_words):
-        trans_word = trans_words[j]
-        if trans_word in auxiliary_words:
-            j += 1
-            continue
-        
-        result_words.append({
-            "text": trans_word,
-            "isCorrect": False,
-            "suggestion": f"Từ '{trans_word}' không cần thiết trong câu."
-        })
-        j += 1
-    
-    return result_words, orig_hiragana, llm_analysis
-
-async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
-    """Analyze audio features and return basic analysis results with improved scoring."""
+    user_audio_path = None
     try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as user_temp:
+            user_content = await user_audio.read()
+            user_temp.write(user_content)
+            user_audio_path = user_temp.name
+            user_audio.file.seek(0)
+            
+        sample_audio_path = None
+        if type:
+            # Determine sample path based on type
+            if type == "conversation":
+                sample_path = get_sample_audio_path("conversation", reference_text)
+            elif type == "vocabulary":
+                sample_path = get_sample_audio_path("vocabulary", reference_text)
+            else:
+                sample_path = None
+            
+            logger.info(f"Type: {type}, Reference text: {reference_text}")
+            logger.info(f"Constructed sample path: {sample_path}")
+           
+            if sample_path and os.path.exists(sample_path):
+                sample_audio_path = sample_path
+                logger.info(f"Sample file found: {sample_audio_path}")
+            else:
+                sample_audio_path = None
+                logger.info(f"Sample file NOT found at: {sample_path}")
+        else:
+            logger.info("No type provided, skipping sample audio")
+            
+        if not reference_text:
+            reference_text = ""
+            
+        # Transcribe user audio
+        try:
+            with open(user_audio_path, "rb") as audio_file:
+                response = client.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=audio_file,
+                    language="ja"
+                )
+                transcription = response.text
+        except Exception as e:
+            transcription = reference_text
+
+        # Load audio files
+        try:
+            user_y, sr = librosa.load(user_audio_path, sr=16000)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Cannot read audio file: {str(e)}")
+            
+        sample_y = None
+        if sample_audio_path and os.path.exists(sample_audio_path):
+            try:
+                sample_y, _ = librosa.load(sample_audio_path, sr=sr)
+            except Exception as e:
+                sample_y = None
+
+        # ===== INTEGRATED AUDIO FEATURES ANALYSIS =====
         
         # Check audio energy first to validate audio quality
         audio_rms = np.sqrt(np.mean(user_y**2))
@@ -310,7 +438,12 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
         user_pitch_data = []
         sample_pitch_data = []
         
-        # Check if audio has enough energy to analyze
+        # ===== PITCH AND INTONATION ANALYSIS =====
+        
+        # Initialize pitch contour variables at the beginning
+        user_pitch_contour = None
+        sample_pitch_contour = None
+        
         if audio_rms < 0.01:
             intonation = "Không thể phân tích ngữ điệu (âm thanh quá yếu)"
         else:
@@ -324,9 +457,6 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
                 pitch_std = np.std(pitch_values)
                 
                 # Analyze pitch contour for more detailed intonation information
-                user_pitch_contour = None
-                sample_pitch_contour = None
-                
                 try:
                     # Extract pitch contour (F0) using more precise method
                     if len(user_y) > 0:
@@ -370,6 +500,8 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
                             sample_pitch_std = np.std(sample_pitch_contour) if len(sample_pitch_contour) > 0 else 0
                 except Exception as e:
                     logger.error(f"Error extracting pitch contours: {str(e)}")
+                    user_pitch_contour = None
+                    sample_pitch_contour = None
                     
                 # Calculate intonation score based on comparison with sample or sensible defaults
                 if (sample_pitch_contour is not None and len(sample_pitch_contour) > 10 and 
@@ -432,9 +564,6 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
                         else:
                             # Too high
                             intonation_score = int(max(10, 50 - (pitch_mean - 400) / 10))
-            else:
-                intonation_score = 0
-                intonation = "Không thể phân tích ngữ điệu (không phát hiện cao độ)"
         
         # Ensure score is within valid range
         intonation_score = max(0, min(100, intonation_score))
@@ -454,7 +583,7 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
         user_pitch_data = user_pitch_contour.tolist() if user_pitch_contour is not None and len(user_pitch_contour) > 0 else []
         sample_pitch_data = sample_pitch_contour.tolist() if sample_pitch_contour is not None and len(sample_pitch_contour) > 0 else []
 
-        # Phân tích formant với Parselmouth
+        # Formant analysis with Parselmouth
         try:
             snd = parselmouth.Sound(np.array(user_y), sr)
             formants = snd.to_formant_burg()
@@ -520,7 +649,7 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
             f1_values = []
             sample_f1_values = []
         
-        # Set status text based on the calculated score
+        # Set clarity status text based on the calculated score
         if clarity_score >= 90:
             clarity = "Độ rõ xuất sắc"
         elif clarity_score >= 75:
@@ -536,48 +665,15 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
             else:
                 clarity = "Cần cải thiện độ rõ khi phát âm"
         
-        # Phân tích nhịp điệu (REMOVED)
-        rhythm_score = 0
-        rhythm = "Không áp dụng"
-        onsets = []
-        expected_syllables = 0
-
-        # So sánh văn bản
-        try:
-            # First check if we have valid transcription text
-            if not transcription or transcription.strip() == "":
-                text_score = 0
-                has_text_match = False
-            else:
-                # Clean texts for comparison
-                transcription_clean = await clean_text(transcription)
-                original_clean = await clean_text(sentence)
-                
-                if len(original_clean) > 0 and len(transcription_clean) > 0:
-                    # Calculate similarity using character-by-character comparison
-                    common_length = min(len(transcription_clean), len(original_clean))
-                    matches = sum(a == b for a, b in zip(transcription_clean[:common_length], original_clean[:common_length]))
-                    
-                    # Calculate additional penalty for length difference
-                    length_diff = abs(len(transcription_clean) - len(original_clean))
-                    max_length = max(len(transcription_clean), len(original_clean))
-                    
-                    # Calculate final similarity score with length penalty
-                    if max_length > 0:
-                        text_similarity = (matches / max_length) * (1 - 0.5 * (length_diff / max_length))
-                        text_score = int(text_similarity * 100)
-                        has_text_match = text_score > 0
-                    else:
-                        text_score = 0
-                        has_text_match = False
-                    
-                else:
-                    text_score = 0
-                    has_text_match = False
-                
-        except Exception as e:
-            text_score = 0
-            has_text_match = False
+        # ===== TEXT COMPARISON WITH ENHANCED TOKENIZATION =====
+        
+        # Get complete comparison structure with original sentence structure
+        comparison_result = await compare_words_with_structure(reference_text, transcription)
+        
+        # Use the hybrid comparison result for text scoring
+        hybrid_result = await compare_texts_hybrid(reference_text, transcription)
+        text_score = int(hybrid_result['hybrid_similarity'] * 100)
+        has_text_match = text_score > 0
         
         # Reset intonation and clarity scores if there's no text match
         if not has_text_match:
@@ -586,11 +682,8 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
             clarity_score = 0
             clarity = "Không thể phân tích độ rõ (không khớp văn bản)"
 
-        # So sánh với âm thanh mẫu nếu có
-        audio_similarity = 0
-        # Removed audio similarity calculation here
+        # ===== FINAL SCORE CALCULATION =====
 
-        # Tính điểm cuối cùng với công thức cải tiến - without rhythm or audio
         try:
             # If text score is 0 (no match), the overall score should be zero
             if text_score == 0:
@@ -610,294 +703,77 @@ async def analyze_audio_features(user_y, sr, sample_y, sentence, transcription):
                 
                 # Ensure score is within valid range
                 score = max(0, min(100, score))
-                
-            # Generate appropriate feedback based on score
-            if score == 0:
-                feedback = "Không thể đánh giá - không nhận diện được văn bản khớp với câu mẫu."
-            elif score < 10:
-                feedback = "Hãy thử tập đọc câu mẫu và ghi âm lại."
-            elif score < 30:
-                feedback = "Cần cải thiện phát âm nhiều hơn."
-            elif score < 50:
-                feedback = "Phát âm trung bình, cần cải thiện nhiều mặt."
-            elif score < 70:
-                feedback = "Phát âm khá tốt, cần cải thiện một số chi tiết."
-            elif score < 85:
-                feedback = "Phát âm tốt!"
-            elif score < 95:
-                feedback = "Phát âm rất tốt!"
-            else:
-                feedback = "Phát âm xuất sắc!"
             
         except Exception as e:
             score = 0
-            feedback = "Không thể tính điểm - hãy thử lại."
-
-        return {
-            "score": score,
-            "feedback": feedback,
-            "intonation": intonation,
-            "clarity": clarity,
-            "rhythm": rhythm,
+        
+        # Generate AI-powered feedback (this will be the main feedback)
+        ai_feedback = await generate_personalized_feedback(
+            comparison_result["enhanced_words"], 
+            reference_text, 
+            transcription, 
+            comparison_result["llm_analysis"],
+            score,
+            intonation_score,
+            clarity_score,
+            text_score
+        )
+        
+        # Create optimized result structure
+        result = {
+            # Core analysis results
+            "score": int(score),
+            "feedback": ai_feedback,  # Use AI-generated feedback as main feedback
             "transcription": transcription,
-            "words": [],  # Will be filled by the enhanced analysis
-            # Add component scores with precise values
-            "intonationScore": intonation_score,
-            "clarityScore": clarity_score,
-            "rhythmScore": rhythm_score, 
-            "textScore": text_score,
-            # Add raw measurements for reference
-            "pitchMean": round(float(pitch_mean), 2),
-            "f1Mean": round(float(f1_mean), 2),
-            # Include formula weights for frontend display
-            "formulaWeights": {
-                "withoutAudio": {
-                    "text": 0.7,
-                    "intonation": 0.15,
-                    "clarity": 0.15
+            
+            # Component analysis
+            "analysis": {
+                "intonation": {
+                    "status": intonation,
+                    "score": float(intonation_score)
+                },
+                "clarity": {
+                    "status": clarity,
+                    "score": float(clarity_score)
+                },
+                "text": {
+                    "score": float(text_score),
+                    "similarity_ratio": float(comparison_result["token_comparison"]["similarity_ratio"])
                 }
             },
-            "userPitchData": [],
-            "samplePitchData": sample_pitch_data,
-            # Add formant data for visualization
-            "userFormantData": [],
-            "sampleFormantData": sample_f1_values if sample_f1_values and len(sample_f1_values) > 0 else []
-        }
-
-    except Exception as e:
-        f1_mean = 500
-        clarity_score = 50
-        f1_values = []
-        sample_f1_values = []
-        
-        # Set status text based on the calculated score
-        if clarity_score >= 90:
-            clarity = "Độ rõ xuất sắc"
-        elif clarity_score >= 75:
-            clarity = "Độ rõ tốt"
-        elif clarity_score >= 50:
-            clarity = "Độ rõ chấp nhận được"
-        else:
-            # Provide more actionable feedback based on F1 value
-            if f1_mean < 450:
-                clarity = "Cần mở rộng miệng hơn khi phát âm"
-            elif f1_mean > 650:
-                clarity = "Cần điều chỉnh vị trí lưỡi khi phát âm"
-            else:
-                clarity = "Cần cải thiện độ rõ khi phát âm"
-        
-        # Phân tích nhịp điệu (REMOVED)
-        rhythm_score = 0
-        rhythm = "Không áp dụng"
-        onsets = []
-        expected_syllables = 0
-
-        # So sánh văn bản
-        try:
-            # First check if we have valid transcription text
-            if not transcription or transcription.strip() == "":
-                text_score = 0
-                has_text_match = False
-            else:
-                # Clean texts for comparison
-                transcription_clean = await clean_text(transcription)
-                original_clean = await clean_text(sentence)
-                
-                if len(original_clean) > 0 and len(transcription_clean) > 0:
-                    # Calculate similarity using character-by-character comparison
-                    common_length = min(len(transcription_clean), len(original_clean))
-                    matches = sum(a == b for a, b in zip(transcription_clean[:common_length], original_clean[:common_length]))
-                    
-                    # Calculate additional penalty for length difference
-                    length_diff = abs(len(transcription_clean) - len(original_clean))
-                    max_length = max(len(transcription_clean), len(original_clean))
-                    
-                    # Calculate final similarity score with length penalty
-                    if max_length > 0:
-                        text_similarity = (matches / max_length) * (1 - 0.5 * (length_diff / max_length))
-                        text_score = int(text_similarity * 100)
-                        has_text_match = text_score > 0
-                    else:
-                        text_score = 0
-                        has_text_match = False
-                    
-                else:
-                    text_score = 0
-                    has_text_match = False
-                
-        except Exception as e:
-            text_score = 0
-            has_text_match = False
-        
-        # Reset intonation and clarity scores if there's no text match
-        if not has_text_match:
-            intonation_score = 0
-            intonation = "Không thể phân tích ngữ điệu (không khớp văn bản)"
-            clarity_score = 0
-            clarity = "Không thể phân tích độ rõ (không khớp văn bản)"
-
-        # So sánh với âm thanh mẫu nếu có
-        audio_similarity = 0
-        # Removed audio similarity calculation here
-
-        # Tính điểm cuối cùng với công thức cải tiến - without rhythm or audio
-        try:
-            # If text score is 0 (no match), the overall score should be zero
-            if text_score == 0:
-                score = 0
-            else:
-                # Regular score calculation when there's some text match
-                # Calculate the final score based on the component scores - without rhythm
-                weighted_score = (text_score * 0.7) + (intonation_score * 0.15) + (clarity_score * 0.15)
-                
-                # Allow exceptional performance to reach 100
-                if text_score >= 95 and intonation_score >= 95 and clarity_score >= 95:
-                    # Bonus for excellent performance across all metrics
-                    bonus_factor = min(1.0, ((text_score + intonation_score + clarity_score) / 300) * 1.05)
-                    score = int(weighted_score * bonus_factor)
-                else:
-                    score = int(weighted_score)
-                
-                # Ensure score is within valid range
-                score = max(0, min(100, score))
-                
-            # Generate appropriate feedback based on score
-            if score == 0:
-                feedback = "Không thể đánh giá - không nhận diện được văn bản khớp với câu mẫu."
-            elif score < 10:
-                feedback = "Hãy thử tập đọc câu mẫu và ghi âm lại."
-            elif score < 30:
-                feedback = "Cần cải thiện phát âm nhiều hơn."
-            elif score < 50:
-                feedback = "Phát âm trung bình, cần cải thiện nhiều mặt."
-            elif score < 70:
-                feedback = "Phát âm khá tốt, cần cải thiện một số chi tiết."
-            elif score < 85:
-                feedback = "Phát âm tốt!"
-            elif score < 95:
-                feedback = "Phát âm rất tốt!"
-            else:
-                feedback = "Phát âm xuất sắc!"
             
-        except Exception as e:
-            score = 0
-            feedback = "Không thể tính điểm - hãy thử lại."
-
-        return {
-            "score": score,
-            "feedback": feedback,
-            "intonation": intonation,
-            "clarity": clarity,
-            "rhythm": rhythm,
-            "transcription": transcription,
-            "words": [],  # Will be filled by the enhanced analysis
-            # Add component scores with precise values
-            "intonationScore": intonation_score,
-            "clarityScore": clarity_score,
-            "rhythmScore": rhythm_score, 
-            "textScore": text_score,
-            # Add raw measurements for reference
-            "pitchMean": round(float(pitch_mean), 2),
-            "f1Mean": round(float(f1_mean), 2),
-            # Include formula weights for frontend display
-            "formulaWeights": {
-                "withoutAudio": {
-                    "text": 0.7,
-                    "intonation": 0.15,
-                    "clarity": 0.15
-                }
+            # Raw measurements
+            "measurements": {
+                "pitchMean": float(pitch_mean),
+                "f1Mean": float(f1_mean)
             },
-            "userPitchData": user_pitch_data,
-            "samplePitchData": sample_pitch_data,
-            # Add formant data for visualization
-            "userFormantData": f1_values if f1_values and len(f1_values) > 0 else [],
-            "sampleFormantData": sample_f1_values if sample_f1_values and len(sample_f1_values) > 0 else []
+            
+            # Text analysis results
+            "textAnalysis": {
+                "originalStructure": comparison_result["original_structure"],
+                "enhancedWords": comparison_result["enhanced_words"],
+                "tokenComparison": {
+                    "matched_tokens": comparison_result["token_comparison"]["matched_tokens"],
+                    "original_tokens": comparison_result["token_comparison"]["original_tokens"],
+                    "transcription_tokens": comparison_result["token_comparison"]["transcription_tokens"]
+                },
+                "llmAnalysis": comparison_result["llm_analysis"]
+            }
         }
-
-async def analyze_audio_enhanced(user_audio: UploadFile, 
-                            reference_text: str = Form(None),
-                            type: str = Form(None)):
-    """Enhanced audio analysis with LLM and hiragana normalization."""
-    
-    user_audio_path = None
-    try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as user_temp:
-            user_content = await user_audio.read()
-            user_temp.write(user_content)
-            user_audio_path = user_temp.name
-            user_audio.file.seek(0)
-            
-        sample_audio_path = None
-        if type:
-            # Determine sample path based on type
-            if type == "conversation":
-                sample_path = f"/home/tufng/Desktop/DATN/nihongo-it/services/ai-service/src/main/resources/conversation/{reference_text}.mp3"
-            elif type == "vocabulary":
-                sample_path = f"/home/tufng/Desktop/DATN/nihongo-it/services/ai-service/src/main/resources/vocabulary/{reference_text}.mp3"
-            else:
-                sample_path = None
-            
-            logger.info(f"Type: {type}, Reference text: {reference_text}")
-            logger.info(f"Constructed sample path: {sample_path}")
-           
-            if sample_path and os.path.exists(sample_path):
-                sample_audio_path = sample_path
-                logger.info(f"Sample file found: {sample_audio_path}")
-            else:
-                sample_audio_path = None
-                logger.info(f"Sample file NOT found at: {sample_path}")
-        else:
-            logger.info("No type provided, skipping sample audio")
-            
-        if not reference_text:
-            reference_text = ""
-            
-        try:
-            with open(user_audio_path, "rb") as audio_file:
-                response = client.audio.transcriptions.create(
-                    model="whisper-1",
-                    file=audio_file,
-                    language="ja"
-                )
-                transcription = response.text
-        except Exception as e:
-            transcription = reference_text
-
-
-        try:
-            user_y, sr = librosa.load(user_audio_path, sr=16000)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Cannot read audio file: {str(e)}")
-            
-        sample_y = None
-        if sample_audio_path and os.path.exists(sample_audio_path):
-            try:
-                sample_y, _ = librosa.load(sample_audio_path, sr=sr)
-            except Exception as e:
-                sample_y = None
-                
-        result = await analyze_audio_features(user_y, sr, sample_y, reference_text, transcription)
-            
-        words, _, llm_result = await compare_words_enhanced(reference_text, transcription)
-        
-        personalized_feedback = await generate_personalized_feedback(
-            words, reference_text, transcription, llm_result)
-        
-        result["words"] = words
-        result["personalizedFeedback"] = personalized_feedback
         
         if user_audio_path and os.path.exists(user_audio_path):
             os.unlink(user_audio_path)
             
         return result
+        
     except Exception as e:
         if user_audio_path and os.path.exists(user_audio_path):
             try:
                 os.unlink(user_audio_path)
             except:
                 pass
-                
-        raise HTTPException(status_code=500, detail=f"Enhanced analysis error: {str(e)}")
+        logger.error(f"Error in analyze_audio_enhanced: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Audio analysis failed: {str(e)}")
 
 @app.post("/analyze-audio-enhanced", response_class=JSONResponse)
 async def analyze_enhanced_endpoint(
@@ -965,6 +841,311 @@ async def general_exception_handler(request: Request, exc: Exception):
             status_code=500,
             content={"detail": "Internal server error - enable DEBUG_MODE for details"},
         )
+
+async def normalize_width(text: str) -> str:
+    """Normalize full-width and half-width characters using mojimoji."""
+    try:
+        # Convert half-width characters to full-width for Japanese text consistency
+        return mojimoji.han_to_zen(text)
+    except Exception as e:
+        logger.warning(f"Error in mojimoji normalization: {e}, falling back to original text")
+        return text
+
+async def process_text_to_tokens(text: str) -> list:
+    """
+    Process text and return array of hiragana tokens instead of joined string.
+    This preserves word boundaries for better comparison.
+    """
+    logger.info(f"Processing text to tokens: '{text}'")
+    
+    # Step 1: Strip whitespace
+    text = text.strip()
+    logger.info(f"After stripping: '{text}'")
+    
+    # Step 2: Normalize character width (full-width/half-width)
+    text = await normalize_width(text)
+    logger.info(f"After width normalization: '{text}'")
+    
+    # Step 3: Tokenize first to preserve semantic meaning
+    tokens = await tokenize_japanese(text)
+    logger.info(f"After tokenization: {tokens}")
+    
+    # Step 4: Clean each token individually to preserve word boundaries
+    cleaned_tokens = []
+    for token in tokens:
+        cleaned_token = await clean_text(token)
+        if cleaned_token.strip():  # Only keep non-empty tokens
+            cleaned_tokens.append(cleaned_token)
+    logger.info(f"After cleaning tokens: {cleaned_tokens}")
+    
+    # Step 5: Convert each cleaned token to hiragana
+    hiragana_tokens = []
+    for token in cleaned_tokens:
+        hiragana_token = await to_hiragana(token)
+        hiragana_tokens.append(hiragana_token)
+    logger.info(f"Final hiragana tokens: {hiragana_tokens}")
+    
+    return hiragana_tokens
+
+async def compare_words_enhanced(original: str, transcription: str) -> tuple:
+    """Enhanced word comparison using hiragana normalization and SequenceMatcher algorithm."""
+    
+    # Get tokenized versions for comparison
+    original_tokens = await process_text_to_tokens(original)
+    transcription_tokens = await process_text_to_tokens(transcription)
+    
+    # Use token-level comparison instead of the old SequenceMatcher
+    token_comparison = await compare_token_arrays(original_tokens, transcription_tokens)
+    
+    # Also get LLM analysis for additional insights
+    llm_analysis = await analyze_with_llm(original, transcription)
+    auxiliary_words = set(llm_analysis.get("auxiliary_words", []))
+    incorrect_map = {item["word"]: item for item in llm_analysis.get("incorrect_words", [])}
+    
+    # Create enhanced words based on token comparison
+    enhanced_words = []
+    matched_tokens = set(token_comparison["matched_tokens"])
+    
+    for token in original_tokens:
+        is_correct = token in matched_tokens
+        
+        # Check if LLM has specific suggestions for this word
+        if token in incorrect_map and not is_correct:
+            suggestion = incorrect_map[token].get("suggestion", f"Cần chú ý phát âm '{token}' rõ ràng hơn")
+        else:
+            suggestion = None if is_correct else f"Cần chú ý phát âm '{token}' rõ ràng hơn"
+        
+        enhanced_words.append({
+            "text": token,
+            "isCorrect": is_correct,
+            "suggestion": suggestion
+        })
+    
+    # Create hiragana mapping for compatibility
+    orig_hiragana = {}
+    for token in original_tokens:
+        orig_hiragana[token] = token  # Already in hiragana from process_text_to_tokens
+    
+    # Add token comparison metrics to LLM analysis
+    llm_analysis["token_similarity_ratio"] = token_comparison["similarity_ratio"]
+    llm_analysis["matched_tokens"] = token_comparison["matched_tokens"]
+    
+    logger.info(f"Token similarity ratio: {token_comparison['similarity_ratio']:.3f}")
+    logger.info(f"Original tokens: {token_comparison['original_tokens']}")
+    logger.info(f"Transcription tokens: {token_comparison['transcription_tokens']}")
+    
+    return enhanced_words, orig_hiragana, llm_analysis
+
+async def compare_token_arrays(original_tokens: list, transcription_tokens: list) -> dict:
+    """
+    Compare two arrays of tokens using SequenceMatcher.
+    This provides more accurate comparison than string-based comparison.
+    """
+    logger.info(f"Comparing token arrays:")
+    logger.info(f"  Original: {original_tokens}")
+    logger.info(f"  Transcription: {transcription_tokens}")
+    
+    # Use SequenceMatcher on token arrays
+    matcher = difflib.SequenceMatcher(None, original_tokens, transcription_tokens)
+    similarity_ratio = matcher.ratio()
+    
+    # Get matching blocks for detailed analysis
+    matching_blocks = matcher.get_matching_blocks()
+    
+    # Calculate matched tokens
+    matched_tokens = []
+    for match in matching_blocks:
+        if match.size > 0:  # Ignore the final dummy block
+            matched_tokens.extend(original_tokens[match.a:match.a + match.size])
+    
+    # Get opcodes for detailed diff analysis
+    opcodes = matcher.get_opcodes()
+    
+    result = {
+        "similarity_ratio": similarity_ratio,
+        "original_tokens": original_tokens,
+        "transcription_tokens": transcription_tokens,
+        "matched_tokens": matched_tokens,
+        "matching_blocks": matching_blocks,
+        "opcodes": opcodes,
+        "total_original_tokens": len(original_tokens),
+        "total_transcription_tokens": len(transcription_tokens),
+        "total_matched_tokens": len(matched_tokens)
+    }
+    
+    logger.info(f"Similarity ratio: {similarity_ratio:.3f}")
+    logger.info(f"Matched tokens: {matched_tokens}")
+    
+    return result
+
+async def compare_texts_hybrid(original: str, transcription: str) -> dict:
+    """
+    Hybrid comparison that combines token-level and character-level analysis.
+    This provides more accurate results for Japanese text comparison.
+    """
+    logger.info(f"Hybrid comparison: '{original}' vs '{transcription}'")
+    
+    # Get tokens for both texts
+    original_tokens = await process_text_to_tokens(original)
+    transcription_tokens = await process_text_to_tokens(transcription)
+    
+    # Method 1: Token-level comparison (for structural similarity)
+    token_result = await compare_token_arrays(original_tokens, transcription_tokens)
+    token_similarity = token_result['similarity_ratio']
+    
+    # Method 2: Character-level comparison (for phonetic similarity)
+    original_string = ''.join(original_tokens)
+    transcription_string = ''.join(transcription_tokens)
+    
+    char_matcher = difflib.SequenceMatcher(None, original_string, transcription_string)
+    char_similarity = char_matcher.ratio()
+    
+    # Method 3: Individual token similarity (for partial matches)
+    token_similarities = []
+    max_tokens = max(len(original_tokens), len(transcription_tokens))
+    
+    if max_tokens > 0:
+        for i in range(max_tokens):
+            orig_token = original_tokens[i] if i < len(original_tokens) else ""
+            trans_token = transcription_tokens[i] if i < len(transcription_tokens) else ""
+            
+            if orig_token and trans_token:
+                token_sim = difflib.SequenceMatcher(None, orig_token, trans_token).ratio()
+                token_similarities.append(token_sim)
+            else:
+                token_similarities.append(0.0)
+    
+    avg_token_similarity = sum(token_similarities) / len(token_similarities) if token_similarities else 0.0
+    
+    # Weighted combination of all methods
+    # Token structure: 40%, Character similarity: 40%, Individual tokens: 20%
+    hybrid_similarity = (
+        token_similarity * 0.4 + 
+        char_similarity * 0.4 + 
+        avg_token_similarity * 0.2
+    )
+    
+    result = {
+        "hybrid_similarity": hybrid_similarity,
+        "token_similarity": token_similarity,
+        "character_similarity": char_similarity,
+        "average_token_similarity": avg_token_similarity,
+        "original_tokens": original_tokens,
+        "transcription_tokens": transcription_tokens,
+        "original_string": original_string,
+        "transcription_string": transcription_string,
+        "individual_token_similarities": token_similarities,
+        "analysis": {
+            "structural_match": token_similarity > 0.8,
+            "phonetic_match": char_similarity > 0.8,
+            "partial_match": avg_token_similarity > 0.6,
+            "overall_match": hybrid_similarity > 0.7
+        }
+    }
+    
+    logger.info(f"Hybrid similarity: {hybrid_similarity:.3f}")
+    logger.info(f"  Token: {token_similarity:.3f}, Char: {char_similarity:.3f}, Avg Token: {avg_token_similarity:.3f}")
+    
+    return result
+
+async def get_original_sentence_structure(original: str) -> dict:
+    """
+    Get detailed structure of the original sentence with tokenization info.
+    Returns original tokens with their hiragana conversions and positions.
+    """
+    logger.info(f"Getting original sentence structure for: '{original}'")
+    
+    # Step 1: Get original tokens (before any processing)
+    original_tokens = await tokenize_japanese(original)
+    
+    # Step 2: Create detailed structure for each token
+    sentence_structure = []
+    current_position = 0
+    
+    for i, token in enumerate(original_tokens):
+        # Get hiragana conversion for this token
+        hiragana = await to_hiragana(token)
+        
+        # Find position in original text
+        token_start = original.find(token, current_position)
+        token_end = token_start + len(token) if token_start != -1 else current_position + len(token)
+        
+        token_info = {
+            "index": i,
+            "original": token,
+            "hiragana": hiragana,
+            "position": {
+                "start": token_start,
+                "end": token_end
+            },
+            "isCorrect": True,  # Default, will be updated during comparison
+            "suggestion": None
+        }
+        
+        sentence_structure.append(token_info)
+        current_position = token_end
+    
+    return {
+        "original_text": original,
+        "tokens": sentence_structure,
+        "total_tokens": len(original_tokens)
+    }
+
+async def compare_words_with_structure(original: str, transcription: str) -> dict:
+    """
+    Enhanced comparison that returns both word analysis and original sentence structure.
+    """
+    logger.info(f"Comparing with structure: '{original}' vs '{transcription}'")
+    
+    # Get original sentence structure
+    original_structure = await get_original_sentence_structure(original)
+    
+    # Get enhanced word comparison
+    enhanced_words, orig_hiragana, llm_analysis = await compare_words_enhanced(original, transcription)
+    
+    # Get detailed token comparison
+    original_tokens = await process_text_to_tokens(original)
+    transcription_tokens = await process_text_to_tokens(transcription)
+    token_comparison = await compare_token_arrays(original_tokens, transcription_tokens)
+    
+    # Update correctness in original structure based on comparison
+    # Map enhanced_words back to original structure
+    enhanced_word_map = {word["text"]: word for word in enhanced_words}
+    
+    for token_info in original_structure["tokens"]:
+        hiragana_token = token_info["hiragana"]
+        if hiragana_token in enhanced_word_map:
+            word_result = enhanced_word_map[hiragana_token]
+            token_info["isCorrect"] = word_result["isCorrect"]
+            token_info["suggestion"] = word_result["suggestion"]
+        else:
+            # Check if this token appears in any of the enhanced words
+            found_match = False
+            for word in enhanced_words:
+                if hiragana_token in word["text"] or word["text"] in hiragana_token:
+                    token_info["isCorrect"] = word["isCorrect"]
+                    token_info["suggestion"] = word["suggestion"]
+                    found_match = True
+                    break
+            
+            if not found_match:
+                # Token not found in transcription - mark as incorrect
+                token_info["isCorrect"] = False
+                token_info["suggestion"] = f"Token '{token_info['original']}' not found in transcription"
+    
+    return {
+        "original_structure": original_structure,
+        "enhanced_words": enhanced_words,
+        "hiragana_mapping": orig_hiragana,
+        "llm_analysis": llm_analysis,
+        "token_comparison": {
+            "similarity_ratio": token_comparison["similarity_ratio"],
+            "original_tokens": token_comparison["original_tokens"],
+            "transcription_tokens": token_comparison["transcription_tokens"],
+            "matched_tokens": token_comparison["matched_tokens"]
+        },
+        "transcription_text": transcription
+    }
 
 if __name__ == "__main__":
     import uvicorn
