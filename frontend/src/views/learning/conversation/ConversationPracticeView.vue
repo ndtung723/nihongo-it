@@ -238,19 +238,19 @@
         </v-card-text>
       </v-card>
 
-      <!-- Feedback Summary Dialog -->
-      <v-dialog v-model="showFeedbackSummary" max-width="600">
-        <v-card>
-          <v-card-title class="text-h5 d-flex align-center">
-            <v-icon color="primary" class="mr-2">mdi-chart-box</v-icon>
+      <!-- Feedback Summary Section (replaces dialog) -->
+      <v-expand-transition>
+        <v-card v-if="isConversationCompleted && feedbackSummary" class="feedback-summary-card mb-6" variant="elevated">
+          <v-card-title class="text-h5 d-flex align-center bg-primary text-white">
+            <v-icon color="white" class="mr-2">mdi-chart-box</v-icon>
             Tổng kết luyện tập
           </v-card-title>
-          <v-card-text v-if="feedbackSummary">
+          <v-card-text>
             <div class="feedback-summary-container">
               <!-- Summary Stats -->
               <div class="d-flex justify-space-between align-center mb-4 stats-container">
                 <div class="stat-item">
-                  <div class="text-subtitle-1">Số lần luyện tập</div>
+                  <div class="text-subtitle-1">Số  câu hội thoại</div>
                   <div class="text-h5 text-primary">{{ feedbackSummary.attempts || 0 }}</div>
                 </div>
                 <div class="stat-item">
@@ -274,56 +274,50 @@
                 </v-card>
               </div>
 
-              <!-- Common Errors -->
-              <div class="common-errors mb-4" v-if="feedbackSummary.common_errors && feedbackSummary.common_errors.length > 0">
-                <h3 class="text-subtitle-1 font-weight-bold mb-2">
-                  <v-icon color="error" size="small" class="mr-1">mdi-alert-circle</v-icon>
-                  Lỗi thường gặp
-                </h3>
-                <v-list density="compact" class="error-list">
-                  <v-list-item v-for="(error, index) in feedbackSummary.common_errors" :key="index" class="error-item">
-                    <template v-slot:prepend>
-                      <v-icon size="small" color="error">mdi-close-circle</v-icon>
-                    </template>
-                    <v-list-item-title>{{ error }}</v-list-item-title>
-                  </v-list-item>
-                </v-list>
-              </div>
+              <div class="d-flex flex-wrap gap-4">
+                <!-- Common Errors -->
+                <div class="common-errors flex-grow-1" v-if="feedbackSummary.common_errors && feedbackSummary.common_errors.length > 0">
+                  <h3 class="text-subtitle-1 font-weight-bold mb-2">
+                    <v-icon color="error" size="small" class="mr-1">mdi-alert-circle</v-icon>
+                    Lỗi thường gặp
+                  </h3>
+                  <v-list density="compact" class="error-list">
+                    <v-list-item v-for="(error, index) in feedbackSummary.common_errors" :key="index" class="error-item">
+                      <template v-slot:prepend>
+                        <v-icon size="small" color="error">mdi-close-circle</v-icon>
+                      </template>
+                      <v-list-item-title>{{ error }}</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </div>
 
-              <!-- Improvement Tips -->
-              <div class="improvement-tips" v-if="feedbackSummary.improvement_tips && feedbackSummary.improvement_tips.length > 0">
-                <h3 class="text-subtitle-1 font-weight-bold mb-2">
-                  <v-icon color="success" size="small" class="mr-1">mdi-lightbulb</v-icon>
-                  Lời khuyên cải thiện
-                </h3>
-                <v-list density="compact" class="tip-list">
-                  <v-list-item v-for="(tip, index) in feedbackSummary.improvement_tips" :key="index" class="tip-item">
-                    <template v-slot:prepend>
-                      <v-icon size="small" color="success">mdi-check-circle</v-icon>
-                    </template>
-                    <v-list-item-title>{{ tip }}</v-list-item-title>
-                  </v-list-item>
-                </v-list>
+                <!-- Improvement Tips -->
+                <div class="improvement-tips flex-grow-1" v-if="feedbackSummary.improvement_tips && feedbackSummary.improvement_tips.length > 0">
+                  <h3 class="text-subtitle-1 font-weight-bold mb-2">
+                    <v-icon color="success" size="small" class="mr-1">mdi-lightbulb</v-icon>
+                    Lời khuyên cải thiện
+                  </h3>
+                  <v-list density="compact" class="tip-list">
+                    <v-list-item v-for="(tip, index) in feedbackSummary.improvement_tips" :key="index" class="tip-item">
+                      <template v-slot:prepend>
+                        <v-icon size="small" color="success">mdi-check-circle</v-icon>
+                      </template>
+                      <v-list-item-title>{{ tip }}</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </div>
               </div>
-            </div>
-          </v-card-text>
-          <v-card-text v-else>
-            <div class="d-flex justify-center align-center" style="min-height: 200px;">
-              <v-progress-circular indeterminate color="primary"></v-progress-circular>
             </div>
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn color="primary" variant="text" @click="showFeedbackSummary = false">
-              Đóng
-            </v-btn>
             <v-btn color="primary" variant="elevated" @click="restartConversation">
               <v-icon start>mdi-refresh</v-icon>
               Luyện tập lại
             </v-btn>
           </v-card-actions>
         </v-card>
-      </v-dialog>
+      </v-expand-transition>
     </template>
   </div>
 </template>
@@ -337,6 +331,7 @@ import axios, { AxiosError } from 'axios'
 import authService from '@/services/auth.service'
 import conversationService from '@/services/conversation.service'
 import aiService from '@/services/ai.service'
+import feedbackService from '@/services/feedback.service'
 import * as speechsdk from 'microsoft-cognitiveservices-speech-sdk'
 import speechRecognitionService from '@/services/SpeechRecognitionService'
 import type { FeedbackSummary } from '@/services/ai.service'
@@ -444,8 +439,7 @@ const azureSpeechRecognizer = ref<speechsdk.SpeechRecognizer | null>(null);
 // Cập nhật biến để theo dõi trạng thái đang phát âm
 const isPlayingAudio = ref(false);
 
-// New state for feedback summary
-const showFeedbackSummary = ref(false)
+// Update the state for feedback summary - remove showFeedbackSummary since we're not using a dialog
 const feedbackSummary = ref<FeedbackSummary | null>(null)
 const feedbackHistory = ref<SpeechAnalysisResult[]>([])
 
@@ -1135,7 +1129,19 @@ const markAsComplete = (index: number) => {
     // Add a small delay before showing the feedback summary
     setTimeout(() => {
       fetchFeedbackSummary();
+      // Scroll to the feedback summary after it's loaded
+      setTimeout(() => {
+        scrollToFeedbackSummary();
+      }, 500);
     }, 1000);
+  }
+}
+
+// Add function to scroll to feedback summary
+const scrollToFeedbackSummary = () => {
+  const feedbackElement = document.querySelector('.feedback-summary-card');
+  if (feedbackElement) {
+    feedbackElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
 
@@ -1493,10 +1499,25 @@ const fetchFeedbackSummary = async () => {
 
     // Fetch the summary
     feedbackSummary.value = null; // Reset while loading
-    showFeedbackSummary.value = true; // Show dialog with loading state
 
     const summary = await aiService.getFeedbackSummary(analysisResults, userLines);
     feedbackSummary.value = summary;
+
+    // Automatically save feedback to the server
+    if (conversation.value.id && authStore.user && authStore.user.userId) {
+      try {
+        const saved = await feedbackService.saveFeedback(
+          conversation.value.id,
+          summary,
+          authStore.user.userId.toString()
+        );
+        if (saved) {
+          console.log('Feedback saved successfully');
+        }
+      } catch (error) {
+        console.error('Error saving feedback:', error);
+      }
+    }
 
   } catch (error) {
     console.error('Error fetching feedback summary:', error);
@@ -1514,11 +1535,8 @@ const fetchFeedbackSummary = async () => {
   }
 }
 
-// Add function to restart conversation
+// Update the restartConversation function - remove dialog references
 const restartConversation = () => {
-  // Hide the dialog
-  showFeedbackSummary.value = false;
-
   // Reset all progress
   recordedAudioUrls.value = new Array(conversation.value?.dialogue.length || 0).fill(null);
   recordedAudioBlobs.value = new Array(conversation.value?.dialogue.length || 0).fill(null);
@@ -1529,6 +1547,9 @@ const restartConversation = () => {
   // Reset visible lines
   visibleLineIndices.value = [0];
   dimmedLineIndices.value = [];
+
+  // Reset feedback summary
+  feedbackSummary.value = null;
 
   // Check if second line is from Nihongo IT to show it dimmed
   if (conversation.value && conversation.value.dialogue.length > 1 &&
@@ -2075,6 +2096,27 @@ onUnmounted(() => {
     .text-error {
       color: #F44336 !important;
     }
+  }
+
+  .feedback-summary-card {
+    animation: slideUp 0.5s ease-out forwards;
+    transform-origin: bottom;
+    overflow: hidden;
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  }
+
+  .gap-4 {
+    gap: 1rem;
   }
 }
 </style>

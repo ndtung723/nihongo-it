@@ -53,6 +53,15 @@ export interface AIExplanationResponse {
   content: string;
 }
 
+export interface FeedbackSummary {
+  summary: string;
+  common_errors: string[];
+  improvement_tips: string[];
+  attempts?: number;
+  avg_score?: number;
+  max_score?: number;
+}
+
 class AIService {
   private baseUrl: string;
 
@@ -284,6 +293,27 @@ class AIService {
       return { content: JSON.stringify(data) };
     } catch (error) {
       throw error;
+    }
+  }
+
+  /**
+   * Get summary of feedback from multiple attempts
+   */
+  async getFeedbackSummary(feedbackList: SpeechAnalysisResult[], conversationText: string): Promise<FeedbackSummary> {
+    try {
+      const response = await api.post('/ai-service-api/v1/speech/summarize-feedback', {
+        feedback_list: feedbackList,
+        conversation_text: conversationText
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('Error getting feedback summary:', error);
+      return {
+        summary: 'Không thể tạo tóm tắt phản hồi.',
+        common_errors: [],
+        improvement_tips: []
+      };
     }
   }
 }
