@@ -24,6 +24,11 @@ interface ReviewLogRepository : JpaRepository<ReviewLogEntity, UUID> {
         GROUP BY CAST(review_timestamp AS DATE)
         ORDER BY CAST(review_timestamp AS DATE)
     """, nativeQuery = true)
+    fun getUserReviewStats(
+        @Param("userId") userId: UUID,
+        @Param("startDate") startDate: LocalDateTime,
+        @Param("endDate") endDate: LocalDateTime
+    ): List<Array<Any>>
 
     // Find reviews by user ID and date range
     fun findByUserIdAndReviewTimestampAfterOrderByReviewTimestampDesc(
@@ -52,7 +57,6 @@ interface ReviewLogRepository : JpaRepository<ReviewLogEntity, UUID> {
     ): List<Array<Any>>
     
     fun findTopByUserIdOrderByReviewTimestampDesc(userId: UUID): ReviewLogEntity?
-
 
     // Find reviews by user ID and date range (between two timestamps)
     fun findByUserIdAndReviewTimestampBetween(

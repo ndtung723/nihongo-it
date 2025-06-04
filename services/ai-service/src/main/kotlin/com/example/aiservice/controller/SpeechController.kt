@@ -35,4 +35,23 @@ class SpeechController {
             ))
         }
     }
+    
+    @PostMapping("/summarize-feedback")
+    fun summarizeFeedback(@RequestBody request: Map<String, Any>): ResponseEntity<Any> {
+        return try {
+            val feedbackList = request["feedback_list"] as? List<*> ?: emptyList<Any>()
+            val conversationText = request["conversation_text"] as? String ?: ""
+            
+            logger.info("Summarizing feedback for conversation: ${conversationText.take(30)}...")
+            
+            val summary = speechAnalysisService.summarizeFeedback(feedbackList, conversationText)
+            ResponseEntity.ok(summary)
+        } catch (e: Exception) {
+            logger.error("Error summarizing feedback", e)
+            ResponseEntity.badRequest().body(mapOf(
+                "error" to e.message,
+                "message" to "Lỗi khi tổng hợp phản hồi: ${e.message}"
+            ))
+        }
+    }
 } 

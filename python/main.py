@@ -1179,6 +1179,144 @@ async def compare_words_with_structure(original: str, transcription: str) -> dic
         "transcription_text": transcription
     }
 
+# Add these new functions before the app routes
+async def summarize_feedback_with_llm(feedback_list: List[Dict], conversation_text: str) -> Dict:
+    """Use LLM to summarize feedback from multiple attempts."""
+    try:
+        if not feedback_list or len(feedback_list) == 0:
+            return {
+                "summary": "Chưa có dữ liệu phản hồi nào.",
+                "common_errors": [],
+                "improvement_tips": []
+            }
+            
+        # Extract key information from feedback
+        attempts = len(feedback_list)
+        scores = [item.get("score", 0) for item in feedback_list]
+        avg_score = sum(scores) / len(scores) if scores else 0
+        max_score = max(scores) if scores else 0
+        
+        # Collect all transcriptions and feedback
+        transcriptions = [item.get("transcription", "") for item in feedback_list if item.get("transcription")]
+        feedbacks = [item.get("feedback", "") for item in feedback_list if item.get("feedback")]
+        
+        # Collect all incorrect words across attempts
+        all_incorrect_words = []
+        for item in feedback_list:
+            if item.get("textAnalysis") and item.get("textAnalysis").get("enhancedWords"):
+                for word in item["textAnalysis"]["enhancedWords"]:
+                    if not word.get("isCorrect", True):
+                        all_incorrect_words.append(word.get("text", ""))
+        
+        # Count frequency of incorrect words
+        word_count = {}
+        for word in all_incorrect_words:
+            if word in word_count:
+                word_count[word] += 1
+            else:
+                word_count[word] = 1
+                
+        # Get most common errors
+        common_errors = sorted(word_count.items(), key=lambda x: x[1], reverse=True)
+        common_errors = common_errors[:5]  # Top 5 most common errors
+        
+        # Create prompt for the LLM
+        prompt = f"""
+Phân tích và tổng hợp kết quả luyện tập phát âm tiếng Nhật:
+
+THÔNG TIN TỔNG QUAN:
+- Câu gốc: '{conversation_text}'
+- Số lần luyện tập: {attempts}
+- Điểm trung bình: {avg_score:.1f}/100
+- Điểm cao nhất: {max_score}/100
+
+CÁC LỖI THƯỜNG GẶP:
+{', '.join([f"'{word}' ({count} lần)" for word, count in common_errors])}
+
+PHẢN HỒI TỪ CÁC LẦN TRƯỚC:
+{' | '.join(feedbacks[:5])}
+
+YÊU CẦU:
+1. Tóm tắt ngắn gọn kết quả luyện tập (1-2 câu)
+2. Liệt kê 3-5 lỗi phát âm phổ biến nhất và cách sửa (dạng danh sách)
+3. Đưa ra 2-3 lời khuyên cụ thể để cải thiện (dạng danh sách)
+4. Viết bằng tiếng Việt, thân thiện và khuyến khích
+5. Tối đa 200 từ
+
+Trả về JSON có cấu trúc:
+{{
+  "summary": "tóm tắt ngắn gọn",
+  "common_errors": ["lỗi 1: cách sửa", "lỗi 2: cách sửa", ...],
+  "improvement_tips": ["lời khuyên 1", "lời khuyên 2", ...]
+}}
+"""
+        
+        # Call OpenAI API
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+            max_tokens=500,
+            response_format={"type": "json_object"}
+        )
+        
+        content = response.choices[0].message.content.strip()
+        result = json.loads(content)
+        
+        # Ensure the result has the expected structure
+        if not isinstance(result, dict):
+            result = {}
+        
+        return {
+            "summary": result.get("summary", "Không thể tạo tóm tắt."),
+            "common_errors": result.get("common_errors", []),
+            "improvement_tips": result.get("improvement_tips", []),
+            "attempts": attempts,
+            "avg_score": avg_score,
+            "max_score": max_score
+        }
+            
+    except Exception as e:
+        logger.error(f"Error summarizing feedback with LLM: {e}")
+        return {
+            "summary": "Đã xảy ra lỗi khi tạo tóm tắt.",
+            "common_errors": [],
+            "improvement_tips": [],
+            "error": str(e)
+        }
+
+# Add the new API endpoint after the existing endpoint
+@app.post("/summarize-feedback", response_class=JSONResponse)
+async def summarize_feedback_endpoint(
+    request: Request
+):
+    try:
+        # Parse the request body
+        body = await request.json()
+        
+        # Extract the feedback list and conversation text
+        feedback_list = body.get("feedback_list", [])
+        conversation_text = body.get("conversation_text", "")
+        
+        # Generate summary using LLM
+        result = await summarize_feedback_with_llm(feedback_list, conversation_text)
+        
+        return JSONResponse(content=result)
+    except Exception as e:
+        if DEBUG_MODE:
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "detail": f"Error summarizing feedback: {str(e)}",
+                    "traceback": traceback.format_exc()
+                }
+            )
+        else:
+            return JSONResponse(
+                status_code=500,
+                content={"detail": f"Error summarizing feedback: {str(e)}"}
+        )
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

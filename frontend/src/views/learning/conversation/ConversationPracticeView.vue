@@ -237,6 +237,93 @@
 
         </v-card-text>
       </v-card>
+
+      <!-- Feedback Summary Dialog -->
+      <v-dialog v-model="showFeedbackSummary" max-width="600">
+        <v-card>
+          <v-card-title class="text-h5 d-flex align-center">
+            <v-icon color="primary" class="mr-2">mdi-chart-box</v-icon>
+            Tổng kết luyện tập
+          </v-card-title>
+          <v-card-text v-if="feedbackSummary">
+            <div class="feedback-summary-container">
+              <!-- Summary Stats -->
+              <div class="d-flex justify-space-between align-center mb-4 stats-container">
+                <div class="stat-item">
+                  <div class="text-subtitle-1">Số lần luyện tập</div>
+                  <div class="text-h5 text-primary">{{ feedbackSummary.attempts || 0 }}</div>
+                </div>
+                <div class="stat-item">
+                  <div class="text-subtitle-1">Điểm trung bình</div>
+                  <div class="text-h5" :class="getScoreColorClass(feedbackSummary.avg_score || 0)">
+                    {{ Math.round(feedbackSummary.avg_score || 0) }}
+                  </div>
+                </div>
+                <div class="stat-item">
+                  <div class="text-subtitle-1">Điểm cao nhất</div>
+                  <div class="text-h5" :class="getScoreColorClass(feedbackSummary.max_score || 0)">
+                    {{ Math.round(feedbackSummary.max_score || 0) }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Summary Text -->
+              <div class="summary-text mb-4">
+                <v-card flat color="grey-lighten-4" class="pa-3">
+                  <p class="text-body-1">{{ feedbackSummary.summary }}</p>
+                </v-card>
+              </div>
+
+              <!-- Common Errors -->
+              <div class="common-errors mb-4" v-if="feedbackSummary.common_errors && feedbackSummary.common_errors.length > 0">
+                <h3 class="text-subtitle-1 font-weight-bold mb-2">
+                  <v-icon color="error" size="small" class="mr-1">mdi-alert-circle</v-icon>
+                  Lỗi thường gặp
+                </h3>
+                <v-list density="compact" class="error-list">
+                  <v-list-item v-for="(error, index) in feedbackSummary.common_errors" :key="index" class="error-item">
+                    <template v-slot:prepend>
+                      <v-icon size="small" color="error">mdi-close-circle</v-icon>
+                    </template>
+                    <v-list-item-title>{{ error }}</v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </div>
+
+              <!-- Improvement Tips -->
+              <div class="improvement-tips" v-if="feedbackSummary.improvement_tips && feedbackSummary.improvement_tips.length > 0">
+                <h3 class="text-subtitle-1 font-weight-bold mb-2">
+                  <v-icon color="success" size="small" class="mr-1">mdi-lightbulb</v-icon>
+                  Lời khuyên cải thiện
+                </h3>
+                <v-list density="compact" class="tip-list">
+                  <v-list-item v-for="(tip, index) in feedbackSummary.improvement_tips" :key="index" class="tip-item">
+                    <template v-slot:prepend>
+                      <v-icon size="small" color="success">mdi-check-circle</v-icon>
+                    </template>
+                    <v-list-item-title>{{ tip }}</v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </div>
+            </div>
+          </v-card-text>
+          <v-card-text v-else>
+            <div class="d-flex justify-center align-center" style="min-height: 200px;">
+              <v-progress-circular indeterminate color="primary"></v-progress-circular>
+            </div>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="primary" variant="text" @click="showFeedbackSummary = false">
+              Đóng
+            </v-btn>
+            <v-btn color="primary" variant="elevated" @click="restartConversation">
+              <v-icon start>mdi-refresh</v-icon>
+              Luyện tập lại
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </template>
   </div>
 </template>
@@ -252,6 +339,7 @@ import conversationService from '@/services/conversation.service'
 import aiService from '@/services/ai.service'
 import * as speechsdk from 'microsoft-cognitiveservices-speech-sdk'
 import speechRecognitionService from '@/services/SpeechRecognitionService'
+import type { FeedbackSummary } from '@/services/ai.service'
 
 // Define types
 interface FuriganaToken {
@@ -355,6 +443,11 @@ const azureSpeechRecognizer = ref<speechsdk.SpeechRecognizer | null>(null);
 
 // Cập nhật biến để theo dõi trạng thái đang phát âm
 const isPlayingAudio = ref(false);
+
+// New state for feedback summary
+const showFeedbackSummary = ref(false)
+const feedbackSummary = ref<FeedbackSummary | null>(null)
+const feedbackHistory = ref<SpeechAnalysisResult[]>([])
 
 // Computed
 const isConversationCompleted = computed(() => {
@@ -1038,6 +1131,11 @@ const markAsComplete = (index: number) => {
       position: 'top',
       duration: 3000
     });
+
+    // Add a small delay before showing the feedback summary
+    setTimeout(() => {
+      fetchFeedbackSummary();
+    }, 1000);
   }
 }
 
@@ -1365,6 +1463,104 @@ const generateFallbackFurigana = (text: string): FuriganaToken[] => {
   }
 
   return result;
+}
+
+// Add new function to fetch feedback summary
+const fetchFeedbackSummary = async () => {
+  if (!conversation.value) return;
+
+  try {
+    // Collect all non-null analysis results
+    const analysisResults = lineAnalysisResults.value.filter(result => result !== null) as SpeechAnalysisResult[];
+
+    // Store in history for future reference
+    feedbackHistory.value = [...analysisResults];
+
+    // Only proceed if we have results to analyze
+    if (analysisResults.length === 0) {
+      toast.warning('Không có đủ dữ liệu để tạo tổng kết', {
+        position: 'top',
+        duration: 3000
+      });
+      return;
+    }
+
+    // Get all user lines as a single string for context
+    const userLines = conversation.value.dialogue
+      .filter(line => line.speaker === 'user')
+      .map(line => line.japanese)
+      .join(' ');
+
+    // Fetch the summary
+    feedbackSummary.value = null; // Reset while loading
+    showFeedbackSummary.value = true; // Show dialog with loading state
+
+    const summary = await aiService.getFeedbackSummary(analysisResults, userLines);
+    feedbackSummary.value = summary;
+
+  } catch (error) {
+    console.error('Error fetching feedback summary:', error);
+    toast.error('Không thể tạo tổng kết phản hồi', {
+      position: 'top',
+      duration: 3000
+    });
+
+    // Provide fallback data
+    feedbackSummary.value = {
+      summary: 'Không thể tạo tổng kết phản hồi do lỗi kết nối.',
+      common_errors: [],
+      improvement_tips: ['Tiếp tục luyện tập để cải thiện phát âm.']
+    };
+  }
+}
+
+// Add function to restart conversation
+const restartConversation = () => {
+  // Hide the dialog
+  showFeedbackSummary.value = false;
+
+  // Reset all progress
+  recordedAudioUrls.value = new Array(conversation.value?.dialogue.length || 0).fill(null);
+  recordedAudioBlobs.value = new Array(conversation.value?.dialogue.length || 0).fill(null);
+  pronunciationScores.value = new Array(conversation.value?.dialogue.length || 0).fill(0);
+  lineCompletionStatus.value = new Array(conversation.value?.dialogue.length || 0).fill(false);
+  lineAnalysisResults.value = new Array(conversation.value?.dialogue.length || 0).fill(null);
+
+  // Reset visible lines
+  visibleLineIndices.value = [0];
+  dimmedLineIndices.value = [];
+
+  // Check if second line is from Nihongo IT to show it dimmed
+  if (conversation.value && conversation.value.dialogue.length > 1 &&
+      conversation.value.dialogue[1].speaker !== 'user') {
+    dimmedLineIndices.value.push(1);
+  }
+
+  // Start typing effect for first message
+  isTyping.value = true;
+  typedText.value = '';
+  currentTypeIndex.value = 0;
+
+  if (conversation.value && conversation.value.dialogue.length > 0) {
+    typeTextEffect(conversation.value.dialogue[0].japanese);
+  }
+
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  toast.info('Bắt đầu luyện tập lại', {
+    position: 'top',
+    duration: 2000
+  });
+}
+
+// Add helper function for score color class
+const getScoreColorClass = (score: number): string => {
+  if (score >= 90) return 'text-success';
+  if (score >= 80) return 'text-light-green';
+  if (score >= 70) return 'text-lime';
+  if (score >= 60) return 'text-warning';
+  return 'text-error';
 }
 
 onUnmounted(() => {
@@ -1826,6 +2022,58 @@ onUnmounted(() => {
     .azure-interim-text {
       font-size: 0.8rem;
       padding: 3px 6px;
+    }
+  }
+
+  .feedback-summary-container {
+    .stats-container {
+      background-color: #f5f5f5;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 0 8px;
+    }
+
+    .error-list, .tip-list {
+      background-color: #f5f5f5;
+      border-radius: 8px;
+      padding: 4px 0;
+    }
+
+    .error-item {
+      border-left: 2px solid #F44336;
+      margin-bottom: 4px;
+      background-color: rgba(244, 67, 54, 0.05);
+    }
+
+    .tip-item {
+      border-left: 2px solid #4CAF50;
+      margin-bottom: 4px;
+      background-color: rgba(76, 175, 80, 0.05);
+    }
+
+    .text-success {
+      color: #4CAF50 !important;
+    }
+
+    .text-light-green {
+      color: #8BC34A !important;
+    }
+
+    .text-lime {
+      color: #CDDC39 !important;
+    }
+
+    .text-warning {
+      color: #FFC107 !important;
+    }
+
+    .text-error {
+      color: #F44336 !important;
     }
   }
 }

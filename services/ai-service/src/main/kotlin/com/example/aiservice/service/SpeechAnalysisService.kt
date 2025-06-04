@@ -66,5 +66,36 @@ class SpeechAnalysisService {
             throw RuntimeException("Lỗi khi thực hiện phân tích nâng cao: ${e.message}")
         }
     }
-
+    
+    /**
+     * Summarize feedback from multiple attempts
+     */
+    fun summarizeFeedback(feedbackList: List<*>, conversationText: String): Map<String, Any> {
+        try {
+            logger.info("Sending feedback summary request to Python service")
+            
+            // Create request body
+            val requestBody = mapOf(
+                "feedback_list" to feedbackList,
+                "conversation_text" to conversationText
+            )
+            
+            // Send request to Python service
+            val response = webClient.post()
+                .uri("/summarize-feedback")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(requestBody))
+                .retrieve()
+                .bodyToMono(Map::class.java)
+                .blockOptional()
+                .orElseThrow { RuntimeException("Không có phản hồi từ dịch vụ Python") } as Map<String, Any>
+                
+            logger.info("Received feedback summary response from Python service")
+            
+            return response
+        } catch (e: Exception) {
+            logger.error("Error in feedback summary: ${e.message}")
+            throw RuntimeException("Lỗi khi tổng hợp phản hồi: ${e.message}")
+        }
+    }
 } 

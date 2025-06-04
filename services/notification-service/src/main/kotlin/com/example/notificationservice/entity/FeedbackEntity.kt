@@ -19,18 +19,12 @@ data class FeedbackEntity(
     @Column(name = "content_type", nullable = false)
     val contentType: String, // 'conversation', 'grammar', 'vocabulary'
 
+    @Column(name = "content", columnDefinition = "text")
+    val content: String?,
+
     @Column(name = "content_id", nullable = false)
-    val contentId: UUID,
-
-    @Column(name = "recording_url")
-    val recordingUrl: String?,
-
-    @Column(name = "ai_feedback", columnDefinition = "text")
-    val aiFeedback: String?,
+    val contentId: UUID,  //id of conversation
 
     @Column(name = "created_at", nullable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
-
-    @Column(name = "status", nullable = false)
-    val status: String = "unread" // 'unread', 'read'
 ) 
