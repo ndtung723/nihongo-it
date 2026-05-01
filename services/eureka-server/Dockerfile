@@ -1,11 +1,24 @@
-FROM eclipse-temurin:21-jre-alpine
+# Build stage — context = services/ (root multi-module project)
+FROM gradle:8.14-jdk21 AS builder
 WORKDIR /app
 
-# Copy pre-built JAR file
-COPY build/libs/*.jar app.jar
+COPY settings.gradle.kts build.gradle.kts ./
+COPY common common
+COPY eureka-server eureka-server
 
-# Set environment variables if needed
-ENV JAVA_OPTS=""
+RUN gradle :eureka-server:bootJar -x test --no-daemon
 
-# Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"] 
+# Runtime stage
+FROM eclipse-temurin:21-jre-jammy
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /app/eureka-server/build/libs/*-SNAPSHOT.jar app.jar
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8761/actuator/health || exit 1
+
+EXPOSE 8761
+
+ENTRYPOINT ["java", "-jar", "app.jar"]

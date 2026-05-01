@@ -1,10 +1,10 @@
 plugins {
     kotlin("jvm") version "1.9.25"
     kotlin("plugin.spring") version "1.9.25"
+    kotlin("plugin.jpa") version "1.9.25"
     id("org.springframework.boot") version "3.4.3"
     id("io.spring.dependency-management") version "1.1.7"
-    kotlin("plugin.jpa") version "1.9.25"
-    id("org.jlleitschuh.gradle.ktlint") version "12.2.0"
+    // id("org.jlleitschuh.gradle.ktlint") version "12.2.0"
 }
 
 group = "com.example"
@@ -23,6 +23,7 @@ repositories {
 extra["springCloudVersion"] = "2024.0.1"
 
 dependencies {
+    implementation(project(":common"))
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-web")
@@ -37,6 +38,8 @@ dependencies {
     // Database
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     runtimeOnly("org.postgresql:postgresql")
+    implementation("org.flywaydb:flyway-core")
+    implementation("org.flywaydb:flyway-database-postgresql")
     
     // JSON
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -49,6 +52,9 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-api:0.11.5")
     implementation("io.jsonwebtoken:jjwt-impl:0.11.5")
     implementation("io.jsonwebtoken:jjwt-jackson:0.11.5")
+
+    // Add Kuromoji for Japanese text analysis
+    implementation("com.atilika.kuromoji:kuromoji-ipadic:0.9.0")
     
     // OpenAPI
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
@@ -88,13 +94,13 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-ktlint {
-    version.set("0.50.0")
-    verbose.set(true)
-    outputToConsole.set(true)
-    outputColorName.set("RED")
-    filter {
-        exclude("**/generated/**")
-        include("**/kotlin/**") 
-    }
-} 
+// ktlint {
+//     version.set("0.50.0")
+//     verbose.set(true)
+//     outputToConsole.set(true)
+//     outputColorName.set("RED")
+//     filter {
+//         exclude("**/generated/**")
+//         include("**/kotlin/**")
+//     }
+// } 

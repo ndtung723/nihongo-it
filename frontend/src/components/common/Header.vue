@@ -51,14 +51,14 @@
       >
         Dịch thuật
       </v-btn>
-      <v-btn
+      <!-- <v-btn
         variant="text"
         :to="{ name: 'furigana' }"
         density="compact"
         class="mx-1 nav-btn"
       >
         Furigana
-      </v-btn>
+      </v-btn> -->
     </div>
 
     <!-- Mobile Menu Button -->
@@ -92,10 +92,79 @@
 
     <!-- User Avatar & Dropdown (for logged in users) -->
     <div v-else class="d-flex align-center">
-      <!-- Notification Button -->
-      <v-btn icon color="blue" variant="text" size="small" class="mr-1 d-none d-sm-flex">
-        <v-icon>mdi-bell</v-icon>
-      </v-btn>
+      <!-- Notification Bell -->
+      <v-menu
+        v-model="notifOpen"
+        :close-on-content-click="false"
+        location="bottom end"
+        max-width="380"
+      >
+        <template v-slot:activator="{ props: menuProps }">
+          <v-btn icon variant="text" size="small" class="mr-1 d-none d-sm-flex" v-bind="menuProps" @click="openNotifications">
+            <v-badge
+              v-if="unreadCount > 0"
+              :content="unreadCount > 99 ? '99+' : String(unreadCount)"
+              color="error"
+              floating
+            >
+              <v-icon>mdi-bell</v-icon>
+            </v-badge>
+            <v-icon v-else>mdi-bell-outline</v-icon>
+          </v-btn>
+        </template>
+
+        <v-card min-width="320" max-height="480" class="d-flex flex-column">
+          <v-card-title class="d-flex align-center justify-space-between py-2 px-4">
+            <span class="text-subtitle-2">Thông báo</span>
+            <v-btn
+              v-if="unreadCount > 0"
+              variant="text"
+              size="x-small"
+              color="primary"
+              @click="doMarkAllRead"
+            >Đánh dấu tất cả đã đọc</v-btn>
+          </v-card-title>
+          <v-divider />
+          <div class="overflow-y-auto flex-grow-1">
+            <div v-if="notifLoading" class="d-flex justify-center py-6">
+              <v-progress-circular size="28" indeterminate color="primary" />
+            </div>
+            <div v-else-if="notifications.length === 0" class="text-center text-body-2 text-medium-emphasis py-8">
+              Không có thông báo nào
+            </div>
+            <v-list v-else density="compact" lines="two">
+              <v-list-item
+                v-for="n in notifications"
+                :key="n.id"
+                :class="{ 'bg-blue-lighten-5': !n.isRead }"
+                @click="handleNotifClick(n)"
+              >
+                <template v-slot:prepend>
+                  <v-icon
+                    :color="n.type === 'REVIEW_DUE' ? 'warning' : n.type === 'SYSTEM_ANNOUNCEMENT' ? 'info' : 'primary'"
+                    size="small"
+                    class="mr-1"
+                  >
+                    {{ n.type === 'REVIEW_DUE' ? 'mdi-cards' : n.type === 'SYSTEM_ANNOUNCEMENT' ? 'mdi-bullhorn' : 'mdi-bell' }}
+                  </v-icon>
+                </template>
+                <v-list-item-title class="text-body-2 font-weight-medium">{{ n.title }}</v-list-item-title>
+                <v-list-item-subtitle class="text-caption">{{ n.message }}</v-list-item-subtitle>
+                <template v-slot:append>
+                  <v-btn
+                    icon
+                    size="x-small"
+                    variant="text"
+                    @click.stop="doDelete(n.id)"
+                  >
+                    <v-icon size="14">mdi-close</v-icon>
+                  </v-btn>
+                </template>
+              </v-list-item>
+            </v-list>
+          </div>
+        </v-card>
+      </v-menu>
 
       <v-menu min-width="200px" rounded>
         <template v-slot:activator="{ props }">
@@ -171,54 +240,95 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Prop } from 'vue-facing-decorator'
+import { Component, Vue } from 'vue-facing-decorator'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores'
+import { ROLES } from '@/types/roles'
+import notificationService, { type NotificationItem } from '@/services/notification.service'
 
-@Component({
-  name: 'AppHeader'
-})
+@Component({ name: 'AppHeader' })
 export default class AppHeader extends Vue {
   private authStore = useAuthStore()
   private mobileMenuOpen = false
 
-  get isLoggedIn(): boolean {
-    return !!this.authStore.user
-  }
+  // Notification state
+  notifOpen = false
+  notifLoading = false
+  unreadCount = 0
+  notifications: NotificationItem[] = []
+  private pollTimer: ReturnType<typeof setInterval> | null = null
 
-  get username(): string {
-    return this.authStore.user?.fullName || 'Guest'
-  }
+  get isLoggedIn(): boolean { return !!this.authStore.user }
+  get username(): string { return this.authStore.user?.fullName || 'Guest' }
+  get userLevel(): string { return this.authStore.user?.currentLevel || 'N5' }
+  get userProfilePicture(): string { return this.authStore.user?.profilePicture || '' }
+  get avatarInitials(): string { return this.username.charAt(0).toUpperCase() }
+  get isAdmin(): boolean { return this.authStore.user?.roleId === ROLES.ADMIN }
 
-  get userLevel(): string {
-    return this.authStore.user?.currentLevel || 'N5'
-  }
-
-  get userProfilePicture(): string {
-    return this.authStore.user?.profilePicture || ''
-  }
-
-  get avatarInitials(): string {
-    return this.username.charAt(0).toUpperCase()
-  }
-
-  get isAdmin(): boolean {
-    return this.authStore.user?.roleId === 1
-  }
-
-  toggleMobileMenu(): void {
-    this.mobileMenuOpen = !this.mobileMenuOpen;
-  }
+  toggleMobileMenu(): void { this.mobileMenuOpen = !this.mobileMenuOpen }
 
   logout(): void {
+    if (this.pollTimer) clearInterval(this.pollTimer)
     this.authStore.logout()
-    const router = useRouter()
-    router.push({ name: 'login' })
+    useRouter().push({ name: 'login' })
   }
 
-  // Đảm bảo giải phóng tham chiếu khi component bị hủy
+  async mounted() {
+    if (this.isLoggedIn) {
+      await this.fetchUnreadCount()
+      this.pollTimer = setInterval(() => this.fetchUnreadCount(), 60_000)
+    }
+  }
+
   beforeUnmount() {
-    this.mobileMenuOpen = false;
+    if (this.pollTimer) clearInterval(this.pollTimer)
+    this.mobileMenuOpen = false
+  }
+
+  async fetchUnreadCount() {
+    try {
+      this.unreadCount = await notificationService.getUnreadCount()
+    } catch { /* silently ignore if service unavailable */ }
+  }
+
+  async openNotifications() {
+    this.notifLoading = true
+    try {
+      const page = await notificationService.getNotifications(0, 20)
+      this.notifications = page.content
+      this.unreadCount = page.content.filter(n => !n.isRead).length
+    } catch {
+      this.notifications = []
+    } finally {
+      this.notifLoading = false
+    }
+  }
+
+  async handleNotifClick(n: NotificationItem) {
+    if (!n.isRead) {
+      await notificationService.markAsRead(n.id)
+      n.isRead = true
+      this.unreadCount = Math.max(0, this.unreadCount - 1)
+    }
+    if (n.actionUrl) {
+      this.notifOpen = false
+      useRouter().push(n.actionUrl)
+    }
+  }
+
+  async doMarkAllRead() {
+    await notificationService.markAllAsRead()
+    this.notifications.forEach(n => { n.isRead = true })
+    this.unreadCount = 0
+  }
+
+  async doDelete(id: string) {
+    await notificationService.deleteNotification(id)
+    const idx = this.notifications.findIndex(n => n.id === id)
+    if (idx !== -1) {
+      if (!this.notifications[idx].isRead) this.unreadCount = Math.max(0, this.unreadCount - 1)
+      this.notifications.splice(idx, 1)
+    }
   }
 }
 </script>

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
-    "preview": "vite preview",
+    "preview": "vite preview --port 5173",
     "test:unit": "vitest",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
@@ -19,6 +19,7 @@
     "axios": "^1.6.2",
     "chart.js": "^4.4.9",
     "date-fns": "^4.1.0",
+    "jwt-decode": "^4.0.0",
     "kuroshiro": "^1.2.0",
     "kuroshiro-analyzer-kuromoji": "^1.1.0",
     "microsoft-cognitiveservices-speech-sdk": "^1.43.1",

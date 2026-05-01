@@ -465,7 +465,6 @@ async function fetchVocabulary(page: number = 0, size: number = 10) {
   } catch (err: any) {
     error.value = err.response?.data?.message || 'Không thể tải danh sách từ vựng';
     $toast.error(error.value || 'Không thể tải danh sách từ vựng');
-    console.error('Lỗi khi tải danh sách từ vựng:', err);
     vocabulary.value = [];
   } finally {
     loading.value = false;
@@ -477,7 +476,6 @@ async function fetchTopics() {
     const response = await topicService.adminGetAllTopics();
     topics.value = response.data;
   } catch (err: any) {
-    console.error('Lỗi khi tải danh sách chủ đề:', err);
     $toast.error('Không thể tải danh sách chủ đề');
     topics.value = [];
   }
@@ -556,7 +554,6 @@ async function saveVocabulary() {
   } catch (err: any) {
     error.value = err.response?.data?.message || 'Không thể lưu từ vựng';
     $toast.error(error.value || 'Không thể lưu từ vựng');
-    console.error('Lỗi khi lưu từ vựng:', err);
   }
 }
 
@@ -576,7 +573,6 @@ async function deleteVocabulary() {
   } catch (err: any) {
     error.value = err.response?.data?.message || 'Không thể xóa từ vựng';
     $toast.error(error.value || 'Không thể xóa từ vựng');
-    console.error('Lỗi khi xóa từ vựng:', err);
   }
 }
 

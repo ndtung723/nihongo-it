@@ -96,7 +96,6 @@ export default class LoginView extends Vue {
 
   mounted(): void {
     if (this.authStore.isAuthenticated) {
-      console.log('User already authenticated, redirecting to home')
       this.$router.push({ name: 'home' })
     } else {
       // Check for error message in query params
@@ -129,7 +128,6 @@ export default class LoginView extends Vue {
       return
     }
 
-    console.log('Logging in with:', this.email)
     const success = await this.authStore.login({
       email: this.email,
       password: this.password
@@ -148,7 +146,6 @@ export default class LoginView extends Vue {
       return
     }
 
-    console.log('Google login successful, processing credentials')
     const success = await this.authStore.loginWithGoogle(response.credential)
 
     this.handleAuthResult(success)
@@ -162,13 +159,11 @@ export default class LoginView extends Vue {
         position: 'top',
         duration: 3000
       })
-      console.log('User logged in successfully')
 
       // Redirect to the requested page or dashboard
       const redirectPath = this.$route.query.redirect
         ? String(this.$route.query.redirect)
         : '/'
-      console.log('Redirecting to:', redirectPath)
       this.$router.push(redirectPath)
     } else {
       toast.error(this.authStore.error || 'Login failed', {

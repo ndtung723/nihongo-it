@@ -3,9 +3,12 @@ uvicorn==0.28.0
 openai==1.75.0
 librosa==0.10.1
 praat-parselmouth==0.4.3
-aubio==0.4.9
 numpy==1.26.4
 soundfile==0.12.1
 fastdtw==0.3.4
 python-multipart==0.0.9
-python-dotenv==1.0.0 
+python-dotenv==1.0.0
+pykakasi==2.3.0
+mojimoji==0.0.13
+SudachiPy==0.6.10
+SudachiDict-core==20250515

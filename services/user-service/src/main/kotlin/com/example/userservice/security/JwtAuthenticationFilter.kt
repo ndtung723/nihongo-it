@@ -62,11 +62,22 @@ class JwtAuthenticationFilter(
     }
 
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
+        // Luôn cho phép OPTIONS requests (CORS preflight)
+        if (request.method == "OPTIONS") {
+            return true
+        }
+        
         val path = request.requestURI
-        return path.startsWith("/api/v1/auth/") ||
-                return path.startsWith("/api/v1/speech/") ||
-                path.startsWith("/api/v1/tts/") ||
+        // Chỉ bỏ qua các endpoint không yêu cầu xác thực
+        return path.startsWith("/api/v1/user/auth/login") ||
+                path.startsWith("/api/v1/user/auth/signup") ||
+                path.startsWith("/api/v1/user/auth/google-login") ||
+                path.startsWith("/api/v1/user/auth/reset-password") ||
+                path.startsWith("/api/v1/user/auth/forgot-password") ||
+                path.startsWith("/api/v1/ai/speech/") ||
+                path.startsWith("/api/v1/ai/tts/") ||
                 path.startsWith("/v3/api-docs") ||
-                path.startsWith("/swagger-ui")
+                path.startsWith("/swagger-ui") ||
+                path.startsWith("/actuator")
     }
 }

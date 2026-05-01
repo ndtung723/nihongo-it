@@ -24,7 +24,7 @@
               class="search-field"
             ></v-text-field>
           </v-col>
-          <v-col cols="4" sm="9" md="6" class="d-flex align-center">
+          <!-- <v-col cols="4" sm="9" md="6" class="d-flex align-center">
             <v-btn
               variant="outlined"
               color="red"
@@ -35,7 +35,7 @@
             >
               Xóa
             </v-btn>
-          </v-col>
+          </v-col> -->
         </v-row>
       </v-card-text>
     </v-card>
@@ -302,7 +302,6 @@ async function loadCategories() {
     categories.value = response.data;
   } catch (err: any) {
     error.value = err.response?.data?.message || 'Không thể tải danh sách danh mục';
-    console.error('Lỗi khi tải danh mục:', err);
   } finally {
     loading.value = false;
   }
@@ -365,7 +364,6 @@ async function saveCategory() {
   } catch (err: any) {
     error.value = err.response?.data?.message || 'Không thể lưu danh mục';
     $toast.error(error.value || 'Không thể lưu danh mục');
-    console.error('Lỗi khi lưu danh mục:', err);
   }
 }
 
@@ -389,7 +387,6 @@ async function toggleCategoryStatus() {
   } catch (err: any) {
     error.value = err.response?.data?.message || 'Không thể thay đổi trạng thái danh mục';
     $toast.error(error.value || 'Không thể thay đổi trạng thái danh mục');
-    console.error('Lỗi khi thay đổi trạng thái danh mục:', err);
   }
 }
 
@@ -408,7 +405,7 @@ async function searchCategories() {
 
   try {
     // Get search term
-    let searchTerm = searchQuery.value.term.trim();
+    const searchTerm = searchQuery.value.term.trim();
 
     if (!searchTerm) {
       await loadCategories();
@@ -421,7 +418,6 @@ async function searchCategories() {
 
   } catch (err: any) {
     error.value = err.response?.data?.message || 'Không thể tìm kiếm danh mục';
-    console.error('Lỗi khi tìm kiếm danh mục:', err);
   } finally {
     loading.value = false;
   }

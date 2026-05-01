@@ -3,7 +3,6 @@ plugins {
     kotlin("plugin.spring") version "1.9.25"
     id("org.springframework.boot") version "3.4.3"
     id("io.spring.dependency-management") version "1.1.7"
-    id("org.jlleitschuh.gradle.ktlint") version "12.2.0"
 }
 
 group = "com.example"
@@ -44,6 +43,9 @@ dependencies {
     
     // Documentation
     implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.7.0")
+    implementation("com.bucket4j:bucket4j-core:8.10.1")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("io.micrometer:micrometer-registry-prometheus")
     
     // Dev tools
     developmentOnly("org.springframework.boot:spring-boot-devtools")
@@ -72,14 +74,3 @@ kotlin {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
-
-ktlint {
-    version.set("0.50.0")
-    verbose.set(true)
-    outputToConsole.set(true)
-    outputColorName.set("RED")
-    filter {
-        exclude("**/generated/**")
-        include("**/kotlin/**")
-    }
-} 

@@ -1,23 +1,4 @@
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-
-// Create axios instance with authorization header interceptor
-const apiClient = axios.create({
-  baseURL: API_URL
-});
-
-// Add a request interceptor to include the token in all requests
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+import api from '../utils/api';
 
 export interface UserCreateRequest {
   email: string;
@@ -100,10 +81,9 @@ class AdminService {
    */
   async getDashboardStats(): Promise<DashboardStats> {
     try {
-      const response = await apiClient.get('/api/admin/dashboard/stats');
+      const response = await api.get('/api/v1/learning/admin/dashboard/stats');
       return response.data.data;
     } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
       throw error;
     }
   }
@@ -117,10 +97,9 @@ class AdminService {
       if (search) {
         Object.assign(params, { search });
       }
-      const response = await apiClient.get('/api/admin/users', { params });
+      const response = await api.get('/api/v1/user/admin/users', { params });
       return response.data;
     } catch (error) {
-      console.error('Error fetching users:', error);
       throw error;
     }
   }
@@ -130,10 +109,9 @@ class AdminService {
    */
   async getUserById(userId: string): Promise<UserInfo> {
     try {
-      const response = await apiClient.get(`/api/admin/users/${userId}`);
+      const response = await api.get(`/api/v1/user/admin/users/${userId}`);
       return response.data;
     } catch (error) {
-      console.error('Error fetching user:', error);
       throw error;
     }
   }
@@ -143,10 +121,9 @@ class AdminService {
    */
   async createUser(userData: UserCreateRequest): Promise<UserInfo> {
     try {
-      const response = await apiClient.post('/api/admin/users', userData);
+      const response = await api.post('/api/v1/user/admin/users', userData);
       return response.data;
     } catch (error) {
-      console.error('Error creating user:', error);
       throw error;
     }
   }
@@ -156,10 +133,9 @@ class AdminService {
    */
   async updateUser(userId: string, userData: UserUpdateRequest): Promise<UserInfo> {
     try {
-      const response = await apiClient.put(`/api/admin/users/${userId}`, userData);
+      const response = await api.put(`/api/v1/user/admin/users/${userId}`, userData);
       return response.data;
     } catch (error) {
-      console.error('Error updating user:', error);
       throw error;
     }
   }
@@ -169,10 +145,9 @@ class AdminService {
    */
   async deactivateUser(userId: string): Promise<{ status: string; message: string }> {
     try {
-      const response = await apiClient.delete(`/api/admin/users/${userId}`);
+      const response = await api.delete(`/api/v1/user/admin/users/${userId}`);
       return response.data;
     } catch (error) {
-      console.error('Error deactivating user:', error);
       throw error;
     }
   }
@@ -182,10 +157,9 @@ class AdminService {
    */
   async activateUser(userId: string): Promise<{ status: string; message: string }> {
     try {
-      const response = await apiClient.put(`/api/admin/users/${userId}/activate`);
+      const response = await api.put(`/api/v1/user/admin/users/${userId}/activate`);
       return response.data;
     } catch (error) {
-      console.error('Error activating user:', error);
       throw error;
     }
   }
@@ -195,12 +169,11 @@ class AdminService {
    */
   async changeUserRole(userId: string, roleId: number): Promise<{ status: string; message: string }> {
     try {
-      const response = await apiClient.put(`/api/admin/users/${userId}/change-role`, null, {
+      const response = await api.put(`/api/v1/user/admin/users/${userId}/change-role`, null, {
         params: { roleId }
       });
       return response.data;
     } catch (error) {
-      console.error('Error changing user role:', error);
       throw error;
     }
   }

@@ -1,0 +1,14 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'spring-services'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets:
+          - 'api-gateway:8080'
+          - 'user-service:8086'
+          - 'learning-service:8088'
+          - 'ai-service:8087'
+          - 'notification-service:8089'

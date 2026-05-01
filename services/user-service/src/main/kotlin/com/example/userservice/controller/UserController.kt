@@ -10,9 +10,9 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/api/v1/user")
+@RequestMapping("/api/v1/user/user")
 @Tag(name = "User Management", description = "API endpoints for managing user profiles and preferences")
-class UserController @Autowired constructor(
+class UserController(
     private val userService: UserService,
     private val userAuthUtil: UserAuthUtil
 ) {

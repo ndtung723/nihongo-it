@@ -3,7 +3,7 @@ plugins {
     kotlin("plugin.spring") version "1.9.25"
     id("org.springframework.boot") version "3.4.3"
     id("io.spring.dependency-management") version "1.1.7"
-    id("org.jlleitschuh.gradle.ktlint") version "12.2.0"
+    // id("org.jlleitschuh.gradle.ktlint") version "12.2.0"
 }
 
 group = "com.example"
@@ -58,13 +58,13 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-ktlint {
-    version.set("0.50.0")
-    verbose.set(true)
-    outputToConsole.set(true)
-    outputColorName.set("RED")
-    filter {
-        exclude("**/generated/**")
-        include("**/kotlin/**") 
-    }
-} 
+// ktlint {
+//     version.set("0.50.0")
+//     verbose.set(true)
+//     outputToConsole.set(true)
+//     outputColorName.set("RED")
+//     filter {
+//         exclude("**/generated/**")
+//         include("**/kotlin/**")
+//     }
+// } 

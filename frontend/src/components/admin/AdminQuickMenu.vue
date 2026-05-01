@@ -39,7 +39,7 @@
         <v-list-item
           prepend-icon="mdi-chat"
           title="Hội thoại"
-          :to="{ name: 'admin-conversations' }"
+          :to="{ name: 'adminConversations' }"
           class="admin-menu-item"
         />
 

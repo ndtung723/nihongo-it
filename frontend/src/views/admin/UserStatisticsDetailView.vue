@@ -356,9 +356,7 @@ const fetchUserStatistics = async () => {
 
   try {
     userStats.value = await statisticsService.getUserStatisticsById(userId.value);
-    console.log('User statistics:', userStats.value);
   } catch (err) {
-    console.error('Error fetching user statistics:', err);
     error.value = true;
   } finally {
     loading.value = false;

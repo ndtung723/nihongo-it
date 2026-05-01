@@ -149,7 +149,6 @@ const handleSubmit = async () => {
       error.value = translateError(authStore.error)
     }
   } catch (err: any) {
-    console.error('Lỗi khi thay đổi mật khẩu:', err)
     error.value = err.message || 'Đã xảy ra lỗi. Vui lòng thử lại.'
   } finally {
     loading.value = false

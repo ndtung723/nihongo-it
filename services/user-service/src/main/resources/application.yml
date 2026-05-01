@@ -5,17 +5,21 @@ spring:
   application:
     name: user-service
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/NihongoIT}
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/NihongoIT}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 20000 # 20 seconds
+      idle-timeout: 300000 # 5 minutes
+      max-lifetime: 1200000 # 20 minutes
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
     show-sql: false
   flyway:
     enabled: true
@@ -32,8 +36,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${MAIL_USERNAME:no.reply.nihongo.it@gmail.com}
-    password: ${MAIL_PASSWORD:your-mail-app-password}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -67,7 +71,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,prometheus,metrics
   endpoint:
     health:
       show-details: always
@@ -82,7 +86,8 @@ springdoc:
 # JWT Configuration
 jwt:
   secret: ${JWT_SECRET}
-  expiration: 2592000000  # 30 days for language learning apps
+  expiration: 7200000 # 2 hours
+  refresh-expiration: 1209600000 # 14 days
 
 # Feign client configuration
 feign:
@@ -93,11 +98,21 @@ feign:
         readTimeout: 5000
         loggerLevel: full
 
+# Application specific configuration
+app:
+  frontend:
+    url: ${APP_FRONTEND_URL:http://localhost:5173}
+
 logging:
   level:
-    root: INFO
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    com.example.userservice: DEBUG
-    org.springframework.web: INFO
-    org.springframework.security: INFO 
+    root: WARN
+    com.example.userservice: INFO
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+
+  metrics:
+    tags:
+      application: \${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true

@@ -44,11 +44,11 @@
               <p class="text-subtitle-1 mb-2 text-grey-darken-1">{{ user.email }}</p>
 
               <v-chip
-                :color="user.roleId === 1 ? 'error' : 'primary'"
+                :color="user.roleId === ROLES.ADMIN ? 'error' : 'primary'"
                 size="small"
                 class="mb-4"
               >
-                {{ user.roleId === 1 ? 'Admin' : 'User' }}
+                {{ user.roleId === ROLES.ADMIN ? 'Admin' : 'User' }}
               </v-chip>
 
               <v-chip
@@ -391,6 +391,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { format, parseISO } from 'date-fns';
 import adminService from '@/services/admin.service';
 import type { UserInfo, UserUpdateRequest } from '@/services/admin.service';
+import { ROLES } from '@/types/roles';
 
 const route = useRoute();
 const router = useRouter();
@@ -455,7 +456,6 @@ const loadUser = async () => {
       notificationPreferences: response.notificationPreferences || 'email,app'
     };
   } catch (error: any) {
-    console.error('Error loading user:', error);
     error.value = error.response?.data?.message || 'Failed to load user details';
   } finally {
     loading.value = false;
@@ -498,7 +498,6 @@ const saveUser = async () => {
     editDialog.value.visible = false;
     loadUser(); // Reload user data
   } catch (error: any) {
-    console.error('Error updating user:', error);
     showSnackbar(error.response?.data?.message || 'Failed to update user', 'error');
   }
 };

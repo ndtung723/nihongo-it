@@ -1,6 +1,6 @@
-package com.example.userservice.config
+﻿package com.example.userservice.config
 
-import com.example.userservice.exception.BusinessException
+import com.example.common.exception.BusinessException
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import feign.Response

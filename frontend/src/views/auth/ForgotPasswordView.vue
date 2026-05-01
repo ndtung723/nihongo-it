@@ -109,7 +109,6 @@ const handleSubmit = async () => {
       isSubmitted.value = true;
     }
   } catch (error) {
-    console.error('Password reset request failed:', error);
   } finally {
     isLoading.value = false;
   }

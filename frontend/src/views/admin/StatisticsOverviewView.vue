@@ -239,9 +239,7 @@ const fetchStatistics = async () => {
 
   try {
     stats.value = await statisticsService.getStatisticsOverview();
-    console.log('Admin Statistics Overview:', stats.value);
   } catch (err) {
-    console.error('Error fetching statistics overview:', err);
     error.value = true;
   } finally {
     loading.value = false;

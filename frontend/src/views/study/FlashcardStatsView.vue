@@ -161,17 +161,17 @@
               </v-card-title>
               <v-card-text>
                 <div class="d-flex flex-wrap justify-center gap-4">
-                  <div
-                    v-for="(count, level) in stats.cardsByJlptLevel"
-                    :key="level"
-                    class="jlpt-level-card"
-                    :class="`jlpt-${level.toLowerCase()}`"
-                    v-if="level !== 'unknown' && count > 0"
-                  >
-                    <div class="text-h5 font-weight-bold">{{ level }}</div>
-                    <div class="text-body-1">{{ count }} thẻ</div>
-                    <div class="text-caption">{{ calculateJlptPercent(level, count) }}%</div>
-                  </div>
+                  <template v-for="(count, level) in stats.cardsByJlptLevel" :key="level">
+                    <div
+                      v-if="String(level) !== 'unknown' && Number(count) > 0"
+                      class="jlpt-level-card"
+                      :class="`jlpt-${String(level).toLowerCase()}`"
+                    >
+                      <div class="text-h5 font-weight-bold">{{ level }}</div>
+                      <div class="text-body-1">{{ count }} thẻ</div>
+                      <div class="text-caption">{{ calculateJlptPercent(String(level), Number(count)) }}%</div>
+                    </div>
+                  </template>
                 </div>
               </v-card-text>
             </v-card>
@@ -194,9 +194,9 @@
                     class="state-card"
                     :class="`state-${state}`"
                   >
-                    <div class="text-h6 text-capitalize">{{ formatState(state) }}</div>
+                    <div class="text-h6 text-capitalize">{{ formatState(String(state)) }}</div>
                     <div class="text-body-1">{{ count }} thẻ</div>
-                    <div class="text-caption">{{ calculateStatePercent(state, count) }}%</div>
+                    <div class="text-caption">{{ calculateStatePercent(String(state), count) }}%</div>
                   </div>
                 </div>
               </v-card-text>
@@ -257,9 +257,7 @@ const fetchStatistics = async () => {
 
   try {
     stats.value = await flashcardService.getStudyStatistics();
-    console.log('Statistics:', stats.value);
   } catch (err) {
-    console.error('Error fetching statistics:', err);
     error.value = true;
   } finally {
     loading.value = false;

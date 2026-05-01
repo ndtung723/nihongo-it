@@ -1,9 +1,9 @@
-package com.example.userservice.service
+﻿package com.example.userservice.service
 
 import com.example.userservice.dto.GoogleUserInfo
 import com.example.userservice.entity.JlptLevel
 import com.example.userservice.entity.UserEntity
-import com.example.userservice.exception.BusinessException
+import com.example.common.exception.BusinessException
 import com.example.userservice.repository.RoleRepository
 import com.example.userservice.repository.UserRepository
 import com.example.userservice.security.JwtTokenUtil
@@ -34,6 +34,9 @@ class GoogleAuthService(
      */
     fun verifyGoogleToken(tokenId: String): GoogleUserInfo {
         try {
+            logger.debug("Verifying Google token with Google's token info endpoint...")
+            logger.debug("Using client ID: $clientId")
+            
             // Use Google's token info endpoint to verify the token
             val response = webClient.get()
                 .uri("https://oauth2.googleapis.com/tokeninfo?id_token=$tokenId")
@@ -41,6 +44,8 @@ class GoogleAuthService(
                 .bodyToMono<Map<String, Any>>()
                 .block() ?: throw BusinessException("Failed to verify Google token")
 
+            logger.debug("Token verification response received from Google: $response")
+            
             // Check if token is issued for our app
             val audience = response["aud"] as? String
             if (audience != clientId) {
@@ -54,6 +59,8 @@ class GoogleAuthService(
             val picture = response["picture"] as? String
             val sub = response["sub"] as? String ?: throw BusinessException("Subject identifier not found in token")
 
+            logger.debug("Successfully extracted user info from Google token: email=$email, name=$name")
+            
             return GoogleUserInfo(
                 email = email,
                 name = name,

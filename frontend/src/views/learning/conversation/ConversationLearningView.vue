@@ -591,7 +591,6 @@ const fetchConversations = async () => {
       await fetchConversations()
     }
   } catch (err) {
-    console.error('Error fetching conversations:', err)
     error.value = true
     errorMessage.value = 'Đã xảy ra lỗi khi tải dữ liệu hội thoại. Vui lòng thử lại sau.'
 

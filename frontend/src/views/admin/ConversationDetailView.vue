@@ -252,7 +252,7 @@ onMounted(async () => {
     await fetchConversation(conversationId);
   } else {
     error.value = 'Không tìm thấy ID hội thoại';
-    router.push({ name: 'admin-conversations' });
+    router.push({ name: 'adminConversations' });
   }
 });
 
@@ -265,7 +265,6 @@ const fetchConversation = async (id: string) => {
     const response = await conversationService.adminGetConversationById(id);
     conversation.value = response.data;
   } catch (err) {
-    console.error('Error fetching conversation:', err);
     error.value = 'Không thể tải dữ liệu hội thoại. Vui lòng thử lại sau.';
   } finally {
     loading.value = false;
@@ -298,7 +297,7 @@ const getSpeakerName = (speaker: string) => {
 };
 
 const goBack = () => {
-  router.push({ name: 'admin-conversations' });
+  router.push({ name: 'adminConversations' });
 };
 
 const goToEdit = () => {

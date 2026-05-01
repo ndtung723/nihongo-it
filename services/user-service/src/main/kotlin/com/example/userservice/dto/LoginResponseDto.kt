@@ -4,6 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class LoginResponseDto(
-    val result: ResponseType,
-    val token: String? = null,
+    val token: String,
+    val refreshToken: String? = null,
 )

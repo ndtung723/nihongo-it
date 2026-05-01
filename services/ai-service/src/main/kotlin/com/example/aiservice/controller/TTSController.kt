@@ -14,7 +14,7 @@ import java.nio.file.StandardOpenOption
 import org.slf4j.LoggerFactory
 
 @RestController
-@RequestMapping("/ai-service-api/v1/tts")
+@RequestMapping("/api/v1/ai/tts")
 class TTSController(
     private val openAiAudioSpeechModel: OpenAiAudioSpeechModel,
 ) {
@@ -41,38 +41,6 @@ class TTSController(
         } catch (e: Exception) {
             1.0f // Default to 1.0 if parsing fails
         }
-
-        // Note: OpenAiAudioTranscriptionOptions is for Speech-to-Text (not Text-to-Speech)
-        // It cannot be directly used with the SpeechPrompt or OpenAiAudioSpeechModel
-        // Instead, we'll incorporate Japanese language handling directly in the prompt
-        
-        // Add Japanese language hints based on content type - commented out for now
-//        val japaneseText = when (validatedContentType) {
-//            "example", "conversation" -> {
-//                """
-//                # 日本語の例文や会話を発音してください。
-//                # 自然な抑揚で、明確に発音してください。
-//
-//                $text
-//                """.trimIndent()
-//            }
-//            "grammar" -> {
-//                """
-//                # 日本語の文法例を発音してください。
-//                # 教育的な、明確な発音でお願いします。
-//
-//                $text
-//                """.trimIndent() 
-//            }
-//            else -> {
-//                """
-//                # 日本語の単語を発音してください。
-//                # ゆっくりと、明確に発音してください。
-//
-//                $text
-//                """.trimIndent()
-//            }
-//        }
 
         val options = OpenAiAudioSpeechOptions.builder()
             .voice(OpenAiAudioApi.SpeechRequest.Voice.NOVA) // NOVA has the best Japanese pronunciation

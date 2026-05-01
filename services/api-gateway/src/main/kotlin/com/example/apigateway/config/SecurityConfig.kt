@@ -1,27 +1,31 @@
 package com.example.apigateway.config
 
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
 import org.springframework.security.config.web.server.ServerHttpSecurity
 import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.reactive.CorsWebFilter
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource
-import org.springframework.http.HttpMethod
 
 @Configuration
 @EnableWebFluxSecurity
 class SecurityConfig {
 
+    @Value("\${app.cors.allowed-origins:http://localhost:5173,http://localhost:3000}")
+    private lateinit var allowedOrigins: String
+
     @Bean
     fun springSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
         return http
             .csrf { it.disable() }
-            .cors { it.disable() }  // Disable Spring Security CORS, we'll use our custom CorsWebFilter
+            .cors { it.disable() }  // handled by corsWebFilter bean
             .authorizeExchange {
-                it.pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()  // Always allow OPTIONS requests
-                it.pathMatchers("/**").permitAll()  // Allow all requests
+                it.pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                it.pathMatchers("/**").permitAll()  // JWT validation handled by GatewayJwtFilter
             }
             .build()
     }
@@ -29,27 +33,19 @@ class SecurityConfig {
     @Bean
     fun corsWebFilter(): CorsWebFilter {
         val corsConfig = CorsConfiguration()
-        
-        // Specify allowed origins - add any additional origins you need
-        corsConfig.allowedOrigins = listOf("http://localhost:5173", "http://localhost:3000", "https://nihongo-it.com")
-        
-        // Allow all common methods
+
+        val origins = allowedOrigins.split(",").map { it.trim() }
+        corsConfig.allowedOrigins = origins
+
         corsConfig.addAllowedMethod("*")
-        
-        // Allow all headers
         corsConfig.addAllowedHeader("*")
-        
-        // Expose common response headers
         corsConfig.addExposedHeader("Authorization")
         corsConfig.addExposedHeader("Content-Disposition")
-        
-        // Allow cookies for authenticated requests
         corsConfig.allowCredentials = true
-        
-        corsConfig.maxAge = 3600L  // 1 hour
+        corsConfig.maxAge = 3600L
 
         val source = UrlBasedCorsConfigurationSource()
         source.registerCorsConfiguration("/**", corsConfig)
         return CorsWebFilter(source)
     }
-} 
+}

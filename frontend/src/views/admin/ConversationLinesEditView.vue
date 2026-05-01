@@ -377,7 +377,7 @@ onMounted(async () => {
     await fetchConversation(conversationId);
   } else {
     error.value = 'Không tìm thấy ID hội thoại';
-    router.push({ name: 'admin-conversations' });
+    router.push({ name: 'adminConversations' });
   }
 
   // Add event listener for beforeunload
@@ -417,7 +417,6 @@ const fetchConversation = async (id: string) => {
     originalConversation.value = JSON.stringify(conversationData);
     dirty.value = false;
   } catch (err: any) {
-    console.error('Error fetching conversation:', err);
     error.value = err.response?.data?.message || 'Không thể tải dữ liệu hội thoại. Vui lòng thử lại sau.';
   } finally {
     loading.value = false;
@@ -456,7 +455,6 @@ const saveConversation = async () => {
       pendingNavigation.value = null;
     }
   } catch (err: any) {
-    console.error('Error saving conversation:', err);
     error.value = err.response?.data?.message || 'Có lỗi xảy ra khi lưu hội thoại';
     toast.error(error.value || 'Có lỗi xảy ra khi lưu hội thoại');
   } finally {
@@ -588,7 +586,7 @@ const goBack = () => {
     pendingNavigation.value = '/admin/conversations';
     unsavedChangesDialog.value = true;
   } else {
-    router.push({ name: 'admin-conversations' });
+    router.push({ name: 'adminConversations' });
   }
 };
 

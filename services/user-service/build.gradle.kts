@@ -4,7 +4,7 @@ plugins {
     kotlin("plugin.jpa") version "1.9.25"
     id("org.springframework.boot") version "3.4.3"
     id("io.spring.dependency-management") version "1.1.7"
-    id("org.jlleitschuh.gradle.ktlint") version "12.2.0"
+    // id("org.jlleitschuh.gradle.ktlint") version "12.2.0"
 }
 
 group = "com.example"
@@ -23,6 +23,7 @@ repositories {
 extra["springCloudVersion"] = "2024.0.1"
 
 dependencies {
+    implementation(project(":common"))
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -40,6 +41,8 @@ dependencies {
     // Database
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     runtimeOnly("org.postgresql:postgresql")
+    implementation("org.flywaydb:flyway-core")
+    implementation("org.flywaydb:flyway-database-postgresql")
     
     // JSON
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -99,13 +102,13 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-ktlint {
-    version.set("0.50.0")
-    verbose.set(true)
-    outputToConsole.set(true)
-    outputColorName.set("RED")
-    filter {
-        exclude("**/generated/**")
-        include("**/kotlin/**") 
-    }
-} 
+// ktlint {
+//     version.set("0.50.0")
+//     verbose.set(true)
+//     outputToConsole.set(true)
+//     outputColorName.set("RED")
+//     filter {
+//         exclude("**/generated/**")
+//         include("**/kotlin/**") 
+//     }
+// } 

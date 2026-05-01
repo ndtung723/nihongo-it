@@ -1,237 +1,200 @@
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-
-// Create axios instance with authorization header interceptor
-const apiClient = axios.create({
-  baseURL: API_URL,
-  withCredentials: true
-});
-
-// Add a request interceptor to include the token in all requests
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+import api from '../utils/api';
 
 export interface LoginRequest {
-  email: string;
-  password: string;
+	email: string;
+	password: string;
 }
 
 export interface SignupRequest {
-  email: string;
-  password: string;
-  fullName: string;
-  profilePicture?: string;
-  currentLevel?: string;
-  jlptGoal?: string;
+	email: string;
+	password: string;
+	fullName: string;
+	profilePicture?: string;
+	currentLevel?: string;
+	jlptGoal?: string;
 }
 
 export interface LoginResponse {
-  result: 'OK' | 'NG';
-  token?: string;
-  message?: string;
+	token?: string;
+	refreshToken?: string;
+	message?: string;
 }
 
 export interface SignupResponse {
-  status: 'OK' | 'NG';
+	message?: string;
 }
 
 export interface UserInfo {
-  userId: number;
-  email: string;
-  fullName: string;
-  roleId: number;
-  profilePicture?: string;
-  currentLevel?: string;
-  jlptGoal?: string;
-  lastLogin?: string;
+	userId: string;
+	email: string;
+	fullName: string;
+	roleId: number;
+	profilePicture?: string;
+	currentLevel?: string;
+	jlptGoal?: string;
+	lastLogin?: string;
 }
 
 export interface GetCurrentUserResponse {
-  status: 'OK' | 'NG';
-  userInfo?: UserInfo;
+	status: 'OK' | 'NG';
+	userInfo?: UserInfo;
 }
 
 export interface GoogleLoginRequest {
-  tokenId: string;
+	tokenId: string;
 }
 
 export interface PasswordResetRequest {
-  email: string;
+	email: string;
 }
 
 export interface PasswordResetResponse {
-  status: 'OK' | 'NG';
-  message?: string;
+	message?: string;
 }
 
 export interface ResetPasswordRequest {
-  token: string;
-  password: string;
+	token: string;
+	password: string;
 }
 
 export interface ChangePasswordRequest {
-  currentPassword: string;
-  newPassword: string;
-  confirmPassword: string;
+	currentPassword: string;
+	newPassword: string;
+	confirmPassword: string;
 }
 
 export interface ChangePasswordResponse {
-  status: 'OK' | 'NG';
-  message?: string;
+	message?: string;
 }
 
 export interface UpdateProfileRequest {
-  fullName: string;
-  currentLevel: string;
-  jlptGoal: string;
+	fullName: string;
+	currentLevel: string;
+	jlptGoal: string;
 }
 
 export interface UpdateProfileResponse {
-  status: 'OK' | 'NG';
-  message?: string;
+	status: 'OK' | 'NG';
+	message?: string;
 }
 
 class AuthService {
-  async login(credentials: LoginRequest): Promise<LoginResponse> {
-    try {
-      const response = await apiClient.post('/api/v1/auth/login', credentials);
-      const result = response.data;
+	async login(credentials: LoginRequest): Promise<LoginResponse> {
+		const response = await api.post('/api/v1/user/auth/login', credentials);
+		const result: LoginResponse = response.data;
+		if (result.token) {
+			this.saveToken(result.token);
+			if (result.refreshToken) this.saveRefreshToken(result.refreshToken);
+		}
+		return result;
+	}
 
-      if (result.result === 'OK' && result.token) {
-        this.saveToken(result.token);
-      }
+	async signup(userData: SignupRequest): Promise<SignupResponse> {
+		try {
+			const response = await api.post('/api/v1/user/auth/signup', userData);
+			return response.data;
+		} catch (error) {
+			throw error;
+		}
+	}
 
-      return result;
-    } catch (error) {
-      console.error('Login error:', error);
-      return { result: 'NG' };
-    }
-  }
+	async getCurrentUser(): Promise<GetCurrentUserResponse> {
+		const response = await api.get('/api/v1/user/auth/current');
+		return response.data;
+	}
 
-  async signup(userData: SignupRequest): Promise<SignupResponse> {
-    try {
-      const response = await apiClient.post('/api/v1/auth/signup', userData);
-      return response.data;
-    } catch (error) {
-      console.error('Signup error:', error);
-      throw error;
-    }
-  }
+	getToken(): string | null {
+		return localStorage.getItem('auth_token');
+	}
 
-  async getCurrentUser(): Promise<GetCurrentUserResponse> {
-    try {
-      const response = await apiClient.get('/api/v1/auth/current');
-      return response.data;
-    } catch (error) {
-      console.error('Get current user error:', error);
-      return { status: 'NG' };
-    }
-  }
+	saveToken(token: string): void {
+		localStorage.setItem('auth_token', token);
+	}
 
-  getToken(): string | null {
-    return localStorage.getItem('auth_token');
-  }
+	removeToken(): void {
+		localStorage.removeItem('auth_token');
+	}
 
-  saveToken(token: string): void {
-    localStorage.setItem('auth_token', token);
-  }
+	getRefreshToken(): string | null {
+		return localStorage.getItem('refresh_token');
+	}
 
-  removeToken(): void {
-    localStorage.removeItem('auth_token');
-  }
+	saveRefreshToken(token: string): void {
+		localStorage.setItem('refresh_token', token);
+	}
 
-  isLoggedIn(): boolean {
-    return !!this.getToken();
-  }
+	removeRefreshToken(): void {
+		localStorage.removeItem('refresh_token');
+	}
 
-  async isTokenValid(): Promise<boolean> {
-    const token = this.getToken();
-    if (!token) return false;
+	isLoggedIn(): boolean {
+		return !!this.getToken();
+	}
 
-    try {
-      // Use the getCurrentUser endpoint to verify token validity
-      // This endpoint should already exist in your backend
-      const response = await apiClient.get('/api/v1/auth/current', {
-        timeout: 3000 // Set timeout to detect server unavailability quickly
-      });
+	async logout(): Promise<void> {
+		const refreshToken = this.getRefreshToken();
+		if (refreshToken) {
+			try {
+				await api.post('/api/v1/user/auth/logout', { refreshToken });
+			} catch {
+				// Ignore errors — still clear local tokens
+			}
+		}
+		this.removeToken();
+		this.removeRefreshToken();
+	}
 
-      // If we get a successful response with user data, the token is valid
-      return response.data && response.data.status === 'OK';
-    } catch (error) {
-      console.error('Token validation error:', error);
-      // If server is down or token is invalid, return false
-      return false;
-    }
-  }
+	async loginWithGoogle(tokenId: string): Promise<LoginResponse> {
+		const response = await api.post('/api/v1/user/auth/google-login', { tokenId });
+		const result: LoginResponse = response.data;
+		if (result.token) {
+			this.saveToken(result.token);
+			if (result.refreshToken) this.saveRefreshToken(result.refreshToken);
+		}
+		return result;
+	}
 
-  async loginWithGoogle(tokenId: string): Promise<LoginResponse> {
-    try {
-      const response = await apiClient.post('/api/v1/auth/google-login', { tokenId })
-      const result = response.data
+	async requestPasswordReset(email: string): Promise<PasswordResetResponse> {
+		try {
+			const response = await api.post('/api/v1/user/auth/forgot-password', {
+				email,
+			} as PasswordResetRequest);
+			return response.data;
+		} catch (error) {
+			throw error;
+		}
+	}
 
-      if (result.result === 'OK' && result.token) {
-        this.saveToken(result.token)
-      }
+	async resetPassword(token: string, password: string): Promise<PasswordResetResponse> {
+		try {
+			const response = await api.post('/api/v1/user/auth/set-new-password', {
+				token,
+				password,
+				confirmPassword: password,
+			});
+			return response.data;
+		} catch (error) {
+			throw error;
+		}
+	}
 
-      return result
-    } catch (error) {
-      console.error('Google login error:', error)
-      return { result: 'NG' }
-    }
-  }
+	async changePassword(request: ChangePasswordRequest): Promise<ChangePasswordResponse> {
+		try {
+			const response = await api.post('/api/v1/user/auth/change-password', request);
+			return response.data;
+		} catch (error) {
+			throw error;
+		}
+	}
 
-  async requestPasswordReset(email: string): Promise<PasswordResetResponse> {
-    try {
-      const response = await apiClient.post('/api/v1/auth/forgot-password', { email } as PasswordResetRequest);
-      return response.data;
-    } catch (error) {
-      console.error('Password reset request failed:', error);
-      throw error;
-    }
-  }
-
-  async resetPassword(token: string, password: string): Promise<PasswordResetResponse> {
-    try {
-      const response = await apiClient.post('/api/v1/auth/set-new-password', {
-        token,
-        password,
-        confirmPassword: password
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Password reset error:', error);
-      throw error;
-    }
-  }
-
-  async changePassword(request: ChangePasswordRequest): Promise<ChangePasswordResponse> {
-    try {
-      const response = await apiClient.post('/api/v1/auth/change-password', request);
-      return response.data;
-    } catch (error) {
-      console.error('Password change error:', error);
-      throw error;
-    }
-  }
-
-  async updateProfile(request: UpdateProfileRequest): Promise<UpdateProfileResponse> {
-    try {
-      const response = await apiClient.post('/api/v1/auth/update-profile', request);
-      return response.data;
-    } catch (error) {
-      console.error('Profile update error:', error);
-      throw error;
-    }
-  }
+	async updateProfile(request: UpdateProfileRequest): Promise<UpdateProfileResponse> {
+		try {
+			const response = await api.post('/api/v1/user/auth/update-profile', request);
+			return response.data;
+		} catch (error) {
+			throw error;
+		}
+	}
 }
 
 export default new AuthService();

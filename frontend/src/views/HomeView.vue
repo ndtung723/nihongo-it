@@ -249,16 +249,12 @@
         </v-col>
       </v-row>
     </v-container>
-
-    <!-- Footer -->
-    <Footer />
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-facing-decorator'
 import { useAuthStore } from '@/stores'
-import Footer from '@/components/common/Footer.vue'
 
 interface Lesson {
   id: string
@@ -284,9 +280,6 @@ interface TrendingSearch {
 
 @Component({
   name: 'HomeView',
-  components: {
-    Footer
-  }
 })
 export default class HomeView extends Vue {
   searchQuery = ''

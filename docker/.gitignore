@@ -1,0 +1,142 @@
+# =================================================================
+# .gitignore for Docker Configuration
+# =================================================================
+
+# ========================
+# Docker Development Files
+# ========================
+
+### Local Override Files ###
+docker-compose.override.yml
+docker-compose.local.yml
+docker-compose.dev.yml
+docker-compose.test.yml
+
+### Development Dockerfiles ###
+Dockerfile.dev
+Dockerfile.local
+Dockerfile.test
+
+# ========================
+# Environment Files
+# ========================
+
+### Environment Variables ###
+.env
+.env.*
+!.env.example
+!.env.template
+!.env.sample
+
+### Local Environment ###
+.env.local
+.env.development
+.env.test
+.env.production
+
+# ========================
+# Volume Data
+# ========================
+
+### Persistent Volumes ###
+postgres-data/
+mysql-data/
+mongodb-data/
+redis-data/
+elasticsearch-data/
+
+### Application Data ###
+uploads/
+logs/
+data/
+
+# ========================
+# Build Context
+# ========================
+
+### Build Artifacts ###
+build/
+dist/
+target/
+
+### Temporary Build Files ###
+.dockerignore.tmp
+*.dockerfile.tmp
+
+# ========================
+# Registry & Images
+# ========================
+
+### Local Registry ###
+registry-data/
+
+### Exported Images ###
+*.tar
+*.tar.gz
+*.tar.bz2
+
+# ========================
+# Secrets & Certificates
+# ========================
+
+### SSL/TLS ###
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+ssl/
+certs/
+certificates/
+
+### Secrets ###
+secrets/
+.secrets/
+secret.yaml
+secret.yml
+
+# ========================
+# Logs
+# ========================
+
+### Container Logs ###
+logs/
+*.log
+*.log.*
+
+# ========================
+# Backup Files
+# ========================
+
+### Database Backups ###
+*.sql
+*.dump
+*.backup
+backups/
+
+# ========================
+# OS Files
+# ========================
+
+### MacOS ###
+.DS_Store
+
+### Windows ###
+Thumbs.db
+Desktop.ini
+
+### Linux ###
+*~
+.directory
+
+# ========================
+# Temporary Files
+# ========================
+
+### Temporary ###
+*.tmp
+*.temp
+*~
+.tmp/
+temp/ 

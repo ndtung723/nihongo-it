@@ -14,7 +14,6 @@ class SpeechRecognitionService {
       this.isInitialized = true;
       return true;
     } catch (error) {
-      console.error('Error initializing speech recognition service:', error);
       return false;
     }
   }
@@ -33,7 +32,6 @@ class SpeechRecognitionService {
     // Đảm bảo dừng bất kỳ phiên nhận dạng nào đang chạy
     if (this.isRecognizing && this.recognizer) {
       this.stopRecognition().catch(error => {
-        console.error('Error stopping previous recognition:', error);
       });
     }
 
@@ -68,14 +66,12 @@ class SpeechRecognitionService {
 
       // Thêm xử lý sự kiện khi phiên làm việc kết thúc
       this.recognizer.sessionStopped = (_, __) => {
-        console.log('Speech recognition session stopped');
         this.isRecognizing = false;
         this.cleanupRecognizer();
       };
 
       this.recognizer.startContinuousRecognitionAsync(
         () => {
-          console.log('Speech recognition started');
           this.isRecognizing = true;
         },
         (error) => {
@@ -102,20 +98,17 @@ class SpeechRecognitionService {
       try {
         this.recognizer.stopContinuousRecognitionAsync(
           () => {
-            console.log('Speech recognition stopped successfully');
             this.isRecognizing = false;
             this.cleanupRecognizer();
             resolve();
           },
           (error) => {
-            console.error('Error stopping recognition:', error);
             this.isRecognizing = false;
             this.cleanupRecognizer();
             reject(error);
           }
         );
       } catch (error) {
-        console.error('Exception during stopRecognition:', error);
         this.isRecognizing = false;
         this.cleanupRecognizer();
         reject(error);
@@ -129,7 +122,6 @@ class SpeechRecognitionService {
       try {
         this.recognizer.close();
       } catch (error) {
-        console.error('Error closing recognizer:', error);
       }
       this.recognizer = null;
     }

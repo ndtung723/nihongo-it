@@ -201,9 +201,10 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'vue-toast-notification'
 import { useVocabularyStore } from '@/stores'
-import axios from 'axios'
+import { isAxiosError } from 'axios'
 import vocabularyService from '@/services/vocabulary.service'
 import authService from '@/services/auth.service'
+import aiService from '@/services/ai.service'
 
 // Define types
 interface Vocabulary {
@@ -254,7 +255,7 @@ const isPlayingRecording = ref(false)
 const recordedAudioBlob = ref<Blob | null>(null)
 
 // Audio context for recording
-let audioContext: AudioContext | null = null
+const audioContext: AudioContext | null = null
 let audioStream: MediaStream | null = null
 
 // Constants
@@ -331,7 +332,6 @@ const toggleSave = async () => {
     vocabulary.value.isSaved = !vocabulary.value.isSaved;
 
   } catch (error) {
-    console.error('Error toggling save status:', error);
     toast.error('Không thể cập nhật trạng thái lưu', {
       position: 'top',
       duration: 3000
@@ -347,7 +347,6 @@ const playAudio = async () => {
       const audio = new Audio(vocabulary.value.audioPath)
       await audio.play()
     } catch (err) {
-      console.error('Error playing audio:', err)
       toast.error('Không thể phát âm thanh', {
         position: 'top',
         duration: 3000
@@ -378,96 +377,19 @@ const playAudio = async () => {
     // Text to speak
     const textToSpeak = vocabulary.value.pronunciation ? vocabulary.value.pronunciation : vocabulary.value.term;
 
-    // Get the backend API URL
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080'
-
-    // First check if audio already exists
-    try {
-      const checkResponse = await axios.get(`${apiUrl}/ai-service-api/v1/tts/check`, {
-        params: {
-          text: textToSpeak,
-          contentType: 'vocabulary'
-        },
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
-
-      if (checkResponse.data.exists) {
-        // Audio exists, use it
-        console.log('Using existing audio file');
-        toast.info('Đang phát âm thanh...', {
-          position: 'top',
-          duration: 2000
-        });
-
-        // Get the audio file
-        const response = await axios.get(`${apiUrl}/ai-service-api/v1/tts/audio`, {
-          params: {
-            text: textToSpeak,
-            contentType: 'vocabulary'
-          },
-          headers: {
-            'Authorization': `Bearer ${authToken}`
-          },
-          responseType: 'blob'
-        });
-
-        // Play the audio
-        const audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audio = new Audio(audioUrl);
-        audio.onended = () => {
-          URL.revokeObjectURL(audioUrl);
-        };
-        await audio.play();
-        return;
-      }
-    } catch (error) {
-      console.log('Error checking for existing audio:', error);
-      // Continue with generating new audio if check fails
-    }
-
-    // No existing audio found, generate new audio
     // Show loading indicator
     toast.info('Đang tạo âm thanh...', {
       position: 'top',
       duration: 2000
     })
 
-    // Set speed for vocabulary
-    const speed = 0.9;
-
-    // Call the TTS API with Authorization header and save audio flag
-    const response = await axios.post(`${apiUrl}/ai-service-api/v1/tts/generate`, textToSpeak, {
-      headers: {
-        'Content-Type': 'text/plain; charset=UTF-8',
-        'Accept-Language': 'ja-JP',
-        'X-Speech-Speed': speed.toString(),
-        'X-Content-Language': 'ja',
-        'X-Content-Type': 'vocabulary',
-        'X-Save-Audio': 'true', // Tell backend to save this audio
-        'Authorization': `Bearer ${authToken}`,
-        'Accept': 'audio/mpeg'
-      },
-      responseType: 'arraybuffer'
-    })
-
-    // Convert response to blob and create audio URL
-    const audioBlob = new Blob([response.data], { type: 'audio/mpeg' })
-    const audioUrl = URL.createObjectURL(audioBlob)
-
-    // Play the audio
-    const audio = new Audio(audioUrl)
-    audio.onended = () => {
-      URL.revokeObjectURL(audioUrl)
-    }
-    await audio.play()
+    // Use AI service to generate and play audio
+    const audioBlob = await aiService.generateTTS(textToSpeak, 'vocabulary', 0.9, true);
+    await aiService.playAudio(audioBlob);
   } catch (error) {
-    console.error('Error generating or playing TTS audio:', error)
 
     // Special handling for 401 errors
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
+    if (isAxiosError(error) && error.response?.status === 401) {
       toast.error('Dịch vụ TTS yêu cầu xác thực. Vui lòng đăng nhập lại khi có thể.', {
         position: 'top',
         duration: 3000
@@ -510,96 +432,19 @@ const playExampleAudio = async () => {
     // Text to speak
     const textToSpeak = vocabulary.value.example;
 
-    // Get the backend API URL
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080'
-
-    // First check if audio already exists
-    try {
-      const checkResponse = await axios.get(`${apiUrl}/ai-service-api/v1/tts/check`, {
-        params: {
-          text: textToSpeak,
-          contentType: 'example'
-        },
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
-
-      if (checkResponse.data.exists) {
-        // Audio exists, use it
-        console.log('Using existing example audio file');
-        toast.info('Đang phát câu ví dụ...', {
-          position: 'top',
-          duration: 2000
-        });
-
-        // Get the audio file
-        const response = await axios.get(`${apiUrl}/ai-service-api/v1/tts/audio`, {
-          params: {
-            text: textToSpeak,
-            contentType: 'example'
-          },
-          headers: {
-            'Authorization': `Bearer ${authToken}`
-          },
-          responseType: 'blob'
-        });
-
-        // Play the audio
-        const audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audio = new Audio(audioUrl);
-        audio.onended = () => {
-          URL.revokeObjectURL(audioUrl);
-        };
-        await audio.play();
-        return;
-      }
-    } catch (error) {
-      console.log('Error checking for existing example audio:', error);
-      // Continue with generating new audio if check fails
-    }
-
-    // No existing audio found, generate new audio
     // Show loading indicator
     toast.info('Đang tạo âm thanh...',{
       position: 'top',
       duration: 2000
     })
 
-    // Set speed for example sentences
-    const speed = 1.0;
-
-    // Call the TTS API with Authorization header
-    const response = await axios.post(`${apiUrl}/ai-service-api/v1/tts/generate`, textToSpeak, {
-      headers: {
-        'Content-Type': 'text/plain; charset=UTF-8',
-        'Accept-Language': 'ja-JP',
-        'X-Speech-Speed': speed.toString(),
-        'X-Content-Language': 'ja',
-        'X-Content-Type': 'example',
-        'X-Save-Audio': 'true', // Tell backend to save this audio
-        'Authorization': `Bearer ${authToken}`,
-        'Accept': 'audio/mpeg'
-      },
-      responseType: 'arraybuffer'
-    })
-
-    // Convert response to blob and create audio URL
-    const audioBlob = new Blob([response.data], { type: 'audio/mpeg' })
-    const audioUrl = URL.createObjectURL(audioBlob)
-
-    // Play the audio
-    const audio = new Audio(audioUrl)
-    audio.onended = () => {
-      URL.revokeObjectURL(audioUrl)
-    }
-    await audio.play()
+    // Use AI service to generate and play audio
+    const audioBlob = await aiService.generateTTS(textToSpeak, 'example', 1.0, true);
+    await aiService.playAudio(audioBlob);
   } catch (error) {
-    console.error('Error generating or playing TTS audio:', error)
 
     // Special handling for 401 errors
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
+    if (isAxiosError(error) && error.response?.status === 401) {
       toast.error('Dịch vụ TTS yêu cầu xác thực. Vui lòng đăng nhập lại khi có thể.', {
         position: 'top',
         duration: 3000
@@ -634,7 +479,7 @@ const startRecording = async () => {
       }
 
       mediaRecorder.value.onstop = () => {
-        const audioBlob = new Blob(audioChunks.value, { type: 'audio/wav' })
+        const audioBlob = new Blob(audioChunks.value, { type: 'audio/mp3' })
         recordedAudioBlob.value = audioBlob
         recordedAudio.value = URL.createObjectURL(audioBlob)
         processRecording(audioBlob)
@@ -648,7 +493,6 @@ const startRecording = async () => {
       })
     }
   } catch (err) {
-    console.error('Error starting recording:', err)
     toast.error('Không thể truy cập microphone', {
       position: 'top',
       duration: 3000
@@ -680,7 +524,6 @@ const playRecordedAudio = () => {
     }
 
     audio.onerror = () => {
-      console.error('Error playing recorded audio')
       isPlayingRecording.value = false
       toast.error('Không thể phát bản ghi âm', {
         position: 'top',
@@ -689,7 +532,6 @@ const playRecordedAudio = () => {
     }
 
     audio.play().catch(err => {
-      console.error('Error playing recorded audio:', err)
       isPlayingRecording.value = false
       toast.error('Không thể phát bản ghi âm', {
         position: 'top',
@@ -697,7 +539,6 @@ const playRecordedAudio = () => {
       })
     })
   } catch (err) {
-    console.error('Error playing recorded audio:', err)
     isPlayingRecording.value = false
     toast.error('Không thể phát bản ghi âm', {
       position: 'top',
@@ -707,74 +548,55 @@ const playRecordedAudio = () => {
 }
 
 const processRecording = async (audioBlob: Blob) => {
-  isProcessing.value = true
+  isProcessing.value = true;
 
   try {
     // Verify authentication before proceeding
-    const authToken = authService.getToken()
+    const authToken = authService.getToken();
     if (!authToken) {
       toast.error('Vui lòng đăng nhập để sử dụng tính năng phân tích phát âm', {
         position: 'top',
         duration: 4000
-      })
-      isProcessing.value = false
-      return
+      });
+      isProcessing.value = false;
+      return;
     }
-
-    // Create FormData and append the audio blob
-    const formData = new FormData()
-    formData.append('file', audioBlob, 'recording.wav')
 
     if (vocabulary.value?.term) {
       const term = vocabulary.value.term;
-      formData.append('reference_text', term);
-      formData.append('sample_id', term); // Use the term as the sample ID
-    }
 
-    // Get the backend API URL
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+      // Use AI service to analyze speech
+      const analysis = await aiService.analyzeSpeech(audioBlob, term, 'vocabulary');
 
-    // Send to speech analysis API
-    const response = await axios.post(`${apiUrl}/ai-service-api/v1/speech/analyze-audio-enhanced`, formData, {
-      headers: {
-        'Authorization': `Bearer ${authToken}`
-      }
-    })
-
-    // Process response
-    if (response.data) {
-      const analysis: SpeechAnalysis = response.data
-      pronounciationScore.value = Math.round(analysis.score)
-      recognizedText.value = analysis.transcription
+      // Process response
+      pronounciationScore.value = Math.round(analysis.score);
+      recognizedText.value = analysis.transcription || '';
 
       if (analysis.personalizedFeedback) {
-        pronunciationFeedback.value = analysis.personalizedFeedback
+        pronunciationFeedback.value = analysis.personalizedFeedback;
       } else {
-        pronunciationFeedback.value = analysis.feedback || getVietnameseFeedback(pronounciationScore.value)
+        pronunciationFeedback.value = analysis.feedback || getVietnameseFeedback(pronounciationScore.value);
       }
 
-      hasScore.value = true
+      hasScore.value = true;
     }
   } catch (err) {
-    console.error('Error processing recording:', err)
-
     // Fallback to mock data for testing if API fails
-    console.log('Using mock data due to API error')
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
     // Mock analysis with random score
-    const mockScore = Math.floor(Math.random() * 40) + 60
-    pronounciationScore.value = mockScore
-    recognizedText.value = vocabulary.value?.term || ''
-    pronunciationFeedback.value = getVietnameseFeedback(mockScore)
-    hasScore.value = true
+    const mockScore = Math.floor(Math.random() * 40) + 60;
+    pronounciationScore.value = mockScore;
+    recognizedText.value = vocabulary.value?.term || '';
+    pronunciationFeedback.value = getVietnameseFeedback(mockScore);
+    hasScore.value = true;
 
     toast.warning('Đang sử dụng dữ liệu mẫu do lỗi kết nối API', {
       position: 'top',
       duration: 3000
-    })
+    });
   } finally {
-    isProcessing.value = false
+    isProcessing.value = false;
   }
 }
 
@@ -828,7 +650,6 @@ const navigateBack = () => {
           // Apply it to our query params
           Object.assign(params, searchState);
         } catch (e) {
-          console.error('Error parsing saved search state:', e);
         }
       }
     }
@@ -851,7 +672,6 @@ onMounted(async () => {
       const response = await vocabularyService.getVocabularyByTerm(term)
       vocabulary.value = response
     } catch (err) {
-      console.error('Error loading vocabulary:', err)
       error.value = 'Không thể tải thông tin từ vựng'
     } finally {
       loading.value = false

@@ -376,9 +376,7 @@ const fetchStatistics = async () => {
 
   try {
     stats.value = await flashcardService.getStudyStatistics();
-    console.log('Statistics:', stats.value);
   } catch (err) {
-    console.error('Error fetching statistics:', err);
     error.value = true;
   } finally {
     loading.value = false;
@@ -406,7 +404,6 @@ const fetchVocabularyStats = async () => {
         const flashcards = await flashcardService.getFlashcardsByVocabulary(vocab.vocabId);
         return { vocab, flashcards: flashcards.length > 0 ? flashcards[0] : null };
       } catch (error) {
-        console.error(`Error fetching flashcard for vocabulary ${vocab.vocabId}:`, error);
         return { vocab, flashcards: null };
       }
     });
@@ -459,7 +456,6 @@ const fetchVocabularyStats = async () => {
     };
 
   } catch (error) {
-    console.error('Error fetching vocabulary statistics:', error);
   } finally {
     vocabLoading.value = false;
   }
@@ -529,8 +525,9 @@ const getCardsDueChartData = () => {
 const getMemoryStrengthChartData = () => {
   if (!stats.value?.memoryStrengthDistribution) return null;
 
-  const labels = ['Yếu', 'Trung bình', 'Mạnh'];
+  const labels = ['Mới', 'Yếu', 'Trung bình', 'Mạnh'];
   const counts = [
+    stats.value.memoryStrengthDistribution.new || 0,
     stats.value.memoryStrengthDistribution.weak || 0,
     stats.value.memoryStrengthDistribution.medium || 0,
     stats.value.memoryStrengthDistribution.strong || 0
@@ -541,11 +538,13 @@ const getMemoryStrengthChartData = () => {
     datasets: [{
       data: counts,
       backgroundColor: [
+        'rgba(255, 159, 64, 0.7)',
         'rgba(255, 99, 132, 0.7)',
         'rgba(255, 206, 86, 0.7)',
         'rgba(54, 162, 235, 0.7)'
       ],
       borderColor: [
+        'rgba(255, 159, 64, 1)',
         'rgba(255, 99, 132, 1)',
         'rgba(255, 206, 86, 1)',
         'rgba(54, 162, 235, 1)'

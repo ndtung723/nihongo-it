@@ -1,4 +1,7 @@
-package com.example.userservice.dto
+﻿package com.example.userservice.dto
+
+import com.example.common.dto.ResponseDto
+import com.example.common.dto.ResponseType
 
 import com.fasterxml.jackson.annotation.JsonInclude
 

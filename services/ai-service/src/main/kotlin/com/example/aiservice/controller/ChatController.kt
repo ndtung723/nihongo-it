@@ -15,7 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 
 @RestController
-@RequestMapping("/ai-service-api/v1/chat")
+@RequestMapping("/api/v1/ai/chat")
 class ChatController(
     private val chatService: ChatService,
     private val chatClient: ChatClient,

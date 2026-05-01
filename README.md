@@ -1,177 +1,172 @@
 # Nihongo IT - Microservice Architecture
 
-This project is a Japanese learning platform built using a microservice architecture. Each service is responsible for a specific domain of the application.
+Nền tảng học tiếng Nhật IT xây dựng theo kiến trúc microservice.
 
 ## Architecture Overview
 
-The application is composed of the following microservices:
+```
+Frontend (Vue.js :5173)
+        │
+        ▼
+  API Gateway (:8080)          ← JWT validation, Rate limiting, Correlation ID
+        │
+        ├──▶ User Service (:8086)          ← Auth, Profile, OAuth2 Google
+        ├──▶ Learning Service (:8088)      ← Flashcard, FSRS, Conversation
+        ├──▶ AI Service (:8087)            ← OpenAI chat, TTS
+        ├──▶ Notification Service (:8089)  ← Email, In-app notifications
+        └──▶ Python Service (:8000)        ← NLP, Speech analysis (FastAPI)
 
-1. **API Gateway (`api-gateway`)**: Acts as an entry point for all client requests, handles routing to appropriate services, and implements cross-cutting concerns like security, logging, and rate limiting.
+  Eureka Server (:8761)        ← Service discovery
+  PostgreSQL (:5432)           ← Primary database (named volume)
+  Prometheus (:9090)           ← Metrics scraping
+  Grafana (:3001)              ← Dashboard (metrics + logs)
+  Loki (:3100)                 ← Log aggregation
+```
 
-2. **User Service (`user-service`)**: Manages user authentication, authorization, profiles, and user-related operations.
+## Services
 
-3. **Learning Service (`learning-service`)**: Core service responsible for managing learning resources, courses, lessons, exercises, and user progress tracking.
-
-4. **AI Service (`ai-service`)**: Handles AI-powered features such as text-to-speech, speech analysis, chat interactions with AI assistants, and other AI functionalities.
-
-5. **Utility Service (`utility-service`)**: Provides utility functions like Furigana generation, Japanese language processing, and other helper functions.
-
-6. **Notification Service (`notification-service`)**: Manages email notifications, alerts, and other communication channels.
-
-7. **Statistic Service (`statistic-service`)**: Collects and analyzes user activities and learning patterns, generating reports and insights.
-
-## Service Communication
-
-Services communicate with each other using:
-- Synchronous communication via REST APIs (with Feign clients)
-- Service discovery through Netflix Eureka
-- Circuit breaking patterns for resilience
+| Service | Port | Mô tả |
+|---|---|---|
+| `api-gateway` | 8080 | Entry point, JWT validation, rate limiting, routing |
+| `user-service` | 8086 | Auth (login/register/OAuth2), profile, refresh token |
+| `learning-service` | 8088 | Flashcard, FSRS spaced repetition, conversation |
+| `ai-service` | 8087 | OpenAI chat, text-to-speech |
+| `notification-service` | 8089 | Email notifications, in-app notification REST API |
+| `python` | 8000 | FastAPI — NLP (SudachiPy), speech analysis |
+| `eureka-server` | 8761 | Netflix Eureka service discovery |
 
 ## Technology Stack
 
-- **Programming Language**: Kotlin
-- **Framework**: Spring Boot 3.x
-- **API Documentation**: SpringDoc OpenAPI (Swagger)
-- **Service Discovery**: Netflix Eureka
-- **API Gateway**: Spring Cloud Gateway
-- **Circuit Breaker**: Resilience4j
-- **Database**: PostgreSQL
-- **Build Tool**: Gradle with Kotlin DSL
-- **Authentication**: JWT + OAuth2
-- **Monitoring**: Spring Boot Actuator
+**Backend**
+- Kotlin + Spring Boot 3.4
+- Spring Cloud Gateway + Netflix Eureka + Feign
+- Spring Security — JWT (access 2h, refresh 14d với rotation)
+- PostgreSQL 16 + Flyway migrations + HikariCP
+- Gradle Kotlin DSL với shared `common` module
+
+**Frontend**
+- Vue 3 + TypeScript + Vite
+- Pinia (state management) + Vue Router
+- Vuetify 3
+
+**AI / NLP**
+- OpenAI API (GPT, TTS)
+- FastAPI + SudachiPy (Japanese NLP)
+- Speech analysis (pitch, formants)
+
+**Observability**
+- Structured JSON logs (Logstash encoder) + Correlation ID xuyên services
+- Prometheus metrics + Grafana dashboard
+- Loki + Promtail log aggregation
+
+**Security**
+- JWT validate tập trung tại Gateway, inject `X-User-Id/Role/Email` header
+- Bucket4j rate limiting (login 5/min, AI 30/min, speech 10/min)
+- CORS whitelist qua `CORS_ALLOWED_ORIGINS` env var
+- Python service protected bằng `X-Internal-Key`
 
 ## Directory Structure
 
-Each microservice follows a similar structure:
-
 ```
-service-name/
-├── src/
-│   ├── main/
-│   │   ├── kotlin/com/example/servicename/
-│   │   │   ├── config/       # Configuration classes
-│   │   │   ├── controller/   # REST controllers
-│   │   │   ├── service/      # Business logic
-│   │   │   ├── repository/   # Data access
-│   │   │   ├── entity/       # Domain models
-│   │   │   ├── dto/          # Data transfer objects
-│   │   │   ├── exception/    # Custom exceptions
-│   │   │   └── util/         # Utility classes
-│   │   └── resources/
-│   │       ├── application.yml  # Service configuration
-│   │       └── db/migration/    # Flyway migrations
-│   └── test/                    # Test code
-└── build.gradle.kts             # Gradle build file
+nihongo-it/
+├── services/                    # Backend microservices (Kotlin/Spring Boot)
+│   ├── common/                  # Shared module: security, exception, dto, logging, metrics
+│   ├── api-gateway/
+│   ├── eureka-server/
+│   ├── user-service/
+│   ├── learning-service/
+│   ├── ai-service/
+│   └── notification/
+├── frontend/                    # Vue 3 + TypeScript
+├── python/                      # FastAPI NLP/Speech service
+│   ├── config.py
+│   ├── nlp.py
+│   ├── openai_client.py
+│   ├── text_comparison.py
+│   ├── speech.py
+│   └── main.py
+├── docker/                      # Docker Compose + observability config
+│   ├── docker-compose.yaml
+│   ├── prometheus.yml
+│   ├── loki-config.yml
+│   ├── promtail-config.yml
+│   └── grafana-provisioning/
+├── deploy/                      # GCP deploy scripts
+├── ddl/                         # SQL schema reference
+└── .env                         # Environment variables (không commit)
 ```
 
-## Setup and Deployment
+## Setup
 
 ### Prerequisites
-- JDK 21
-- Docker and Docker Compose
-- PostgreSQL
+- Docker Desktop
+- Node.js 20+ (frontend)
+- JDK 21 (nếu build local)
 
-### Development Environment Setup
+### 1. Cấu hình environment
 
-1. Clone the repository
 ```bash
-git clone https://github.com/tungducng/nihongo-it.git
-cd nihongo-it
+cp docker/.env.example docker/.env
+# Điền các giá trị: DB_PASSWORD, JWT_SECRET, OPENAI_API_KEY, MAIL_*, GOOGLE_CLIENT_*
 ```
 
-2. Set up environment variables or modify the default values in application.yml files
+### 2. Khởi động toàn bộ bằng Docker
 
-3. Start the services using Docker Compose
 ```bash
-# Start Docker containers for PostgreSQL and other dependencies
-./start-docker.sh
-
-# Start service discovery (Eureka server)
-./gradlew :eureka-server:bootRun
-
-# Start other services
-./gradlew :api-gateway:bootRun
-./gradlew :user-service:bootRun
-./gradlew :learning-service:bootRun
-./gradlew :ai-service:bootRun
-./gradlew :notification-service:bootRun
+cd docker
+docker compose up -d
 ```
 
-Alternatively, you can start all services at once:
+Flyway sẽ tự động chạy migrations tạo schema và seed data khi services khởi động.
+
+### 3. Chạy frontend local
+
 ```bash
-./start-all-services.sh
+cd frontend
+npm install
+npm run dev
+# → http://localhost:5173
 ```
 
-### API Documentation
+### 4. Build backend (không cần chạy, chỉ compile kiểm tra)
 
-Each service exposes its API documentation via Swagger UI:
+```bash
+cd services
+./gradlew build -x test
+```
 
-- API Gateway: http://localhost:8080/api-docs
-- User Service: http://localhost:8086/swagger-ui.html
-- Learning Service: http://localhost:8081/swagger-ui.html
-- AI Service: http://localhost:8082/swagger-ui.html
-- Utility Service: http://localhost:8083/swagger-ui.htm
-- Notification Service: http://localhost:8084/swagger-ui.html
+## API Documentation (Swagger)
 
-## Frontend Application
+| Service | URL |
+|---|---|
+| User Service | http://localhost:8086/swagger-ui.html |
+| Learning Service | http://localhost:8088/swagger-ui.html |
+| AI Service | http://localhost:8087/swagger-ui.html |
+| Notification Service | http://localhost:8089/swagger-ui.html |
 
-The frontend application is a separate repository located in the `nihongo-it-frontend` directory.
+## Monitoring
+
+| Tool | URL |
+|---|---|
+| Eureka Dashboard | http://localhost:8761 |
+| Prometheus | http://localhost:9090 |
+| Grafana | http://localhost:3001 (admin / admin) |
+
+## Environment Variables
+
+| Variable | Mô tả |
+|---|---|
+| `JWT_SECRET` | Secret key ký JWT |
+| `DB_USERNAME` / `DB_PASSWORD` | PostgreSQL credentials |
+| `POSTGRES_DB` | Tên database |
+| `OPENAI_API_KEY` | OpenAI API key |
+| `MAIL_USERNAME` / `MAIL_PASSWORD` | Gmail app password |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | OAuth2 Google |
+| `APP_FRONTEND_URL` | URL frontend (default: `http://localhost:5173`) |
+| `CORS_ALLOWED_ORIGINS` | CORS whitelist (default: `http://localhost:5173,http://localhost:3000`) |
+| `INTERNAL_API_KEY` | Key bảo vệ Python service |
+| `PYTHON_SERVICE_URL` | URL Python service (default: `http://python:8000`) |
 
 ## License
 
 [MIT License](LICENSE)
-
-## Cấu trúc thư mục
-
-```
-nihongo-it/
-│
-├── services/                          # Các microservice Spring Boot
-│   ├── api-gateway/                   # API Gateway
-│   ├── eureka-server/                 # Service discovery
-│   ├── user-service/                  # Xác thực và quản lý người dùng
-│   ├── learning-service/              # Nội dung học tập
-│   ├── ai-service/                    # Dịch vụ AI và TTS
-│   └── notification-service/          # Thông báo
-│
-├── frontend/                          # Front-end Vue.js
-│
-├── python/                            # Dịch vụ Python cho xử lý ngôn ngữ
-│
-├── docker/                            # Cấu hình Docker
-│   └── docker-compose.yaml            # Cấu hình Docker Compose
-│
-├── tools/                             # Scripts tiện ích
-│   ├── start-springboot-services.sh   # Khởi động các dịch vụ Spring Boot
-│   ├── start-all-services.sh          # Khởi động Python và Vue.js
-│   ├── start-docker.sh                # Khởi động dịch vụ Docker
-│   └── stop-services.sh               # Dừng tất cả dịch vụ
-│
-└── logs/                              # Thư mục chứa logs
-```
-
-## Hướng dẫn chạy
-
-### Chạy bằng Docker
-
-```bash
-./tools/start-docker.sh
-```
-
-### Chạy các microservice Spring Boot
-
-```bash
-./tools/start-springboot-services.sh
-```
-
-### Chạy dịch vụ Python và Frontend
-
-```bash
-./tools/start-all-services.sh
-```
-
-### Dừng tất cả dịch vụ
-
-```bash
-./tools/stop-services.sh
-``` 

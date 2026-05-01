@@ -1,12 +1,12 @@
-package com.example.userservice.controller.admin
+﻿package com.example.userservice.controller.admin
 
-import com.example.userservice.dto.ResponseDto
-import com.example.userservice.dto.ResponseType
+import com.example.common.dto.ResponseDto
+import com.example.common.dto.ResponseType
 import com.example.userservice.dto.UserCreateRequest
 import com.example.userservice.dto.UserDto
 import com.example.userservice.dto.UserListResponse
 import com.example.userservice.dto.UserUpdateRequest
-import com.example.userservice.security.PreAuthFilter
+import com.example.common.security.PreAuthFilter
 import com.example.userservice.service.AdminService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*
 import java.util.*
 
 @RestController
-@RequestMapping("/api/admin/users")
+@RequestMapping("/api/v1/user/admin/users")
 @Tag(name = "Admin User Management", description = "API endpoints for admin to manage user accounts")
 @PreAuthFilter(hasRole = "admin")
 class AdminController(

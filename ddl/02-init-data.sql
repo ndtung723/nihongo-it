@@ -58,7 +58,7 @@ INSERT INTO topics (topic_id, name, meaning, display_order, category_id, created
 VALUES
   (gen_random_uuid(), 'SQLの基本', 'SQL cơ bản', 1, (SELECT category_id FROM category), NOW(), NOW(), true),
   (gen_random_uuid(), 'データベース設計', 'Thiết kế cơ sở dữ liệu', 2, (SELECT category_id FROM category), NOW(), NOW(), true),
-  (gen_random_uuid(), 'NoSQL・新しい概念', 'NoSQL và các khái niệm mới', 3, (SELECT category_id FROM categ  ory), NOW(), NOW(), true)
+  (gen_random_uuid(), 'NoSQL・新しい概念', 'NoSQL và các khái niệm mới', 3, (SELECT category_id FROM category), NOW(), NOW(), true)
 ON CONFLICT (name) DO NOTHING;
 
 -- Insert topics if they don't exist (AI/Data)

@@ -16,41 +16,33 @@ spring:
       routes:
         # User Service (Auth Service) Route
         - id: user-service
-          uri: lb://user-service
+          uri: ${USER_SERVICE_URL:lb://user-service}
           predicates:
-            - Path=/api/**, /api/v1/users/**, /api/v1/auth/**, /api/v1/roles/**, /ai-service-api/**
+            - Path=/api/v1/user/**
           filters:
             - StripPrefix=0
 
-        # - id: learning-service
-        #   uri: lb://learning-service
-        #   predicates:
-        #     - Path=/api/learning/**
-        #   filters:
-        #     - RewritePath=/api/learning/(?<segment>.*), /$\{segment}
-        #     # - name: CircuitBreaker
-        #     #   args:
-        #     #     name: learningServiceCircuitBreaker
-        #     #     fallbackUri: forward:/fallback/learning
+        - id: learning-service
+          uri: ${LEARNING_SERVICE_URL:lb://learning-service}
+          predicates:
+            - Path=/api/v1/learning/**
+          filters:
+            - StripPrefix=0
 
         # AI Service Route
         - id: ai-service
-          uri: lb://ai-service
+          uri: ${AI_SERVICE_URL:lb://ai-service}
           predicates:
-            - Path=/ai-service-api/**
+            - Path=/api/v1/ai/**
           filters:
             - StripPrefix=0
 
-        # - id: notification-service
-        #   uri: lb://notification-service
-        #   predicates:
-        #     - Path=/api/notification/**
-        #   filters:
-        #     - RewritePath=/api/notification/(?<segment>.*), /$\{segment}
-        #     # - name: CircuitBreaker
-        #     #   args:
-        #     #     name: notificationServiceCircuitBreaker
-        #     #     fallbackUri: forward:/fallback/notification
+        - id: notification-service
+          uri: ${NOTIFICATION_SERVICE_URL:lb://notification-service}
+          predicates:
+            - Path=/api/v1/notify/**
+          filters:
+            - StripPrefix=0
 
 eureka:
   client:
@@ -65,10 +57,16 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,gateway
+        include: health,info,metrics,prometheus,gateway
   endpoint:
     gateway:
       enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
     health:
       show-details: always
 
@@ -79,9 +77,16 @@ springdoc:
     enabled: true
     path: /v3/api-docs
 
+jwt:
+  secret: ${JWT_SECRET}
+
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
+
 logging:
   level:
     root: INFO
-    org.springframework.cloud.gateway: DEBUG
+    org.springframework.cloud.gateway: INFO
     org.springframework.web: INFO
-    com.example.apigateway: DEBUG 
+    com.example.apigateway: INFO

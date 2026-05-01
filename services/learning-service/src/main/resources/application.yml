@@ -1,21 +1,25 @@
 server:
-  port: 8081
+  port: 8088
 
 spring:
   application:
     name: learning-service
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/NihongoIT}
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/NihongoIT}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 15
+      connection-timeout: 20000 # 20 seconds
+      idle-timeout: 300000 # 5 minutes
+      max-lifetime: 1200000 # 20 minutes
   jpa:
     hibernate:
       ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
     show-sql: false
   flyway:
     enabled: true
@@ -30,12 +34,23 @@ eureka:
     register-with-eureka: true
   instance:
     prefer-ip-address: true
+    instance-id: ${spring.application.name}:${random.uuid}
+
+# Ribbon configuration for load balancing
+ribbon:
+  eureka:
+    enabled: true
+  ConnectTimeout: 5000
+  ReadTimeout: 5000
+  MaxAutoRetries: 1
+  MaxAutoRetriesNextServer: 1
+  OkToRetryOnAllOperations: true
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,prometheus,metrics
   endpoint:
     health:
       show-details: always
@@ -47,23 +62,22 @@ springdoc:
     enabled: true
     path: /v3/api-docs
 
-app:
-  ai-service-url: ${AI_SERVICE_URL:http://localhost:8082}
-  notification-service-url: ${NOTIFICATION_SERVICE_URL:http://localhost:8084}
+# JWT Configuration - Sử dụng cùng secret key với user-service để xác thực token
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 7200000 # 2h, sync với user-service
 
-# Feign client configuration
-feign:
-  client:
-    config:
-      default:
-        connectTimeout: 5000
-        readTimeout: 5000
-        loggerLevel: full
-
+# Cấu hình logging
 logging:
   level:
-    root: INFO
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    com.example.learningservice: DEBUG
-    org.springframework.web: INFO 
+    root: WARN
+    com.example.learningservice: INFO
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+
+  metrics:
+    tags:
+      application: \${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true

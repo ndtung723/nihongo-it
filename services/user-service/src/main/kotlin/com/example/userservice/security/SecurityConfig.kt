@@ -1,5 +1,6 @@
 package com.example.userservice.security
 
+import com.example.common.security.JwtAuthenticationEntryPoint
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.authentication.AuthenticationManager
@@ -51,11 +52,12 @@ class SecurityConfig(
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { auth ->
                 auth
-                    .requestMatchers("/api/v1/auth/**").permitAll()
-                    .requestMatchers("/api/v1/speech/**").permitAll()
-                    .requestMatchers("/api/v1/tts/**").permitAll()
+                    .requestMatchers("/v1/auth/login", "/v1/auth/signup").permitAll()
+                    .requestMatchers("/api/v1/user/auth/login", "/api/v1/user/auth/signup", "/api/v1/user/auth/google-login", "/api/v1/user/auth/reset-password", "/api/v1/user/auth/forgot-password", "/api/v1/user/auth/refresh-token", "/api/v1/user/auth/logout", "/api/v1/user/auth/verify-email", "/api/v1/user/auth/set-new-password").permitAll()
+                    .requestMatchers("/api/v1/auth/login", "/api/v1/auth/signup").permitAll()
                     .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                    .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                    .requestMatchers("/actuator/**").permitAll()
+                    .requestMatchers("/api/v1/user/admin/**").hasRole("ADMIN")
                     .anyRequest().authenticated()
             }
 

@@ -33,6 +33,6 @@ management:
 logging:
   level:
     root: INFO
-    com.netflix.eureka: DEBUG
-    com.netflix.discovery: DEBUG
-    org.springframework.cloud: DEBUG 
+    com.netflix.eureka: INFO
+    com.netflix.discovery: INFO
+    org.springframework.cloud: INFO

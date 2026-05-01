@@ -13,7 +13,6 @@ export const handleSessionExpiration = (currentPath: string): void => {
       duration: 5000
     })
   } catch (e) {
-    console.error('Failed to show toast notification', e)
   }
 
   // Redirect to login page if not already there

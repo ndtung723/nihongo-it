@@ -58,7 +58,6 @@ async function checkDueCards() {
       show.value = true
     }
   } catch (error) {
-    console.error('Error fetching due cards count:', error)
   }
 }
 

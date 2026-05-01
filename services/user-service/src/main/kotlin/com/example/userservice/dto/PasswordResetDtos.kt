@@ -40,9 +40,6 @@ data class ResetPasswordDto(
  */
 @Schema(description = "Response for password reset operations")
 data class PasswordResetResponseDto(
-    @Schema(description = "Response status (OK or NG)", required = true)
-    val status: ResponseType,
-    
     @Schema(description = "Response message", required = true)
     val message: String
-) 
+)

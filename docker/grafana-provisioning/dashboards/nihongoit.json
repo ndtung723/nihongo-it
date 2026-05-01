@@ -1,0 +1,167 @@
+{
+  "title": "NihongoIT Overview",
+  "uid": "nihongoit-overview",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1, "type": "stat", "title": "HTTP Request Rate (all services)",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "targets": [{
+        "expr": "sum(rate(http_server_requests_seconds_count[1m]))",
+        "legendFormat": "req/s"
+      }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area" },
+      "fieldConfig": { "defaults": { "unit": "reqps", "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }] } } }
+    },
+    {
+      "id": 2, "type": "stat", "title": "Error Rate (5xx)",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "targets": [{
+        "expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[1m]))",
+        "legendFormat": "errors/s"
+      }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" },
+      "fieldConfig": { "defaults": { "unit": "reqps", "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 0.1 }] } } }
+    },
+    {
+      "id": 3, "type": "stat", "title": "Rate Limit Hits (429)",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "targets": [{
+        "expr": "sum(rate(http_server_requests_seconds_count{status=\"429\"}[1m]))",
+        "legendFormat": "429/s"
+      }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" },
+      "fieldConfig": { "defaults": { "unit": "reqps", "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "orange", "value": 0.1 }] } } }
+    },
+    {
+      "id": 4, "type": "stat", "title": "JVM Heap Used (all services)",
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+      "targets": [{
+        "expr": "sum(jvm_memory_used_bytes{area=\"heap\"})",
+        "legendFormat": "heap"
+      }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" },
+      "fieldConfig": { "defaults": { "unit": "bytes", "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "orange", "value": 500000000 }, { "color": "red", "value": 800000000 }] } } }
+    },
+    {
+      "id": 5, "type": "timeseries", "title": "HTTP Request Rate by Service",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "targets": [{
+        "expr": "sum by (application) (rate(http_server_requests_seconds_count[1m]))",
+        "legendFormat": "{{application}}"
+      }],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 6, "type": "timeseries", "title": "p95 Latency by Service (ms)",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "targets": [{
+        "expr": "histogram_quantile(0.95, sum by (application, le) (rate(http_server_requests_seconds_bucket[1m]))) * 1000",
+        "legendFormat": "p95 {{application}}"
+      }],
+      "fieldConfig": { "defaults": { "unit": "ms" } }
+    },
+    {
+      "id": 7, "type": "timeseries", "title": "HTTP Status Codes",
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "targets": [{
+        "expr": "sum by (status) (rate(http_server_requests_seconds_count[1m]))",
+        "legendFormat": "HTTP {{status}}"
+      }],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 8, "type": "timeseries", "title": "JVM Heap by Service",
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+      "targets": [{
+        "expr": "jvm_memory_used_bytes{area=\"heap\"}",
+        "legendFormat": "{{application}}"
+      }],
+      "fieldConfig": { "defaults": { "unit": "bytes" } }
+    },
+    {
+      "id": 9, "type": "timeseries", "title": "DB Connection Pool (HikariCP)",
+      "gridPos": { "x": 0, "y": 20, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "hikaricp_connections_active",
+          "legendFormat": "active {{application}}"
+        },
+        {
+          "expr": "hikaricp_connections_pending",
+          "legendFormat": "pending {{application}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 10, "type": "timeseries", "title": "Login Attempts (auth.login events)",
+      "gridPos": { "x": 12, "y": 20, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{application=\"user-service\", uri=\"/api/v1/user/auth/login\", status=\"200\"}[5m]))",
+          "legendFormat": "login success"
+        },
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{application=\"user-service\", uri=\"/api/v1/user/auth/login\", status=\"401\"}[5m]))",
+          "legendFormat": "login failure (401)"
+        },
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{application=\"api-gateway\", uri=\"/api/v1/user/auth/login\", status=\"429\"}[5m]))",
+          "legendFormat": "rate limited (429)"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 11, "type": "row", "title": "Logs per Service", "collapsed": false,
+      "gridPos": { "x": 0, "y": 28, "w": 24, "h": 1 }
+    },
+    {
+      "id": 12, "type": "logs", "title": "api-gateway",
+      "gridPos": { "x": 0, "y": 29, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+      "targets": [{ "expr": "{container=\"nihongoit-api-gateway\"}", "legendFormat": "" }],
+      "options": { "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending", "dedupStrategy": "none" }
+    },
+    {
+      "id": 13, "type": "logs", "title": "user-service",
+      "gridPos": { "x": 12, "y": 29, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+      "targets": [{ "expr": "{container=\"nihongoit-user-service\"}", "legendFormat": "" }],
+      "options": { "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending", "dedupStrategy": "none" }
+    },
+    {
+      "id": 14, "type": "logs", "title": "learning-service",
+      "gridPos": { "x": 0, "y": 37, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+      "targets": [{ "expr": "{container=\"nihongoit-learning-service\"}", "legendFormat": "" }],
+      "options": { "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending", "dedupStrategy": "none" }
+    },
+    {
+      "id": 15, "type": "logs", "title": "ai-service",
+      "gridPos": { "x": 12, "y": 37, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+      "targets": [{ "expr": "{container=\"nihongoit-ai-service\"}", "legendFormat": "" }],
+      "options": { "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending", "dedupStrategy": "none" }
+    },
+    {
+      "id": 16, "type": "logs", "title": "notification-service",
+      "gridPos": { "x": 0, "y": 45, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+      "targets": [{ "expr": "{container=\"nihongoit-notification-service\"}", "legendFormat": "" }],
+      "options": { "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending", "dedupStrategy": "none" }
+    },
+    {
+      "id": 17, "type": "logs", "title": "eureka-server",
+      "gridPos": { "x": 12, "y": 45, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+      "targets": [{ "expr": "{container=\"nihongoit-eureka-server\"}", "legendFormat": "" }],
+      "options": { "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending", "dedupStrategy": "none" }
+    }
+  ]
+}
+

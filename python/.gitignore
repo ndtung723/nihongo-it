@@ -1,12 +1,21 @@
-# Python
+# =================================================================
+# .gitignore for Python Language Processing Service
+# =================================================================
+
+# ========================
+# Python Core
+# ========================
+
+### Byte-compiled / optimized / DLL files ###
 __pycache__/
 *.py[cod]
 *$py.class
+
+### C extensions ###
 *.so
+
+### Distribution / packaging ###
 .Python
-venv/
-env/
-ENV/
 build/
 develop-eggs/
 dist/
@@ -18,20 +27,342 @@ lib64/
 parts/
 sdist/
 var/
+wheels/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
-# Environment variables
+### PyInstaller ###
+*.manifest
+*.spec
+
+### Installer logs ###
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ========================
+# Virtual Environments
+# ========================
+
+### Virtual Environment ###
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+.env/
+
+### Conda ###
+.conda/
+
+### Poetry ###
+poetry.lock
+.venv/
+
+### Pipenv ###
+Pipfile.lock
+
+# ========================
+# Development Tools
+# ========================
+
+### PyCharm ###
+.idea/
+*.iws
+*.iml
+*.ipr
+
+### VS Code ###
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+### Spyder ###
+.spyderproject
+.spyproject
+
+### Rope ###
+.ropeproject
+
+# ========================
+# Testing
+# ========================
+
+### Unit test / coverage reports ###
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+### pytest ###
+.pytest_cache/
+
+# ========================
+# Jupyter Notebook
+# ========================
+
+### Jupyter Notebook ###
+.ipynb_checkpoints
+
+### IPython ###
+profile_default/
+ipython_config.py
+
+# ========================
+# Environment & Configuration
+# ========================
+
+### Environment variables ###
 .env
 .env.*
+!.env.example
+!.env.template
 
-# Temporary files
-*.tmp
+### Python environment ###
+.python-version
+
+### pyenv ###
+.python-version
+
+# ========================
+# Web Frameworks
+# ========================
+
+### Django ###
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+### Flask ###
+instance/
+.webassets-cache
+
+### Scrapy ###
+.scrapy
+
+# ========================
+# Documentation
+# ========================
+
+### Sphinx documentation ###
+docs/_build/
+
+### mkdocs ###
+site/
+
+# ========================
+# Machine Learning & Data Science
+# ========================
+
+### Jupyter ###
+.ipynb_checkpoints
+
+### Data files ###
+*.csv
+*.json
+*.xml
+*.xlsx
+*.parquet
+data/
+datasets/
+!sample_data/
+
+### Model files ###
+*.pkl
+*.pickle
+*.joblib
+*.h5
+*.hdf5
+*.pb
+models/
+checkpoints/
+saved_models/
+
+### TensorFlow ###
+logs/
+tensorboard_logs/
+
+### PyTorch ###
+*.pth
+*.pt
+
+# ========================
+# Natural Language Processing
+# ========================
+
+### Language Models ###
+*.bin
+*.vec
+*.model
+*.vocab
+word2vec/
+glove/
+fasttext/
+
+### Japanese Processing ###
+mecab-ipadic/
+juman-dict/
+japanese_models/
+
+### Translation Models ###
+translation_models/
+seq2seq_models/
+
+# ========================
+# Audio Processing (for TTS/STT)
+# ========================
+
+### Audio files ###
 *.wav
 *.mp3
-temp/
+*.flac
+*.ogg
+*.m4a
+audio_cache/
+temp_audio/
 
-# OS specific files
+### Speech models ###
+speech_models/
+tts_models/
+stt_models/
+
+# ========================
+# Caching
+# ========================
+
+### Cache directories ###
+.cache/
+cache/
+__pycache__/
+
+### Celery ###
+celerybeat-schedule
+celerybeat.pid
+
+### Redis ###
+dump.rdb
+
+# ========================
+# Database
+# ========================
+
+### SQLite ###
+*.db
+*.sqlite
+*.sqlite3
+
+### Database migrations ###
+migrations/
+
+# ========================
+# Logs
+# ========================
+
+### Application logs ###
+*.log
+*.log.*
+logs/
+log/
+
+### Debug logs ###
+debug.log
+error.log
+
+# ========================
+# Docker
+# ========================
+
+### Docker ###
+Dockerfile.dev
+Dockerfile.local
+docker-compose.override.yml
+.dockerignore
+
+# ========================
+# Cloud & Deployment
+# ========================
+
+### AWS ###
+.aws/
+
+### Google Cloud ###
+.gcloud/
+gcp-key.json
+
+### Heroku ###
+.heroku/
+
+### Kubernetes ###
+*.kubeconfig
+
+# ========================
+# OS Files
+# ========================
+
+### MacOS ###
 .DS_Store
-Thumbs.db 
+.AppleDouble
+.LSOverride
+
+### Windows ###
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+### Linux ###
+*~
+.directory
+.Trash-*
+
+# ========================
+# Security
+# ========================
+
+### Secrets ###
+secrets/
+*.pem
+*.key
+*.crt
+api_keys.py
+credentials.json
+
+# ========================
+# Temporary Files
+# ========================
+
+### Temporary ###
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+### Backup files ###
+*.bak
+*.backup
+*.old
+
+# ========================
+# Project Specific
+# ========================
+
+### Custom ###
+# Add your project-specific ignores here
+local_config.py
+private_data/
+experimental/

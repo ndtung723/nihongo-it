@@ -1,80 +1,86 @@
-version: '3.8'
-
 services:
   # Database Services
   postgres:
-    image: postgres:latest
-    container_name: nihongo-it-postgres
+    image: postgres:16
+    container_name: nihongoit-postgres
     environment:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - nihongo_network
-    restart: unless-stopped
+    restart: no
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: nihongo-it-pgadmin
+  python:
+    build:
+      context: ../python
+      dockerfile: Dockerfile
+    image: nihongoit/python:latest
+    container_name: nihongoit-python
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      DEBUG_MODE: "false"
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+      INTERNAL_ONLY: "true"
     ports:
-      - "5050:80"
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    depends_on:
-      - postgres
+      - "8000:8000"
     networks:
       - nihongo_network
-    restart: unless-stopped
-    
+    restart: no
+
   # Service Discovery
   eureka-server:
     build:
-      context: ./services/eureka-server
-      dockerfile: Dockerfile
-    container_name: nihongo-it-eureka-server
+      context: ../services
+      dockerfile: eureka-server/Dockerfile
+    image: nihongoit/eureka-server:latest
+    container_name: nihongoit-eureka-server
     ports:
       - "8761:8761"
     networks:
       - nihongo_network
-    restart: unless-stopped
-    
+    restart: no
+
   # API Gateway
   api-gateway:
     build:
-      context: ./services/api-gateway
-      dockerfile: Dockerfile
-    container_name: nihongo-it-api-gateway
+      context: ../services
+      dockerfile: api-gateway/Dockerfile
+    image: nihongoit/api-gateway:latest
+    container_name: nihongoit-api-gateway
     environment:
       EUREKA_SERVICE_URL: http://eureka-server:8761/eureka/
+      JWT_SECRET: ${JWT_SECRET}
     ports:
       - "8080:8080"
     depends_on:
       - eureka-server
     networks:
       - nihongo_network
-    restart: unless-stopped
-    
+    restart: no
+
   # User Service (Auth Service)
   user-service:
     build:
-      context: ./services/user-service
-      dockerfile: Dockerfile
-    container_name: nihongo-it-user-service
+      context: ../services
+      dockerfile: user-service/Dockerfile
+    image: nihongoit/user-service:latest
+    container_name: nihongoit-user-service
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
-      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
       EUREKA_SERVICE_URL: http://eureka-server:8761/eureka/
       JWT_SECRET: ${JWT_SECRET}
       MAIL_USERNAME: ${MAIL_USERNAME}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      APP_FRONTEND_URL: ${APP_FRONTEND_URL}
     ports:
       - "8086:8086"
     depends_on:
@@ -82,29 +88,134 @@ services:
       - eureka-server
     networks:
       - nihongo_network
-    restart: unless-stopped
+    restart: no
 
   # AI Service
   ai-service:
     build:
-      context: ./services/ai-service
-      dockerfile: Dockerfile
-    container_name: nihongo-it-ai-service
+      context: ../services
+      dockerfile: ai-service/Dockerfile
+    image: nihongoit/ai-service:latest
+    container_name: nihongoit-ai-service
     environment:
       EUREKA_SERVICE_URL: http://eureka-server:8761/eureka/
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      PYTHON_SERVICE_URL: ${PYTHON_SERVICE_URL:-http://python:8000}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
     ports:
       - "8087:8087"
     depends_on:
       - eureka-server
     networks:
       - nihongo_network
-    restart: unless-stopped
+    restart: no
 
-volumes:
-  postgres_data:
-  pgadmin_data:
+  # Notification Service
+  notification-service:
+    build:
+      context: ../services
+      dockerfile: notification/Dockerfile
+    image: nihongoit/notification-service:latest
+    container_name: nihongoit-notification-service
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      EUREKA_SERVICE_URL: http://eureka-server:8761/eureka/
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      APP_FRONTEND_URL: ${APP_FRONTEND_URL}
+    ports:
+      - "8089:8089"
+    depends_on:
+      - postgres
+      - eureka-server
+    networks:
+      - nihongo_network
+    restart: no
+
+  # Learning Service
+  learning-service:
+    build:
+      context: ../services
+      dockerfile: learning-service/Dockerfile
+    image: nihongoit/learning-service:latest
+    container_name: nihongoit-learning-service
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      EUREKA_SERVICE_URL: http://eureka-server:8761/eureka/
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "8088:8088"
+    depends_on:
+      - postgres
+      - eureka-server
+    networks:
+      - nihongo_network
+    restart: no
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: nihongoit-prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - nihongo_network
+    restart: no
+
+  loki:
+    image: grafana/loki:2.9.6
+    container_name: nihongoit-loki
+    command: -config.file=/etc/loki/config.yml
+    volumes:
+      - ./loki-config.yml:/etc/loki/config.yml
+      - loki_data:/loki
+    ports:
+      - "3100:3100"
+    networks:
+      - nihongo_network
+    restart: no
+
+  promtail:
+    image: grafana/promtail:2.9.6
+    container_name: nihongoit-promtail
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - ./promtail-config.yml:/etc/promtail/config.yml
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - loki
+    networks:
+      - nihongo_network
+    restart: no
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: nihongoit-grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana-provisioning:/etc/grafana/provisioning
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - nihongo_network
+    restart: no
 
 networks:
   nihongo_network:
     driver: bridge
+
+volumes:
+  postgres_data:
+  grafana_data:
+  loki_data:

@@ -5,8 +5,6 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"
     kotlin("plugin.jpa") version "1.9.25"
 
-    id("org.jlleitschuh.gradle.ktlint") version "12.2.0" // Thêm plugin ktlint
-
     // OpenAPI
     id("org.openapi.generator") version "6.6.0"
 
@@ -32,6 +30,7 @@ extra["springCloudVersion"] = "2024.0.1"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
 
@@ -81,14 +80,3 @@ kotlin {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
-
-ktlint {
-    version.set("0.50.0")
-    verbose.set(true)
-    outputToConsole.set(true)
-    outputColorName.set("RED")
-    filter {
-        exclude("**/generated/**")
-        include("**/kotlin/**")
-    }
-} 

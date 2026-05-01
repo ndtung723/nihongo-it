@@ -1,7 +1,13 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import authService from '@/services/auth.service';
-import type { UserInfo, LoginRequest, SignupRequest, ChangePasswordRequest } from '@/services/auth.service';
+import authService from '@/services/auth.service.ts';
+import { isTokenExpired } from '@/utils/jwt';
+import type {
+  UserInfo,
+  LoginRequest,
+  SignupRequest,
+  ChangePasswordRequest,
+} from '@/services/auth.service.ts';
 
 export const useAuthStore = defineStore('auth', () => {
   // State
@@ -11,10 +17,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Getters
   const isAuthenticated = computed(() => {
-    const hasToken = !!authService.getToken();
-    const hasUser = !!user.value;
-    console.log('Auth state check:', { hasToken, hasUser });
-    return hasToken;
+    const token = authService.getToken();
+    return !!token && !isTokenExpired(token);
   });
 
   // Actions
@@ -23,21 +27,16 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null;
 
     try {
-      console.log('Attempting login for:', credentials.email);
       const response = await authService.login(credentials);
 
-      if (response.result === 'OK' && response.token) {
-        console.log('Login successful');
+      if (response.token) {
         await fetchCurrentUser();
         return true;
-      } else {
-        error.value = 'Invalid credentials';
-        console.error('Login response indicated failure:', response);
-        return false;
       }
+      error.value = 'Invalid credentials';
+      return false;
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Login failed. Please try again.';
-      console.error('Login error:', err);
       return false;
     } finally {
       loading.value = false;
@@ -49,12 +48,10 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null;
 
     try {
-      console.log('Attempting registration for:', userData.email);
-      const response = await authService.signup(userData);
-      return response.status === 'OK';
+      await authService.signup(userData);
+      return true;
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Registration failed. Please try again.';
-      console.error('Registration error:', err);
       return false;
     } finally {
       loading.value = false;
@@ -67,35 +64,32 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const response = await authService.getCurrentUser();
 
-      if (response.status === 'OK' && response.userInfo) {
+      if (response.userInfo) {
         user.value = response.userInfo;
         return true;
-      } else {
-        user.value = null;
-        console.warn('Failed to get user data:', response);
-        return false;
       }
+      user.value = null;
+      return false;
     } catch (err: any) {
       user.value = null;
-      console.error('Error fetching user data:', err);
       return false;
     } finally {
       loading.value = false;
     }
   }
 
-  function logout() {
-    console.log('Logging out user');
-    authService.removeToken();
+  async function logout() {
+    await authService.logout();
     user.value = null;
   }
 
-  // Initialize user if token exists
+  // Initialize user if token exists and is valid
   function initializeAuth() {
-    if (authService.getToken()) {
+    const token = authService.getToken();
+    if (token && !isTokenExpired(token)) {
       fetchCurrentUser();
-    } else {
-      console.log('No token found, not initializing auth');
+    } else if (token) {
+      authService.removeToken();
     }
   }
 
@@ -104,21 +98,16 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null;
 
     try {
-      console.log('Attempting Google login with token');
       const response = await authService.loginWithGoogle(tokenId);
 
-      if (response.result === 'OK' && response.token) {
-        console.log('Google login successful');
+      if (response.token) {
         await fetchCurrentUser();
         return true;
-      } else {
-        error.value = response.message || 'Google login failed';
-        console.error('Google login response indicated failure:', response);
-        return false;
       }
+      error.value = 'Google login failed';
+      return false;
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Google login failed. Please try again.';
-      console.error('Google login error:', err);
       return false;
     } finally {
       loading.value = false;
@@ -130,12 +119,11 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null;
 
     try {
-      console.log('Requesting password reset for:', email);
-      const response = await authService.requestPasswordReset(email);
-      return response.status === 'OK';
+      await authService.requestPasswordReset(email);
+      return true;
     } catch (err: any) {
-      error.value = err.response?.data?.message || 'Password reset request failed. Please try again.';
-      console.error('Password reset request error:', err);
+      error.value =
+        err.response?.data?.message || 'Password reset request failed. Please try again.';
       return false;
     } finally {
       loading.value = false;
@@ -147,12 +135,10 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null;
 
     try {
-      console.log('Resetting password with token');
-      const response = await authService.resetPassword(token, password);
-      return response.status === 'OK';
+      await authService.resetPassword(token, password);
+      return true;
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Password reset failed. Please try again.';
-      console.error('Password reset error:', err);
       return false;
     } finally {
       loading.value = false;
@@ -164,12 +150,10 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null;
 
     try {
-      console.log('Changing password');
-      const response = await authService.changePassword(request);
-      return response.status === 'OK';
+      await authService.changePassword(request);
+      return true;
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Password change failed. Please try again.';
-      console.error('Password change error:', err);
       return false;
     } finally {
       loading.value = false;
@@ -189,6 +173,6 @@ export const useAuthStore = defineStore('auth', () => {
     initializeAuth,
     requestPasswordReset,
     resetPassword,
-    changePassword
+    changePassword,
   };
 });

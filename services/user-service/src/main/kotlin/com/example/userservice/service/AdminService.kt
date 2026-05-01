@@ -1,11 +1,11 @@
-package com.example.userservice.service
+﻿package com.example.userservice.service
 
 import com.example.userservice.dto.UserCreateRequest
 import com.example.userservice.dto.UserDto
 import com.example.userservice.dto.UserListResponse
 import com.example.userservice.dto.UserUpdateRequest
 import com.example.userservice.entity.UserEntity
-import com.example.userservice.exception.BusinessException
+import com.example.common.exception.BusinessException
 import com.example.userservice.repository.RoleRepository
 import com.example.userservice.repository.UserRepository
 import org.slf4j.LoggerFactory
@@ -141,7 +141,8 @@ class AdminService(
             isEmailVerified = request.isEmailVerified ?: existingUser.isEmailVerified,
             reminderEnabled = request.reminderEnabled ?: existingUser.reminderEnabled,
             reminderTime = reminderTime,
-            notificationPreferences = request.notificationPreferences 
+            notificationPreferences = request.notificationPreferences
+                ?.split(",")?.map { it.trim() }?.toMutableSet()
                 ?: existingUser.notificationPreferences,
             minCardThreshold = request.minCardThreshold ?: existingUser.minCardThreshold,
             role = role,
