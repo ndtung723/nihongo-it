@@ -1,5 +1,5 @@
 # Build stage — context = services/ (root multi-module project)
-FROM gradle:8.14-jdk21 AS builder
+FROM gradle:9.5-jdk21 AS builder
 WORKDIR /app
 
 COPY settings.gradle.kts build.gradle.kts ./
