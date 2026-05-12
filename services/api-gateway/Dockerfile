@@ -9,7 +9,7 @@ COPY api-gateway api-gateway
 RUN gradle :api-gateway:bootJar -x test --no-daemon
 
 # Runtime stage
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:25-jre-jammy
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
