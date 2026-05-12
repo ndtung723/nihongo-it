@@ -7,7 +7,7 @@ numpy==1.26.4
 soundfile==0.12.1
 fastdtw==0.3.4
 python-multipart==0.0.9
-python-dotenv==1.0.0
+python-dotenv==1.2.2
 pykakasi==2.3.0
 mojimoji==0.0.13
 SudachiPy==0.6.10
