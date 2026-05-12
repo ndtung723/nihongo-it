@@ -1,12 +1,8 @@
-﻿package com.example.learningservice.dto
-
-import com.example.common.dto.ResponseDto
+package com.example.learningservice.dto
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
-class UpdateVocabularyResponseDto (
-    @JsonProperty("result")
-    val result: ResponseDto,
+data class UpdateVocabularyResponseDto(
     @JsonProperty("data")
-    val data: VocabularyDto
+    val data: VocabularyDto,
 )

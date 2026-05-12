@@ -1,184 +1,134 @@
-import api from '../utils/api';
+import api from "@/utils/api";
+import type { AxiosResponse } from "axios";
+import type {
+  VocabularyItem,
+  VocabularyFilter,
+  CreateVocabularyRequest,
+  UpdateVocabularyRequest,
+} from "@/types/learning.types";
+import type { PagedResponse } from "@/types/common.types";
 
-// Types
-export interface VocabularyItem {
-	vocabId: string;
-	term: string;
-	meaning: string;
-	pronunciation?: string;
-	example?: string;
-	exampleMeaning?: string;
-	audioPath?: string;
-	jlptLevel: string;
-	topicId?: string;
-	topicName?: string;
-	createdAt?: string;
-	isSaved: boolean;
+// Public endpoints — return unwrapped Promise<T>
+const vocabularyService = {
+  getVocabulary: (
+    filter: VocabularyFilter,
+  ): Promise<PagedResponse<VocabularyItem>> =>
+    api
+      .get("/api/v1/learning/vocabulary", {
+        params: {
+          keyword: filter.keyword || undefined,
+          jlptLevel: filter.jlptLevel || undefined,
+          topicName: filter.topicName || undefined,
+          page: filter.page,
+          size: filter.size,
+          sort: filter.sort || undefined,
+        },
+      })
+      .then((r) => r.data),
 
-	// For chat interface
-	aiExplanation?: string;
-	aiExamples?: ExampleSentence[];
-	chatHistory?: ChatMessage[];
-}
+  getVocabularyById: (id: string): Promise<VocabularyItem> =>
+    api
+      .get(`/api/v1/learning/vocabulary/${id}`)
+      .then((r) => r.data.data ?? r.data),
 
-export interface VocabularyFilter {
-	keyword: string | null;
-	jlptLevel: string | null;
-	topicName: string | null;
-	page: number;
-	size: number;
-	sort?: string | null;
-}
+  getVocabularyByTerm: (term: string): Promise<VocabularyItem> =>
+    api
+      .get(`/api/v1/learning/vocabulary/term/${term}`)
+      .then((r) => r.data.data ?? r.data),
 
-export interface PagedResponse<T> {
-	content: T[];
-	page: number;
-	size: number;
-	totalElements: number;
-	totalPages: number;
-	lastPage: boolean;
-}
+  saveVocabulary: (id: string): Promise<void> =>
+    api
+      .post(`/api/v1/learning/vocabulary/${id}/save`, {})
+      .then(() => undefined),
 
-export interface ExampleSentence {
-	japanese: string;
-	vietnamese: string;
-}
+  removeSavedVocabulary: (id: string): Promise<void> =>
+    api.delete(`/api/v1/learning/vocabulary/${id}/save`).then(() => undefined),
 
-export interface ChatMessage {
-	role: string;
-	content: string;
-}
+  getSavedVocabulary: (
+    filter: VocabularyFilter,
+  ): Promise<PagedResponse<VocabularyItem>> =>
+    api
+      .get("/api/v1/learning/vocabulary/saved", {
+        params: {
+          keyword: filter.keyword || undefined,
+          page: filter.page,
+          size: filter.size,
+          sort: filter.sort || undefined,
+        },
+      })
+      .then((r) => r.data),
 
-class VocabularyService {
-	// Get vocabulary with filters
-	async getVocabulary(filter: VocabularyFilter): Promise<PagedResponse<VocabularyItem>> {
-		try {
-			const response = await api.get('/api/v1/learning/vocabulary', {
-				params: {
-					keyword: filter.keyword || undefined,
-					jlptLevel: filter.jlptLevel || undefined,
-					topicName: filter.topicName || undefined,
-					page: filter.page,
-					size: filter.size,
-					sort: filter.sort || undefined,
-				},
-			});
-			return response.data;
-		} catch (error) {
-			throw error;
-		}
-	}
+  // Metadata helpers (vocabulary-specific endpoints used by learning views)
+  getCategories: (): Promise<unknown> =>
+    api.get("/api/v1/learning/vocabulary/categories").then((r) => r.data),
 
-	// Get vocabulary by ID
-	async getVocabularyById(id: string): Promise<VocabularyItem> {
-		try {
-			const response = await api.get(`/api/v1/learning/vocabulary/${id}`);
-			return response.data.data;
-		} catch (error) {
-			throw error;
-		}
-	}
+  getJlptLevels: (): Promise<unknown> =>
+    api.get("/api/v1/learning/vocabulary/jlpt-levels").then((r) => r.data),
 
-	// Get vocabulary by term
-	async getVocabularyByTerm(term: string): Promise<VocabularyItem> {
-		try {
-			const response = await api.get(`/api/v1/learning/vocabulary/term/${term}`);
-			return response.data.data;
-		} catch (error) {
-			throw error;
-		}
-	}
+  getTopics: (): Promise<unknown> =>
+    api.get("/api/v1/learning/topics").then((r) => r.data),
 
-	// Save vocabulary to user's notebook
-	async saveVocabulary(id: string): Promise<VocabularyItem> {
-		try {
-			const response = await api.post(`/api/v1/learning/vocabulary/${id}/save`, {});
-			return response.data;
-		} catch (error) {
-			throw error;
-		}
-	}
+  getTopicsByCategory: (categoryId: string): Promise<unknown> =>
+    api
+      .get(`/api/v1/learning/vocabulary/categories/${categoryId}/topics`)
+      .then((r) => r.data),
 
-	// Remove vocabulary from user's notebook
-	async removeSavedVocabulary(id: string): Promise<VocabularyItem> {
-		try {
-			const response = await api.delete(`/api/v1/learning/vocabulary/${id}/save`);
-			return response.data;
-		} catch (error) {
-			throw error;
-		}
-	}
+  // Admin endpoints — keep AxiosResponse<T> to match VocabularyManagementView usage
+  adminGetAllVocabulary: (
+    page = 0,
+    size = 20,
+  ): Promise<AxiosResponse<PagedResponse<VocabularyItem>>> =>
+    api.get("/api/v1/learning/admin/vocabulary", { params: { page, size } }),
 
-	// Get saved vocabulary
-	async getSavedVocabulary(filter: VocabularyFilter): Promise<PagedResponse<VocabularyItem>> {
-		try {
-			const response = await api.get('/api/v1/learning/vocabulary/saved', {
-				params: {
-					keyword: filter.keyword || undefined,
-					page: filter.page,
-					size: filter.size,
-					sort: filter.sort || undefined,
-				},
-			});
-			return response.data;
-		} catch (error) {
-			throw error;
-		}
-	}
+  adminGetVocabularyByTopicId: (
+    topicId: string,
+    page = 0,
+    size = 20,
+  ): Promise<AxiosResponse<PagedResponse<VocabularyItem>>> =>
+    api.get(`/api/v1/learning/admin/vocabulary/topic/${topicId}`, {
+      params: { page, size },
+    }),
 
-	async getCategories(): Promise<any> {
-		try {
-			const response = await api.get('/api/v1/learning/vocabulary/categories');
-			return response.data;
-		} catch (error) {
-			throw error;
-		}
-	}
+  adminGetVocabularyByJlptLevel: (
+    jlptLevel: string,
+    page = 0,
+    size = 20,
+  ): Promise<AxiosResponse<PagedResponse<VocabularyItem>>> =>
+    api.get("/api/v1/learning/admin/vocabulary", {
+      params: { jlptLevel, page, size },
+    }),
 
-	async getJlptLevels(): Promise<any> {
-		try {
-			const response = await api.get('/api/v1/learning/vocabulary/jlpt-levels');
-			return response.data;
-		} catch (error) {
-			throw error;
-		}
-	}
+  adminGetVocabularyById: (
+    id: string,
+  ): Promise<AxiosResponse<VocabularyItem>> =>
+    api.get(`/api/v1/learning/admin/vocabulary/${id}`),
 
-	async getTopics(): Promise<any> {
-		try {
-			const response = await api.get('/api/v1/learning/topics');
-			return response.data;
-		} catch (error) {
-			throw error;
-		}
-	}
+  adminCreateVocabulary: (
+    data: CreateVocabularyRequest,
+  ): Promise<AxiosResponse<VocabularyItem>> =>
+    api.post("/api/v1/learning/admin/vocabulary", data),
 
-	async getTopicsByCategory(categoryId: string): Promise<any> {
-		try {
-			const response = await api.get(`/api/v1/learning/vocabulary/categories/${categoryId}/topics`);
-			return response.data;
-		} catch (error) {
-			throw error;
-		}
-	}
+  adminUpdateVocabulary: (
+    id: string,
+    data: UpdateVocabularyRequest,
+  ): Promise<AxiosResponse<VocabularyItem>> =>
+    api.put(`/api/v1/learning/admin/vocabulary/${id}`, data),
 
-	async createVocabulary(vocabulary: any): Promise<any> {
-		try {
-			const response = await api.post('/api/v1/learning/vocabulary', vocabulary);
-			return response.data;
-		} catch (error) {
-			throw error;
-		}
-	}
+  adminDeleteVocabulary: (id: string): Promise<AxiosResponse<unknown>> =>
+    api.delete(`/api/v1/learning/admin/vocabulary/${id}`),
 
-	async updateVocabulary(id: string, vocabulary: any): Promise<any> {
-		try {
-			const response = await api.put(`/api/v1/learning/vocabulary/${id}`, vocabulary);
-			return response.data;
-		} catch (error) {
-			throw error;
-		}
-	}
-}
+  adminSearchVocabulary: (
+    query: string,
+    topicId?: string,
+    jlptLevel?: string,
+    page = 0,
+    size = 20,
+  ): Promise<AxiosResponse<PagedResponse<VocabularyItem>>> => {
+    const params: Record<string, unknown> = { query, page, size };
+    if (topicId) params.topicId = topicId;
+    if (jlptLevel) params.jlptLevel = jlptLevel;
+    return api.get("/api/v1/learning/admin/vocabulary/search", { params });
+  },
+};
 
-export default new VocabularyService();
+export default vocabularyService;

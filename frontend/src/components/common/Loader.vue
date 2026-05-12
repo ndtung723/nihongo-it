@@ -6,19 +6,25 @@
       color="primary"
       indeterminate
     />
-    <div v-if="text" class="loader-text text-body-2 text-medium-emphasis mt-3">{{ text }}</div>
+    <div v-if="text" class="loader-text text-body-2 text-medium-emphasis mt-3">
+      {{ text }}
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-withDefaults(defineProps<{
-  fullscreen?: boolean
-  size?: number
-  text?: string
-}>(), {
-  fullscreen: false,
-  size: 48,
-})
+defineOptions({ name: "AppLoader" });
+withDefaults(
+  defineProps<{
+    fullscreen?: boolean;
+    size?: number;
+    text?: string;
+  }>(),
+  {
+    fullscreen: false,
+    size: 48,
+  },
+);
 </script>
 
 <style scoped>

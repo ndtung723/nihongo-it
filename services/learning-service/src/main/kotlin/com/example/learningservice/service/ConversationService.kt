@@ -1,12 +1,12 @@
 ﻿package com.example.learningservice.service
 
+import com.example.common.exception.BusinessException
 import com.example.learningservice.dto.ConversationDTO
 import com.example.learningservice.dto.CreateConversationRequest
 import com.example.learningservice.dto.PagedResponse
 import com.example.learningservice.dto.UpdateConversationRequest
 import com.example.learningservice.entity.ConversationEntity
 import com.example.learningservice.entity.ConversationLineEntity
-import com.example.common.exception.BusinessException
 import com.example.learningservice.repository.ConversationLineRepository
 import com.example.learningservice.repository.ConversationRepository
 import org.springframework.data.domain.Pageable
@@ -18,52 +18,52 @@ import java.util.UUID
 @Service
 class ConversationService(
     private val conversationRepository: ConversationRepository,
-    private val conversationLineRepository: ConversationLineRepository
+    private val conversationLineRepository: ConversationLineRepository,
 ) {
 
     fun getAllConversations(pageable: Pageable): PagedResponse<ConversationDTO> {
         val page = conversationRepository.findAll(pageable)
         val content = page.content.map { ConversationDTO.fromEntity(it) }
-        
+
         return PagedResponse(
             content = content,
             totalPages = page.totalPages,
             totalElements = page.totalElements,
             currentPage = page.number,
-            size = page.size
+            size = page.size,
         )
     }
 
     fun searchConversations(query: String, pageable: Pageable): PagedResponse<ConversationDTO> {
         val page = conversationRepository.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(query, query, pageable)
         val content = page.content.map { ConversationDTO.fromEntity(it) }
-        
+
         return PagedResponse(
             content = content,
             totalPages = page.totalPages,
             totalElements = page.totalElements,
             currentPage = page.number,
-            size = page.size
+            size = page.size,
         )
     }
 
     fun getConversationsByJlptLevel(level: String, pageable: Pageable): PagedResponse<ConversationDTO> {
         val page = conversationRepository.findByJlptLevel(level, pageable)
         val content = page.content.map { ConversationDTO.fromEntity(it) }
-        
+
         return PagedResponse(
             content = content,
             totalPages = page.totalPages,
             totalElements = page.totalElements,
             currentPage = page.number,
-            size = page.size
+            size = page.size,
         )
     }
 
     fun getConversationById(conversationId: UUID): ConversationDTO {
         val conversation = conversationRepository.findById(conversationId)
             .orElseThrow { BusinessException("Conversation not found with id: $conversationId") }
-        
+
         return ConversationDTO.fromEntity(conversation)
     }
 
@@ -75,11 +75,11 @@ class ConversationService(
             jlptLevel = request.jlptLevel,
             unit = request.unit,
             createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now()
+            updatedAt = LocalDateTime.now(),
         )
-        
+
         val savedConversation = conversationRepository.save(conversation)
-        
+
         // Save conversation lines
         if (request.lines.isNotEmpty()) {
             val conversationLines = request.lines.map { lineRequest ->
@@ -90,21 +90,21 @@ class ConversationService(
                     vietnameseTranslation = lineRequest.vietnameseTranslation,
                     notes = lineRequest.notes,
                     importantVocab = lineRequest.importantVocab,
-                    orderIndex = lineRequest.orderIndex
+                    orderIndex = lineRequest.orderIndex,
                 )
             }
-            
+
             conversationLineRepository.saveAll(conversationLines)
         }
-        
-        return getConversationById(savedConversation.convId!!)
+
+        return getConversationById(requireNotNull(savedConversation.convId) { "Conversation ID missing after save" })
     }
 
     @Transactional
     fun updateConversation(conversationId: UUID, request: UpdateConversationRequest): ConversationDTO {
         val conversation = conversationRepository.findById(conversationId)
             .orElseThrow { BusinessException("Conversation not found with id: $conversationId") }
-        
+
         // Update conversation properties
         conversation.apply {
             title = request.title ?: title
@@ -113,14 +113,14 @@ class ConversationService(
             unit = request.unit ?: unit
             updatedAt = LocalDateTime.now()
         }
-        
+
         conversationRepository.save(conversation)
-        
+
         // Update conversation lines if provided
         if (request.lines != null) {
             // Delete existing lines
             conversationLineRepository.deleteByConversationId(conversationId)
-            
+
             // Create new lines
             val conversationLines = request.lines.map { lineRequest ->
                 ConversationLineEntity(
@@ -130,13 +130,13 @@ class ConversationService(
                     vietnameseTranslation = lineRequest.vietnameseTranslation,
                     notes = lineRequest.notes,
                     importantVocab = lineRequest.importantVocab,
-                    orderIndex = lineRequest.orderIndex
+                    orderIndex = lineRequest.orderIndex,
                 )
             }
-            
+
             conversationLineRepository.saveAll(conversationLines)
         }
-        
+
         return getConversationById(conversationId)
     }
 
@@ -145,11 +145,11 @@ class ConversationService(
         if (!conversationRepository.existsById(conversationId)) {
             throw BusinessException("Conversation not found with id: $conversationId")
         }
-        
+
         // Delete associated lines first
         conversationLineRepository.deleteByConversationId(conversationId)
-        
+
         // Delete the conversation
         conversationRepository.deleteById(conversationId)
     }
-} 
+}

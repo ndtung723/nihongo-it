@@ -21,19 +21,27 @@ private data class BucketEntry(val bucket: Bucket, @Volatile var lastAccess: Ins
 
 @Component
 class RateLimitFilter : GlobalFilter, Ordered {
+    companion object {
+        private const val FILTER_ORDER = -50
+        private const val STALE_BUCKET_MINUTES = 30L
+    }
 
     private val logger = LoggerFactory.getLogger(RateLimitFilter::class.java)
 
+    @Suppress("MagicNumber")
     private val rules = listOf(
-        RateLimitRule("/api/v1/user/auth/login",           5,  Duration.ofMinutes(1)),
-        RateLimitRule("/api/v1/user/auth/forgot-password", 3,  Duration.ofMinutes(5)),
-        RateLimitRule("/api/v1/user/auth/refresh-token",   10, Duration.ofMinutes(1)),
-        RateLimitRule("/api/v1/ai/speech/",                10, Duration.ofMinutes(1)),
-        RateLimitRule("/api/v1/ai/",                       30, Duration.ofMinutes(1)),
+        RateLimitRule("/api/v1/user/auth/login", 5, Duration.ofMinutes(1)),
+        RateLimitRule("/api/v1/user/auth/signup", 3, Duration.ofHours(1)),
+        RateLimitRule("/api/v1/user/auth/forgot-password", 3, Duration.ofMinutes(5)),
+        RateLimitRule("/api/v1/user/auth/set-new-password", 5, Duration.ofHours(1)),
+        RateLimitRule("/api/v1/user/auth/refresh-token", 10, Duration.ofMinutes(1)),
+        RateLimitRule("/api/v1/ai/speech/", 10, Duration.ofMinutes(1)),
+        RateLimitRule("/api/v1/ai/", 30, Duration.ofMinutes(1)),
     )
 
     private val buckets = ConcurrentHashMap<String, BucketEntry>()
 
+    @Suppress("ForbiddenVoid")
     override fun filter(exchange: ServerWebExchange, chain: GatewayFilterChain): Mono<Void> {
         val path = exchange.request.path.value()
         val rule = rules.firstOrNull { path.startsWith(it.pathPrefix) } ?: return chain.filter(exchange)
@@ -63,6 +71,7 @@ class RateLimitFilter : GlobalFilter, Ordered {
         return BucketEntry(bucket)
     }
 
+    @Suppress("ForbiddenVoid")
     private fun tooManyRequests(exchange: ServerWebExchange, refillPeriod: Duration): Mono<Void> {
         val response = exchange.response
         response.statusCode = HttpStatus.TOO_MANY_REQUESTS
@@ -75,10 +84,10 @@ class RateLimitFilter : GlobalFilter, Ordered {
 
     @Scheduled(fixedDelay = 3_600_000)
     fun evictStaleBuckets() {
-        val cutoff = Instant.now().minus(Duration.ofMinutes(30))
+        val cutoff = Instant.now().minus(Duration.ofMinutes(STALE_BUCKET_MINUTES))
         val removed = buckets.entries.removeIf { it.value.lastAccess.isBefore(cutoff) }
         if (removed) logger.debug("Evicted stale rate-limit buckets")
     }
 
-    override fun getOrder(): Int = -50
+    override fun getOrder(): Int = FILTER_ORDER
 }

@@ -17,6 +17,11 @@ interface RefreshTokenRepository : JpaRepository<RefreshTokenEntity, UUID> {
     @Transactional
     fun deleteByToken(token: String)
 
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM RefreshTokenEntity r WHERE r.familyId = :familyId")
+    fun deleteByFamilyId(familyId: UUID)
+
     @Modifying
     @Query("DELETE FROM RefreshTokenEntity r WHERE r.expiresAt < :now")
     fun deleteAllExpired(now: LocalDateTime)

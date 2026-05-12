@@ -1,0 +1,16 @@
+package com.example.userservice.entity
+
+enum class AuditAction {
+    LOGIN_SUCCESS,
+    LOGIN_FAILURE,
+    LOGOUT,
+    LOGOUT_ALL,
+    PASSWORD_CHANGED,
+    PASSWORD_RESET_REQUESTED,
+    PASSWORD_RESET_COMPLETED,
+    USER_CREATED,
+    USER_UPDATED,
+    USER_DEACTIVATED,
+    USER_ACTIVATED,
+    ROLE_CHANGED,
+}

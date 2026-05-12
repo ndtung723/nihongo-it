@@ -40,63 +40,84 @@
 
       <!-- Main Content Column -->
       <div class="main-content-column">
-    <!-- Main Content -->
+        <!-- Main Content -->
         <div v-if="!loading">
           <!-- Category View -->
           <div class="category-section">
-            <div v-for="category in filteredCategories" :key="category.id" class="category-item">
+            <div
+              v-for="category in filteredCategories"
+              :key="category.id"
+              class="category-item"
+            >
               <div class="text-center mb-2">
-                <div class="text-h6 font-weight-bold text-center japanese-text">{{ category.name }}</div>
-          </div>
+                <div class="text-h6 font-weight-bold text-center japanese-text">
+                  {{ category.name }}
+                </div>
+              </div>
 
               <div class="category-card">
-            <v-card
+                <v-card
                   class="category-lesson-card"
                   variant="flat"
-              rounded="lg"
-              @click="selectCategory(category)"
-            >
-              <v-img
-                :src="getImagePath(category.name)"
+                  rounded="lg"
+                  @click="selectCategory(category)"
+                >
+                  <v-img
+                    :src="getImagePath(category.name)"
                     height="180px"
                     width="100%"
                     aspect-ratio="1"
-                cover
-                class="position-relative"
-              >
-                <div class="category-overlay d-flex flex-column justify-center align-center">
-                      <div class="text-subtitle-1 font-weight-bold text-white text-center">
-                    {{ category.meaning }}
-                  </div>
+                    cover
+                    class="position-relative"
+                  >
+                    <div
+                      class="category-overlay d-flex flex-column justify-center align-center"
+                    >
+                      <div
+                        class="text-subtitle-1 font-weight-bold text-white text-center"
+                      >
+                        {{ category.meaning }}
+                      </div>
                       <div class="text-caption text-white mt-1">
-                    {{ getTopicsCount(category) }} topics
-                  </div>
-                </div>
-              </v-img>
-            </v-card>
-        </div>
-      </div>
+                        {{ getTopicsCount(category) }} topics
+                      </div>
+                    </div>
+                  </v-img>
+                </v-card>
+              </div>
+            </div>
 
             <!-- Empty State when no categories match search -->
-            <div v-if="filteredCategories.length === 0" class="text-center py-8">
-          <v-icon size="large" icon="mdi-book-search-outline" class="mb-4"></v-icon>
+            <div
+              v-if="filteredCategories.length === 0"
+              class="text-center py-8"
+            >
+              <v-icon
+                size="large"
+                icon="mdi-book-search-outline"
+                class="mb-4"
+              ></v-icon>
               <h3 class="text-h6">カテゴリーが見つかりません</h3>
-          <p class="text-body-1 text-medium-emphasis">
+              <p class="text-body-1 text-medium-emphasis">
                 No categories match your search criteria.
               </p>
               <v-btn color="primary" class="mt-4" @click="clearAllFilters">
                 Clear Search
-                  </v-btn>
-                </div>
-                  </div>
-                </div>
+              </v-btn>
+            </div>
+          </div>
+        </div>
 
-        <!-- Loading Indicator -->
-        <div v-if="loading" class="text-center py-8">
-          <v-progress-circular indeterminate color="primary"></v-progress-circular>
-          <p class="text-body-1 text-medium-emphasis mt-3">Loading...</p>
-                </div>
-              </div>
+        <!-- Loading Skeleton -->
+        <template v-else>
+          <v-skeleton-loader
+            v-for="i in 4"
+            :key="i"
+            type="list-item-avatar"
+            class="mb-2"
+          />
+        </template>
+      </div>
 
       <!-- Right Column: Banners/Guidelines -->
       <div class="banner-column">
@@ -107,13 +128,17 @@
             学習経路
           </v-card-title>
           <v-card-text>
-            <p class="text-body-2">カテゴリーとトピックを選んで、IT用語の学習を始めましょう。</p>
+            <p class="text-body-2">
+              カテゴリーとトピックを選んで、IT用語の学習を始めましょう。
+            </p>
             <div class="d-flex align-center mt-2">
-              <v-icon size="small" color="success" class="mr-2">mdi-check-circle</v-icon>
+              <v-icon size="small" color="success" class="mr-2"
+                >mdi-check-circle</v-icon
+              >
               <span class="text-body-2">基本から応用まで体系的に学べます</span>
-                          </div>
+            </div>
           </v-card-text>
-                </v-card>
+        </v-card>
 
         <!-- Study Tips Banner -->
         <v-card class="mb-4 study-tips-card" variant="outlined" rounded="lg">
@@ -129,7 +154,7 @@
               <li class="text-body-2">不明点はChatGPTに質問しましょう</li>
             </ul>
           </v-card-text>
-                    </v-card>
+        </v-card>
 
         <!-- Resources Banner -->
         <v-card class="resources-card" variant="outlined" rounded="lg">
@@ -147,17 +172,17 @@
             <p class="text-body-2">
               IT分野の専門用語を効率よく習得するための追加リソースをご利用ください。
             </p>
-                  <v-btn
-                    color="primary"
+            <v-btn
+              color="primary"
               variant="text"
               class="px-0 mt-2"
               prepend-icon="mdi-open-in-new"
               density="comfortable"
             >
               リソースを見る
-                  </v-btn>
+            </v-btn>
           </v-card-text>
-          </v-card>
+        </v-card>
       </div>
     </div>
 
@@ -189,166 +214,155 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import vocabularyService from '@/services/vocabulary.service'
-import { useToast } from 'vue-toast-notification'
+import { ref, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import vocabularyService from "@/services/vocabulary.service";
+import { useAppToast } from "@/composables/useAppToast";
+import { useCategoriesStore } from "@/stores";
 
 // Define interfaces for the data structures
 interface Topic {
-  id: string
-  name: string
-  meaning: string
-  categoryId?: string
+  id: string;
+  name: string;
+  meaning: string;
+  categoryId?: string;
   category?: {
-    id: string
-    name: string
-  }
-  displayOrder: number
-  vocabularyCount?: number
+    id: string;
+    name: string;
+  };
+  displayOrder: number;
+  vocabularyCount?: number;
 }
 
 interface Category {
-  id: string
-  name: string
-  meaning: string
-  displayOrder: number
+  id: string;
+  name: string;
+  meaning: string;
+  displayOrder: number;
 }
 
-const router = useRouter()
-const toast = useToast()
+const router = useRouter();
+const toast = useAppToast();
+const categoriesStore = useCategoriesStore();
 
 // State variables
-const loading = ref(false)
-const categories = ref<Category[]>([])
-const topics = ref<Topic[]>([])
-const search = ref('')
-const showFilterDialog = ref(false)
+const loading = ref(false);
+const categories = ref<Category[]>([]);
+const topics = ref<Topic[]>([]);
+const search = ref("");
+const showFilterDialog = ref(false);
 
 // Computed properties
 const filteredCategories = computed(() => {
-  if (!search.value) return categories.value
+  if (!search.value) return categories.value;
 
-  return categories.value.filter(category => {
-    return category.name.toLowerCase().includes(search.value.toLowerCase()) ||
-           category.meaning.toLowerCase().includes(search.value.toLowerCase())
-  })
-})
+  return categories.value.filter((category) => {
+    return (
+      category.name.toLowerCase().includes(search.value.toLowerCase()) ||
+      category.meaning.toLowerCase().includes(search.value.toLowerCase())
+    );
+  });
+});
 
 // Debounce function for category search
-let categorySearchTimeout: any = null
+let categorySearchTimeout: ReturnType<typeof setTimeout> | null = null;
 function debouncedFilterCategories() {
-  clearTimeout(categorySearchTimeout)
+  clearTimeout(categorySearchTimeout ?? undefined);
   categorySearchTimeout = setTimeout(() => {
     // We don't need to fetch categories as they're already loaded
     // Just let the v-for directive filter them based on search.value
-  }, 300)
+  }, 300);
 }
 
 // Lifecycle hooks
 onMounted(async () => {
-  await Promise.all([
-    fetchCategories(),
-    fetchTopics()
-  ])
-})
+  await Promise.all([fetchCategories(), fetchTopics()]);
+});
 
 // API Methods
 async function fetchCategories() {
   try {
-    loading.value = true
-    const response = await vocabularyService.getCategories()
+    loading.value = true;
+    await categoriesStore.fetchCategories();
 
-    if (Array.isArray(response)) {
-      categories.value = response.map(category => {
-        return {
-          id: category.id || category.categoryId,
-          name: category.name,
-          meaning: category.meaning,
-          displayOrder: category.displayOrder || 0
-        }
-      })
-    } else {
-      categories.value = []
-    }
-  } catch (error) {
-    toast.error('Failed to load categories', {
-      position: 'top',
-      duration: 3000
-    })
+    categories.value = categoriesStore.categories.map((category) => ({
+      id: category.categoryId,
+      name: category.name,
+      meaning: category.meaning ?? "",
+      displayOrder: category.displayOrder || 0,
+    }));
+  } catch {
+    toast.error("Failed to load categories");
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 async function fetchTopics() {
   try {
-    const response = await vocabularyService.getTopics()
+    const response = await vocabularyService.getTopics();
 
     if (Array.isArray(response)) {
-      topics.value = response.map(topic => {
+      topics.value = response.map((topic) => {
         return {
           id: topic.id || topic.topicId,
           name: topic.name,
           meaning: topic.meaning,
           categoryId: topic.categoryId || topic.category?.id,
           displayOrder: topic.displayOrder || 0,
-          vocabularyCount: topic.vocabularyCount || 0
-        }
-      })
+          vocabularyCount: topic.vocabularyCount || 0,
+        };
+      });
     } else {
-      topics.value = []
+      topics.value = [];
     }
-  } catch (error) {
-    toast.error('Failed to load topics', {
-      position: 'top',
-      duration: 3000
-    })
+  } catch {
+    toast.error("Failed to load topics");
   }
 }
 
 // Navigation and UI Methods
 function goBack() {
-  router.back()
+  router.back();
 }
 
 function getImagePath(categoryName: string): string {
   const categoryImages: Record<string, string> = {
-    'IT基礎': 'it-basics.png',
-    'プログラミング': 'programming.png',
-    'ウェブ開発': 'web-dev.png',
-    'データベース': 'database.png',
-    '人工知能・データ': 'ai-data.png',
-    'コミュニケーション': 'communication.png',
-    '実務とキャリア': 'career.png'
-  }
+    IT基礎: "it-basics.png",
+    プログラミング: "programming.png",
+    ウェブ開発: "web-dev.png",
+    データベース: "database.png",
+    "人工知能・データ": "ai-data.png",
+    コミュニケーション: "communication.png",
+    実務とキャリア: "career.png",
+  };
 
-  return `/images/categories/${categoryImages[categoryName] || 'default.png'}`
+  return `/images/categories/${categoryImages[categoryName] || "default.png"}`;
 }
 
 function getTopicsCount(category: Category): number {
-  const matchingTopics = topics.value.filter(t => {
-    const topicCategoryId = t.categoryId || (t.category && t.category.id)
-    return topicCategoryId === category.id
-  })
-  return matchingTopics.length
+  const matchingTopics = topics.value.filter((t) => {
+    const topicCategoryId = t.categoryId || (t.category && t.category.id);
+    return topicCategoryId === category.id;
+  });
+  return matchingTopics.length;
 }
 
 function selectCategory(category: Category) {
   // Navigate to the category detail page
   router.push({
-    name: 'categoryDetail',
-    params: { slug: encodeURIComponent(category.name) }
+    name: "categoryDetail",
+    params: { slug: encodeURIComponent(category.name) },
   });
 }
 
 function openFilterDialog() {
-  showFilterDialog.value = true
+  showFilterDialog.value = true;
 }
 
 function clearAllFilters() {
-  search.value = ''
-  showFilterDialog.value = false
+  search.value = "";
+  showFilterDialog.value = false;
 }
 </script>
 
@@ -395,7 +409,8 @@ function clearAllFilters() {
     grid-template-columns: 1fr;
   }
 
-  .banner-column, .empty-column {
+  .banner-column,
+  .empty-column {
     display: none;
   }
 
@@ -444,7 +459,7 @@ function clearAllFilters() {
 }
 
 .japanese-text {
-  font-family: 'Noto Sans JP', sans-serif;
+  font-family: "Noto Sans JP", sans-serif;
 }
 
 .search-field {
@@ -484,7 +499,11 @@ function clearAllFilters() {
 }
 
 .category-overlay {
-  background: linear-gradient(0deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.4) 100%);
+  background: linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.75) 0%,
+    rgba(0, 0, 0, 0.4) 100%
+  );
   position: absolute;
   top: 0;
   left: 0;
@@ -501,15 +520,15 @@ function clearAllFilters() {
 
 /* Banner card styles */
 .learning-path-card {
-  border-left: 4px solid #42A5F5 !important;
+  border-left: 4px solid #42a5f5 !important;
 }
 
 .study-tips-card {
-  border-left: 4px solid #66BB6A !important;
+  border-left: 4px solid #66bb6a !important;
 }
 
 .resources-card {
-  border-left: 4px solid #FFA726 !important;
+  border-left: 4px solid #ffa726 !important;
 }
 
 .category-section {
@@ -522,5 +541,3 @@ function clearAllFilters() {
   margin-right: auto;
 }
 </style>
-
-

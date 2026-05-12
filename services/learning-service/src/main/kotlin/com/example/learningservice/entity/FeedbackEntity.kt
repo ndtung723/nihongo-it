@@ -1,4 +1,4 @@
-package com.example.learningservice.entity
+﻿package com.example.learningservice.entity
 
 import jakarta.persistence.*
 import java.time.LocalDateTime
@@ -23,8 +23,8 @@ data class FeedbackEntity(
     val content: String?,
 
     @Column(name = "content_id", nullable = false)
-    val contentId: UUID,  //id of conversation
+    val contentId: UUID, // id of conversation
 
     @Column(name = "created_at", nullable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
-) 
+)

@@ -16,10 +16,11 @@ interface NotificationRepository : JpaRepository<NotificationEntity, UUID> {
     fun findByUserAndIsReadFalseOrderBySentAtDesc(user: UserEntity): List<NotificationEntity>
     fun findByUserAndSentAtAfterOrderBySentAtDesc(user: UserEntity, afterDate: LocalDateTime): List<NotificationEntity>
     fun countByUserAndIsReadFalse(user: UserEntity): Long
+
     @Modifying
     @Query("DELETE FROM NotificationEntity n WHERE n.sentAt < :beforeDate")
     fun deleteByCreatedAtBefore(beforeDate: LocalDateTime): Int
-    
+
     // Find the most recent notification by user and type
     fun findFirstByUserAndTypeOrderBySentAtDesc(user: UserEntity, type: NotificationType): NotificationEntity?
-} 
+}

@@ -1,12 +1,8 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import vocabularyService from "@/services/vocabulary.service.ts";
-import type {
-  VocabularyItem,
-  VocabularyFilter,
-  PagedResponse,
-} from "@/services/vocabulary.service.ts";
-import { useToast } from "vue-toast-notification";
+import vocabularyService from "@/services/vocabulary.service";
+import type { VocabularyItem, VocabularyFilter } from "@/types/learning.types";
+import { extractApiError } from "@/types/common.types";
 
 export const useVocabularyStore = defineStore("vocabulary", () => {
   // State
@@ -30,20 +26,13 @@ export const useVocabularyStore = defineStore("vocabulary", () => {
   async function fetchVocabularyById(id: string) {
     loading.value = true;
     error.value = null;
-
     try {
       const vocabulary = await vocabularyService.getVocabularyById(id);
       currentVocabulary.value = vocabulary;
       await fetchRelatedTerms(vocabulary);
       return vocabulary;
-    } catch (err: any) {
-      error.value =
-        err.response?.data?.message || "Failed to load vocabulary details";
-      const toast = useToast();
-      toast.error(error.value || "Failed to load vocabulary details", {
-        position: "top",
-        duration: 3000,
-      });
+    } catch (err: unknown) {
+      error.value = extractApiError(err, "Failed to load vocabulary details");
       return null;
     } finally {
       loading.value = false;
@@ -53,20 +42,13 @@ export const useVocabularyStore = defineStore("vocabulary", () => {
   async function fetchVocabularyByTerm(term: string) {
     loading.value = true;
     error.value = null;
-
     try {
       const vocabulary = await vocabularyService.getVocabularyByTerm(term);
       currentVocabulary.value = vocabulary;
       await fetchRelatedTerms(vocabulary);
       return vocabulary;
-    } catch (err: any) {
-      error.value =
-        err.response?.data?.message || "Failed to load vocabulary details";
-      const toast = useToast();
-      toast.error(error.value || "Failed to load vocabulary details", {
-        position: "top",
-        duration: 3000,
-      });
+    } catch (err: unknown) {
+      error.value = extractApiError(err, "Failed to load vocabulary details");
       return null;
     } finally {
       loading.value = false;
@@ -77,11 +59,10 @@ export const useVocabularyStore = defineStore("vocabulary", () => {
     page = 0,
     size = 10,
     keyword?: string,
-    sort?: string
+    sort?: string,
   ) {
     savedLoading.value = true;
     error.value = null;
-
     try {
       const filter: VocabularyFilter = {
         keyword: keyword || null,
@@ -91,9 +72,7 @@ export const useVocabularyStore = defineStore("vocabulary", () => {
         size,
         sort: sort || null,
       };
-
       const response = await vocabularyService.getSavedVocabulary(filter);
-
       if (response && Array.isArray(response.content)) {
         savedVocabulary.value = response.content;
         totalSavedItems.value = response.totalElements;
@@ -102,27 +81,13 @@ export const useVocabularyStore = defineStore("vocabulary", () => {
         savedVocabulary.value = [];
         totalSavedItems.value = 0;
         totalSavedPages.value = 0;
-
-        // Don't show error for empty results
-        if (!response) {
-          throw new Error("Invalid response format");
-        }
       }
-
       return response;
-    } catch (err: any) {
-      error.value =
-        err.response?.data?.message || "Failed to load saved vocabulary";
+    } catch (err: unknown) {
+      error.value = extractApiError(err, "Failed to load saved vocabulary");
       savedVocabulary.value = [];
       totalSavedItems.value = 0;
       totalSavedPages.value = 0;
-
-      const toast = useToast();
-      toast.error(error.value || "Failed to load saved vocabulary", {
-        position: "top",
-        duration: 3000,
-      });
-
       return null;
     } finally {
       savedLoading.value = false;
@@ -131,7 +96,6 @@ export const useVocabularyStore = defineStore("vocabulary", () => {
 
   async function fetchRelatedTerms(vocabulary: VocabularyItem) {
     try {
-      // Fetch related terms based on topicName or JLPT level
       const filters: VocabularyFilter = {
         keyword: null,
         topicName: vocabulary.topicName || null,
@@ -139,86 +103,50 @@ export const useVocabularyStore = defineStore("vocabulary", () => {
         page: 0,
         size: 5,
       };
-
       const response = await vocabularyService.getVocabulary(filters);
-
       if (response && Array.isArray(response.content)) {
-        // Filter out the current vocabulary item
         relatedVocabulary.value = response.content
           .filter((item) => item.vocabId !== vocabulary.vocabId)
-          .slice(0, 4); // Limit to 4 items
+          .slice(0, 4);
       }
-    } catch (err) {
+    } catch {
       relatedVocabulary.value = [];
-      // Don't show error toast, this is not critical
     }
   }
 
-  async function toggleFavorite() {
+  async function toggleFavorite(): Promise<boolean> {
     if (!currentVocabulary.value) return false;
-
-    const toast = useToast();
     try {
       if (isFavorite.value) {
         await vocabularyService.removeSavedVocabulary(
-          currentVocabulary.value.vocabId
+          currentVocabulary.value.vocabId,
         );
-        toast.success("Removed from saved items", {
-          position: "top",
-          duration: 2000,
-        });
       } else {
         await vocabularyService.saveVocabulary(currentVocabulary.value.vocabId);
-        toast.success("Added to saved items", {
-          position: "top",
-          duration: 2000,
-        });
       }
-
-      // Toggle the state locally
       if (currentVocabulary.value) {
         currentVocabulary.value = {
           ...currentVocabulary.value,
           isSaved: !isFavorite.value,
         };
       }
-
       return true;
-    } catch (err) {
-      toast.error("Failed to update saved status", {
-        position: "top",
-        duration: 3000,
-      });
+    } catch {
       return false;
     }
   }
 
-  async function removeSavedItem(vocabId: string) {
-    const toast = useToast();
+  async function removeSavedItem(vocabId: string): Promise<boolean> {
     try {
       await vocabularyService.removeSavedVocabulary(vocabId);
-
-      // Remove the item from the local state
       savedVocabulary.value = savedVocabulary.value.filter(
-        (item) => item.vocabId !== vocabId
+        (item) => item.vocabId !== vocabId,
       );
-
-      // Decrement the total count
       if (totalSavedItems.value > 0) {
         totalSavedItems.value--;
       }
-
-      toast.success("Removed from saved items", {
-        position: "top",
-        duration: 2000,
-      });
-
       return true;
-    } catch (err) {
-      toast.error("Failed to remove item from saved list", {
-        position: "top",
-        duration: 3000,
-      });
+    } catch {
       return false;
     }
   }
@@ -243,7 +171,6 @@ export const useVocabularyStore = defineStore("vocabulary", () => {
   }
 
   return {
-    // State
     currentVocabulary,
     relatedVocabulary,
     savedVocabulary,
@@ -253,14 +180,10 @@ export const useVocabularyStore = defineStore("vocabulary", () => {
     processedExample,
     totalSavedItems,
     totalSavedPages,
-
-    // Getters
     hasVocabulary,
     hasRelatedItems,
     hasSavedItems,
     isFavorite,
-
-    // Actions
     fetchVocabularyById,
     fetchVocabularyByTerm,
     fetchRelatedTerms,

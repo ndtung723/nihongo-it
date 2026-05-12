@@ -2,23 +2,23 @@ package com.example.userservice.service
 
 import com.example.userservice.feign.AiServiceClient
 import com.example.userservice.feign.models.*
+import feign.FeignException
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
-import feign.FeignException
 
 @Service
 class AiService(private val aiServiceClient: AiServiceClient) {
-    
+
     private val logger = LoggerFactory.getLogger(AiService::class.java)
-    
+
     fun generateSpeech(
-        text: String, 
-        speedStr: String = "1.0", 
+        text: String,
+        speedStr: String = "1.0",
         contentType: String = "vocabulary",
         language: String = "ja",
-        saveAudio: Boolean = false
+        saveAudio: Boolean = false,
     ): ResponseEntity<ByteArray> {
         try {
             return aiServiceClient.generateSpeech(text, speedStr, contentType, language, saveAudio)
@@ -27,7 +27,7 @@ class AiService(private val aiServiceClient: AiServiceClient) {
             throw RuntimeException("Failed to convert text to speech", e)
         }
     }
-    
+
     fun checkAudioExists(text: String, contentType: String = "vocabulary"): ResponseEntity<Map<String, Boolean>> {
         try {
             return aiServiceClient.checkAudioExists(text, contentType)
@@ -36,7 +36,7 @@ class AiService(private val aiServiceClient: AiServiceClient) {
             throw RuntimeException("Failed to check if audio exists", e)
         }
     }
-    
+
     fun getAudio(text: String, contentType: String = "vocabulary"): ResponseEntity<ByteArray> {
         try {
             return aiServiceClient.getAudio(text, contentType)
@@ -45,7 +45,7 @@ class AiService(private val aiServiceClient: AiServiceClient) {
             throw RuntimeException("Failed to get audio", e)
         }
     }
-    
+
     fun analyzeSpeech(audio: MultipartFile, text: String, userId: String? = null): ResponseEntity<AnalyzeSpeechResponse> {
         try {
             return aiServiceClient.analyzeSpeech(audio, text, userId)
@@ -54,7 +54,7 @@ class AiService(private val aiServiceClient: AiServiceClient) {
             throw RuntimeException("Failed to analyze speech", e)
         }
     }
-    
+
     fun analyzeSample(sentence: String, sampleId: String): ResponseEntity<AnalyzeSpeechResponse> {
         try {
             return aiServiceClient.analyzeSample(sentence, sampleId)
@@ -63,7 +63,7 @@ class AiService(private val aiServiceClient: AiServiceClient) {
             throw RuntimeException("Failed to analyze speech sample", e)
         }
     }
-    
+
     fun getSampleAudio(sampleId: String, format: String = "wav"): ResponseEntity<ByteArray> {
         try {
             return aiServiceClient.getSampleAudio(sampleId, format)
@@ -72,7 +72,7 @@ class AiService(private val aiServiceClient: AiServiceClient) {
             throw RuntimeException("Failed to get sample audio", e)
         }
     }
-    
+
     fun analyzeAudioEnhanced(audio: MultipartFile, referenceText: String, sampleId: String? = null): ResponseEntity<Any> {
         try {
             return aiServiceClient.analyzeAudioEnhanced(audio, referenceText, sampleId)
@@ -81,7 +81,7 @@ class AiService(private val aiServiceClient: AiServiceClient) {
             throw RuntimeException("Failed to analyze audio with enhanced method", e)
         }
     }
-    
+
     fun healthCheck(): ResponseEntity<Map<String, Any>> {
         try {
             return aiServiceClient.healthCheck()
@@ -90,7 +90,7 @@ class AiService(private val aiServiceClient: AiServiceClient) {
             throw RuntimeException("Failed to check AI service health", e)
         }
     }
-    
+
     fun askAI(prompt: String): String {
         try {
             return aiServiceClient.askAI(prompt)
@@ -99,7 +99,7 @@ class AiService(private val aiServiceClient: AiServiceClient) {
             throw RuntimeException("Failed to get AI response", e)
         }
     }
-    
+
     fun getResponseOptions(prompt: String): String {
         try {
             return aiServiceClient.getResponseOptions(prompt)
@@ -108,7 +108,7 @@ class AiService(private val aiServiceClient: AiServiceClient) {
             throw RuntimeException("Failed to get response options", e)
         }
     }
-    
+
     fun translate(text: String, direction: String): TranslationResponse {
         try {
             return aiServiceClient.translate(text, direction)
@@ -117,7 +117,7 @@ class AiService(private val aiServiceClient: AiServiceClient) {
             throw RuntimeException("Failed to translate text", e)
         }
     }
-    
+
     fun translateEconomy(text: String, direction: String): TranslationResponse {
         try {
             return aiServiceClient.translateEconomy(text, direction)
@@ -126,7 +126,7 @@ class AiService(private val aiServiceClient: AiServiceClient) {
             throw RuntimeException("Failed to translate text", e)
         }
     }
-    
+
     fun getVocabularyList(category: String, level: String = "N5"): List<VocabularyInfo> {
         try {
             return aiServiceClient.getVocabularyList(category, level)
@@ -135,9 +135,14 @@ class AiService(private val aiServiceClient: AiServiceClient) {
             throw RuntimeException("Failed to get vocabulary list", e)
         }
     }
-    
-    fun explainVocabulary(term: String, pronunciation: String?, meaning: String,
-                         topicName: String?, example: String?): String {
+
+    fun explainVocabulary(
+        term: String,
+        pronunciation: String?,
+        meaning: String,
+        topicName: String?,
+        example: String?,
+    ): String {
         try {
             return aiServiceClient.explainVocabulary(term, pronunciation, meaning, topicName, example)
         } catch (e: FeignException) {
@@ -145,7 +150,7 @@ class AiService(private val aiServiceClient: AiServiceClient) {
             throw RuntimeException("Failed to explain vocabulary", e)
         }
     }
-    
+
     fun vocabularyChat(vocabWord: String, userMessage: String): String {
         try {
             return aiServiceClient.vocabularyChat(vocabWord, userMessage)
@@ -154,7 +159,7 @@ class AiService(private val aiServiceClient: AiServiceClient) {
             throw RuntimeException("Failed to get vocabulary chat response", e)
         }
     }
-    
+
     fun getListResponse(category: String, year: String): MutableList<String>? {
         try {
             return aiServiceClient.getListResponse(category, year)
@@ -163,7 +168,7 @@ class AiService(private val aiServiceClient: AiServiceClient) {
             throw RuntimeException("Failed to get list response", e)
         }
     }
-    
+
     fun getResponseAdvisor(message: String): String? {
         try {
             return aiServiceClient.getResponseAdvisor(message)
@@ -172,7 +177,7 @@ class AiService(private val aiServiceClient: AiServiceClient) {
             throw RuntimeException("Failed to get advisor response", e)
         }
     }
-    
+
     fun getMapResponse(category: String, year: String): Map<String, Any>? {
         try {
             return aiServiceClient.getMapResponse(category, year)
@@ -181,4 +186,4 @@ class AiService(private val aiServiceClient: AiServiceClient) {
             throw RuntimeException("Failed to get map response", e)
         }
     }
-} 
+}

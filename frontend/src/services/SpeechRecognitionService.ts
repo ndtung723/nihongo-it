@@ -1,4 +1,4 @@
-import * as sdk from 'microsoft-cognitiveservices-speech-sdk';
+import * as sdk from "microsoft-cognitiveservices-speech-sdk";
 
 class SpeechRecognitionService {
   private speechConfig: sdk.SpeechConfig | null = null;
@@ -9,11 +9,14 @@ class SpeechRecognitionService {
   // Khởi tạo service với key và region
   public initialize(speechKey: string, serviceRegion: string): boolean {
     try {
-      this.speechConfig = sdk.SpeechConfig.fromSubscription(speechKey, serviceRegion);
-      this.speechConfig.speechRecognitionLanguage = 'ja-JP';
+      this.speechConfig = sdk.SpeechConfig.fromSubscription(
+        speechKey,
+        serviceRegion,
+      );
+      this.speechConfig.speechRecognitionLanguage = "ja-JP";
       this.isInitialized = true;
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -22,22 +25,24 @@ class SpeechRecognitionService {
   public startRecognition(
     onRecognizing: (text: string) => void,
     onRecognized: (text: string) => void,
-    onError: (error: any) => void
+    onError: (error: unknown) => void,
   ): void {
     if (!this.isInitialized || !this.speechConfig) {
-      onError(new Error('Speech recognition service not initialized'));
+      onError(new Error("Speech recognition service not initialized"));
       return;
     }
 
     // Đảm bảo dừng bất kỳ phiên nhận dạng nào đang chạy
     if (this.isRecognizing && this.recognizer) {
-      this.stopRecognition().catch(error => {
-      });
+      this.stopRecognition().catch(() => {});
     }
 
     try {
       const audioConfig = sdk.AudioConfig.fromDefaultMicrophoneInput();
-      this.recognizer = new sdk.SpeechRecognizer(this.speechConfig, audioConfig);
+      this.recognizer = new sdk.SpeechRecognizer(
+        this.speechConfig,
+        audioConfig,
+      );
 
       this.recognizer.recognizing = (_, e) => {
         if (e.result.reason === sdk.ResultReason.RecognizingSpeech) {
@@ -51,7 +56,7 @@ class SpeechRecognitionService {
         } else if (e.result.reason === sdk.ResultReason.NoMatch) {
           // Chỉ báo lỗi nếu đang trong quá trình nhận dạng
           if (this.isRecognizing) {
-            onError('No speech could be recognized');
+            onError("No speech could be recognized");
           }
         }
       };
@@ -65,7 +70,7 @@ class SpeechRecognitionService {
       };
 
       // Thêm xử lý sự kiện khi phiên làm việc kết thúc
-      this.recognizer.sessionStopped = (_, __) => {
+      this.recognizer.sessionStopped = (_data: unknown, _extra: unknown) => {
         this.isRecognizing = false;
         this.cleanupRecognizer();
       };
@@ -77,7 +82,7 @@ class SpeechRecognitionService {
         (error) => {
           onError(error);
           this.isRecognizing = false;
-        }
+        },
       );
     } catch (error) {
       onError(error);
@@ -106,7 +111,7 @@ class SpeechRecognitionService {
             this.isRecognizing = false;
             this.cleanupRecognizer();
             reject(error);
-          }
+          },
         );
       } catch (error) {
         this.isRecognizing = false;
@@ -121,8 +126,7 @@ class SpeechRecognitionService {
     if (this.recognizer) {
       try {
         this.recognizer.close();
-      } catch (error) {
-      }
+      } catch {}
       this.recognizer = null;
     }
   }

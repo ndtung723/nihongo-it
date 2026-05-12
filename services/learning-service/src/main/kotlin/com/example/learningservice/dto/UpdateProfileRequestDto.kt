@@ -1,4 +1,4 @@
-package com.example.learningservice.dto
+﻿package com.example.learningservice.dto
 
 import com.example.learningservice.entity.JlptLevel
 import com.example.learningservice.validation.ValidJlptProgression
@@ -17,5 +17,5 @@ data class UpdateProfileRequestDto(
     val currentLevel: JlptLevel,
 
     @JsonProperty("jlptGoal")
-    val jlptGoal: JlptLevel
-) 
+    val jlptGoal: JlptLevel,
+)

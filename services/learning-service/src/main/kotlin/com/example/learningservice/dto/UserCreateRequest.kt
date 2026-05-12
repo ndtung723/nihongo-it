@@ -1,4 +1,4 @@
-package com.example.learningservice.dto
+﻿package com.example.learningservice.dto
 
 import com.example.learningservice.entity.JlptLevel
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -33,5 +33,5 @@ data class UserCreateRequest(
     val jlptGoal: JlptLevel? = JlptLevel.N3,
 
     @JsonProperty("roleId")
-    val roleId: Int = 2 // Default to ROLE_USER
-) 
+    val roleId: Int = 2, // Default to ROLE_USER
+)

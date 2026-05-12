@@ -14,6 +14,9 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource
 @Configuration
 @EnableWebFluxSecurity
 class SecurityConfig {
+    companion object {
+        private const val CORS_MAX_AGE_SECONDS = 3600L
+    }
 
     @Value("\${app.cors.allowed-origins:http://localhost:5173,http://localhost:3000}")
     private lateinit var allowedOrigins: String
@@ -22,10 +25,10 @@ class SecurityConfig {
     fun springSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
         return http
             .csrf { it.disable() }
-            .cors { it.disable() }  // handled by corsWebFilter bean
+            .cors { it.disable() } // handled by corsWebFilter bean
             .authorizeExchange {
                 it.pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                it.pathMatchers("/**").permitAll()  // JWT validation handled by GatewayJwtFilter
+                it.pathMatchers("/**").permitAll() // JWT validation handled by GatewayJwtFilter
             }
             .build()
     }
@@ -35,14 +38,18 @@ class SecurityConfig {
         val corsConfig = CorsConfiguration()
 
         val origins = allowedOrigins.split(",").map { it.trim() }
-        corsConfig.allowedOrigins = origins
+        if (origins.any { it.contains('*') }) {
+            corsConfig.allowedOriginPatterns = origins
+        } else {
+            corsConfig.allowedOrigins = origins
+        }
 
         corsConfig.addAllowedMethod("*")
         corsConfig.addAllowedHeader("*")
         corsConfig.addExposedHeader("Authorization")
         corsConfig.addExposedHeader("Content-Disposition")
         corsConfig.allowCredentials = true
-        corsConfig.maxAge = 3600L
+        corsConfig.maxAge = CORS_MAX_AGE_SECONDS
 
         val source = UrlBasedCorsConfigurationSource()
         source.registerCorsConfiguration("/**", corsConfig)

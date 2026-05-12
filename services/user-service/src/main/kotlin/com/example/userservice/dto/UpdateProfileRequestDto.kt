@@ -17,5 +17,5 @@ data class UpdateProfileRequestDto(
     val currentLevel: JlptLevel,
 
     @JsonProperty("jlptGoal")
-    val jlptGoal: JlptLevel
-) 
+    val jlptGoal: JlptLevel,
+)

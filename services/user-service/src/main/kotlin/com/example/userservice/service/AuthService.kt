@@ -1,38 +1,35 @@
-﻿package com.example.userservice.service
+package com.example.userservice.service
 
+import com.example.common.exception.BusinessException
+import com.example.common.exception.UnauthorizedException
+import com.example.common.logging.SecurityEventLogger
 import com.example.userservice.dto.GetCurrentUserResponseDto
 import com.example.userservice.dto.GoogleLoginRequest
 import com.example.userservice.dto.LoginRequest
 import com.example.userservice.dto.LoginResponseDto
 import com.example.userservice.dto.RefreshTokenRequest
-import com.example.common.dto.ResponseDto
-import com.example.common.dto.ResponseType
 import com.example.userservice.dto.SignupRequest
 import com.example.userservice.dto.SignupResponseDto
 import com.example.userservice.dto.UserDto
+import com.example.userservice.entity.AuditAction
 import com.example.userservice.entity.RefreshTokenEntity
+import com.example.userservice.entity.RoleEntity
 import com.example.userservice.entity.UserEntity
-import com.example.common.exception.BusinessException
-import com.example.common.exception.UnauthorizedException
 import com.example.userservice.repository.RefreshTokenRepository
 import com.example.userservice.repository.RoleRepository
 import com.example.userservice.repository.UserRepository
 import com.example.userservice.security.JwtTokenUtil
 import com.example.userservice.util.UserAuthUtil
-import com.example.common.logging.SecurityEventLogger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.security.authentication.AuthenticationManager
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.util.UUID
 
 @Service
+@Suppress("LongParameterList")
 class AuthService(
-    private val authenticationManager: AuthenticationManager,
     private val userRepository: UserRepository,
     private val roleRepository: RoleRepository,
     private val passwordEncoder: PasswordEncoder,
@@ -41,6 +38,8 @@ class AuthService(
     private val googleAuthService: GoogleAuthService,
     private val userAuthUtil: UserAuthUtil,
     private val securityEventLogger: SecurityEventLogger,
+    private val auditService: AuditService,
+    private val notificationService: NotificationService,
 ) {
     private val logger = LoggerFactory.getLogger(AuthService::class.java)
 
@@ -51,16 +50,13 @@ class AuthService(
         val user = userRepository.findByEmail(request.email)
             ?: run {
                 securityEventLogger.loginFailure(request.email, ip, "user_not_found")
+                auditService.log(AuditAction.LOGIN_FAILURE, ip = ip, details = "user_not_found email=${request.email}")
                 throw UnauthorizedException("Invalid email or password")
             }
 
-        try {
-            val authentication = authenticationManager.authenticate(
-                UsernamePasswordAuthenticationToken(request.email, request.password)
-            )
-            SecurityContextHolder.getContext().authentication = authentication
-        } catch (e: Exception) {
+        if (!passwordEncoder.matches(request.password, user.password)) {
             securityEventLogger.loginFailure(request.email, ip, "bad_credentials")
+            auditService.log(AuditAction.LOGIN_FAILURE, userId = user.userId, ip = ip, details = "bad_credentials")
             throw UnauthorizedException("Invalid email or password")
         }
 
@@ -68,9 +64,10 @@ class AuthService(
         userRepository.save(updatedUser)
 
         val token = jwtTokenUtil.generateToken(updatedUser)
-        val refreshToken = createRefreshToken(updatedUser.userId!!)
+        val refreshToken = createRefreshToken(requireNotNull(updatedUser.userId) { "User ID missing after login" })
 
         securityEventLogger.loginSuccess(request.email, ip)
+        auditService.log(AuditAction.LOGIN_SUCCESS, userId = updatedUser.userId, ip = ip)
         return LoginResponseDto(token = token, refreshToken = refreshToken)
     }
 
@@ -79,8 +76,9 @@ class AuthService(
             throw BusinessException("Email is already in use")
         }
 
-        val role = roleRepository.findByRoleId(2) ?: throw BusinessException("Role not found")
+        val role = roleRepository.findByRoleId(RoleEntity.ROLE_USER) ?: throw BusinessException("Role not found")
 
+        val verificationToken = UUID.randomUUID().toString()
         val user = UserEntity(
             email = request.email,
             password = passwordEncoder.encode(request.password),
@@ -90,11 +88,27 @@ class AuthService(
             jlptGoal = request.jlptGoal,
             lastLogin = LocalDateTime.now(),
             role = role,
+            verificationToken = verificationToken,
+            isEmailVerified = false,
         )
         userRepository.save(user)
+        notificationService.sendVerificationEmail(request.email, verificationToken)
 
         logger.debug("User registered: ${request.email}")
-        return SignupResponseDto(message = "Registration successful")
+        return SignupResponseDto(message = "Registration successful. Please check your email to verify your account.")
+    }
+
+    fun verifyEmail(token: String) {
+        val user = userRepository.findByVerificationToken(token)
+            ?: throw BusinessException("Invalid or expired verification token")
+
+        userRepository.save(
+            user.copy(
+                isEmailVerified = true,
+                verificationToken = null,
+                updatedAt = LocalDateTime.now(),
+            ),
+        )
     }
 
     fun getCurrentUser(): GetCurrentUserResponseDto {
@@ -105,7 +119,7 @@ class AuthService(
             .orElseThrow { BusinessException("User not found") }
 
         val userInfo = UserDto(
-            userId = user.userId!!,
+            userId = requireNotNull(user.userId) { "User ID missing" },
             email = user.email,
             fullName = user.fullName,
             roleId = user.role.roleId,
@@ -115,10 +129,7 @@ class AuthService(
             lastLogin = user.lastLogin,
         )
 
-        return GetCurrentUserResponseDto(
-            ResponseDto(status = ResponseType.OK),
-            userInfo = userInfo,
-        )
+        return GetCurrentUserResponseDto(userInfo = userInfo)
     }
 
     fun googleLogin(request: GoogleLoginRequest): LoginResponseDto {
@@ -130,6 +141,14 @@ class AuthService(
         val stored = refreshTokenRepository.findByToken(request.refreshToken)
             ?: throw UnauthorizedException("Invalid refresh token")
 
+        if (stored.isRevoked) {
+            // A previously rotated token is being reused — indicates token theft.
+            // Revoke the entire session family to protect the legitimate user.
+            refreshTokenRepository.deleteByFamilyId(stored.familyId)
+            logger.warn("Refresh token reuse detected: familyId=${stored.familyId} userId=${stored.userId}")
+            throw UnauthorizedException("Invalid or expired refresh token")
+        }
+
         if (stored.expiresAt.isBefore(LocalDateTime.now())) {
             refreshTokenRepository.delete(stored)
             throw UnauthorizedException("Refresh token expired")
@@ -138,23 +157,36 @@ class AuthService(
         val user = userRepository.findById(stored.userId).orElse(null)
             ?: throw UnauthorizedException("User not found")
 
-        refreshTokenRepository.delete(stored)
+        // Mark the old token as revoked (kept for theft detection) rather than deleting it
+        refreshTokenRepository.save(stored.copy(isRevoked = true, revokedAt = LocalDateTime.now()))
 
         val newAccessToken = jwtTokenUtil.generateToken(user)
-        val newRefreshToken = createRefreshToken(user.userId!!)
+        val newRefreshToken = createRefreshToken(
+            requireNotNull(user.userId) { "User ID missing after refresh" },
+            stored.familyId,
+        )
 
         return LoginResponseDto(token = newAccessToken, refreshToken = newRefreshToken)
     }
 
-    fun logout(request: RefreshTokenRequest): ResponseDto {
+    fun logout(request: RefreshTokenRequest) {
         refreshTokenRepository.deleteByToken(request.refreshToken)
-        return ResponseDto(status = ResponseType.OK)
+        auditService.log(AuditAction.LOGOUT)
     }
 
-    fun createRefreshToken(userId: UUID): String {
+    fun logoutAll() {
+        val userId = userAuthUtil.getCurrentUserId()
+            ?: throw UnauthorizedException("Authentication required")
+        refreshTokenRepository.deleteByUserId(userId)
+        auditService.log(AuditAction.LOGOUT_ALL, userId = userId, actorId = userId)
+    }
+
+    fun createRefreshToken(userId: UUID, familyId: UUID = UUID.randomUUID()): String {
         val token = UUID.randomUUID().toString()
         val expiresAt = LocalDateTime.now().plusSeconds(refreshExpiration / 1000)
-        refreshTokenRepository.save(RefreshTokenEntity(userId = userId, token = token, expiresAt = expiresAt))
+        refreshTokenRepository.save(
+            RefreshTokenEntity(userId = userId, token = token, expiresAt = expiresAt, familyId = familyId),
+        )
         return token
     }
 }

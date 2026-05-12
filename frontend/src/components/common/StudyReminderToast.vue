@@ -1,14 +1,22 @@
 <template>
   <Transition name="toast-fade">
-    <div v-if="show" class="study-reminder-toast" :class="{ 'hide': hiding }">
+    <div v-if="show" class="study-reminder-toast" :class="{ hide: hiding }">
       <div class="toast-content" @click="navigateToStudy">
         <v-icon color="white" icon="mdi-book-open-variant" class="me-2" />
         <div class="toast-message">
           <div class="toast-title">Thẻ đến hạn ôn tập</div>
-          <div class="toast-subtitle">{{ dueCardCount }} thẻ đang chờ bạn học!</div>
+          <div class="toast-subtitle">
+            {{ dueCardCount }} thẻ đang chờ bạn học!
+          </div>
         </div>
       </div>
-      <v-btn icon variant="text" density="compact" color="white" @click.stop="dismissToast">
+      <v-btn
+        icon
+        variant="text"
+        density="compact"
+        color="white"
+        @click.stop="dismissToast"
+      >
         <v-icon>mdi-close</v-icon>
       </v-btn>
     </div>
@@ -16,113 +24,118 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import flashcardService from '@/services/flashcard.service'
+import { ref, onMounted, onUnmounted } from "vue";
+import { useRouter } from "vue-router";
+import flashcardService from "@/services/flashcard.service";
 
-const router = useRouter()
-const show = ref(false)
-const hiding = ref(false)
-const dueCardCount = ref(0)
+const router = useRouter();
+const show = ref(false);
+const hiding = ref(false);
+const dueCardCount = ref(0);
 
 // Use sessionStorage instead of localStorage to track when toast was dismissed
-const TOAST_DISMISSED_KEY = 'study_reminder_dismissed_session'
+const TOAST_DISMISSED_KEY = "study_reminder_dismissed_session";
 // Generate session ID to identify the current browser session
-const SESSION_ID_KEY = 'current_session_id'
+const SESSION_ID_KEY = "current_session_id";
 // Check for due cards every 30 minutes
-const CHECK_INTERVAL = 30 * 60 * 1000
-let checkInterval: number | null = null
+const CHECK_INTERVAL = 30 * 60 * 1000;
+let checkInterval: number | null = null;
 
 // Function to generate a random session ID
 function generateSessionId() {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+  return (
+    Math.random().toString(36).substring(2, 15) +
+    Math.random().toString(36).substring(2, 15)
+  );
 }
 
 // Check or set session ID
 function ensureSessionId() {
   if (!sessionStorage.getItem(SESSION_ID_KEY)) {
-    sessionStorage.setItem(SESSION_ID_KEY, generateSessionId())
+    sessionStorage.setItem(SESSION_ID_KEY, generateSessionId());
     // Clear dismissed status on new session
-    sessionStorage.removeItem(TOAST_DISMISSED_KEY)
+    sessionStorage.removeItem(TOAST_DISMISSED_KEY);
   }
 }
 
 // Function to check for due cards
 async function checkDueCards() {
   try {
-    const dueCards = await flashcardService.getDueCards()
-    dueCardCount.value = dueCards.length
+    const dueCards = await flashcardService.getDueCards();
+    dueCardCount.value = dueCards.length;
 
     // Only show toast if there are due cards and it hasn't been dismissed
-    if (dueCardCount.value > 0 && !sessionStorage.getItem(TOAST_DISMISSED_KEY)) {
-      show.value = true
+    if (
+      dueCardCount.value > 0 &&
+      !sessionStorage.getItem(TOAST_DISMISSED_KEY)
+    ) {
+      show.value = true;
     }
-  } catch (error) {
-  }
+  } catch {}
 }
 
 // Set up periodic checking
 function setupPeriodicChecking() {
   // Clear any existing interval
   if (checkInterval) {
-    clearInterval(checkInterval)
+    clearInterval(checkInterval);
   }
 
   // Initial check
-  checkDueCards()
+  checkDueCards();
 
   // Set interval for periodic checks
   checkInterval = window.setInterval(() => {
     // Only check if the toast isn't showing and isn't dismissed in this session
     if (!show.value && !sessionStorage.getItem(TOAST_DISMISSED_KEY)) {
-      checkDueCards()
+      checkDueCards();
     }
-  }, CHECK_INTERVAL)
+  }, CHECK_INTERVAL);
 }
 
 // Document visibility change handling
 function handleVisibilityChange() {
-  if (document.visibilityState === 'visible') {
+  if (document.visibilityState === "visible") {
     // User has returned to the tab/website
-    checkDueCards()
+    checkDueCards();
   }
 }
 
 onMounted(() => {
   // Ensure we have a session ID
-  ensureSessionId()
+  ensureSessionId();
 
   // Setup periodic checking
-  setupPeriodicChecking()
+  setupPeriodicChecking();
 
   // Setup visibility change listener to check when user returns to the tab
-  document.addEventListener('visibilitychange', handleVisibilityChange)
-})
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+});
 
 onUnmounted(() => {
   // Clean up on component unmount
   if (checkInterval) {
-    clearInterval(checkInterval)
+    clearInterval(checkInterval);
   }
-  document.removeEventListener('visibilitychange', handleVisibilityChange)
-})
+  document.removeEventListener("visibilitychange", handleVisibilityChange);
+});
 
 function dismissToast() {
-  hiding.value = true
+  hiding.value = true;
 
   // Save dismissal state for this session only
-  sessionStorage.setItem(TOAST_DISMISSED_KEY, 'true')
+  sessionStorage.setItem(TOAST_DISMISSED_KEY, "true");
 
   // Animate out before removing
   setTimeout(() => {
-    show.value = false
-    hiding.value = false
-  }, 300)
+    show.value = false;
+    hiding.value = false;
+  }, 300);
 }
 
 function navigateToStudy() {
-  router.push({ name: 'flashcardStudy' })
-  dismissToast()
+  router.push({ name: "flashcardStudy" });
+  dismissToast();
 }
 </script>
 
@@ -143,7 +156,9 @@ function navigateToStudy() {
   min-width: 300px;
   max-width: 400px;
   cursor: pointer;
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
 }
 
 .study-reminder-toast.hide {
@@ -171,11 +186,15 @@ function navigateToStudy() {
   opacity: 0.9;
 }
 
-.toast-fade-enter-active, .toast-fade-leave-active {
-  transition: opacity 0.3s, transform 0.3s;
+.toast-fade-enter-active,
+.toast-fade-leave-active {
+  transition:
+    opacity 0.3s,
+    transform 0.3s;
 }
 
-.toast-fade-enter-from, .toast-fade-leave-to {
+.toast-fade-enter-from,
+.toast-fade-leave-to {
   opacity: 0;
   transform: translateX(30px);
 }

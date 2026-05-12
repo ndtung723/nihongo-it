@@ -17,7 +17,9 @@
         />
         <v-divider class="my-2"></v-divider>
 
-        <v-list-subheader class="text-uppercase font-weight-medium">Quản lý nội dung</v-list-subheader>
+        <v-list-subheader class="text-uppercase font-weight-medium"
+          >Quản lý nội dung</v-list-subheader
+        >
         <v-list-item
           prepend-icon="mdi-book-open-variant"
           title="Từ vựng"
@@ -45,7 +47,9 @@
 
         <v-divider class="my-2"></v-divider>
 
-        <v-list-subheader class="text-uppercase font-weight-medium">Người dùng</v-list-subheader>
+        <v-list-subheader class="text-uppercase font-weight-medium"
+          >Người dùng</v-list-subheader
+        >
         <v-list-item
           prepend-icon="mdi-account-group"
           title="Quản lý người dùng"
@@ -66,29 +70,26 @@
       :class="{ 'admin-toggle-btn-open': drawer }"
       @click="toggleDrawer"
     >
-      <v-icon :icon="drawer ? 'mdi-chevron-right' : 'mdi-chevron-left'" color="white"></v-icon>
+      <v-icon
+        :icon="drawer ? 'mdi-chevron-right' : 'mdi-chevron-left'"
+        color="white"
+      ></v-icon>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { Component, Vue } from 'vue-facing-decorator'
+<script setup lang="ts">
+import { ref, onBeforeUnmount } from "vue";
 
-@Component({
-  name: 'AdminQuickMenu'
-})
-export default class AdminQuickMenu extends Vue {
-  drawer = false;
+const drawer = ref(false);
 
-  toggleDrawer(): void {
-    this.drawer = !this.drawer;
-  }
-
-  // Giải phóng tham chiếu để tránh lỗi parentNode
-  beforeUnmount() {
-    this.drawer = false;
-  }
+function toggleDrawer() {
+  drawer.value = !drawer.value;
 }
+
+onBeforeUnmount(() => {
+  drawer.value = false;
+});
 </script>
 
 <style scoped>

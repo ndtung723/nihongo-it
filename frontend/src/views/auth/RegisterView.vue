@@ -80,7 +80,10 @@
               </v-btn>
 
               <div class="text-center mt-4">
-                <router-link :to="{ name: 'login' }" class="text-decoration-none">
+                <router-link
+                  :to="{ name: 'login' }"
+                  class="text-decoration-none"
+                >
                   Already have an account? Login
                 </router-link>
               </div>
@@ -92,136 +95,95 @@
   </v-container>
 </template>
 
-<script lang="ts">
-import { Component, Vue, Ref } from 'vue-facing-decorator'
-import { useAuthStore } from '@/stores'
-import { useToast } from 'vue-toast-notification'
-import 'vue-toast-notification/dist/theme-sugar.css'
-import { reactive, ref } from 'vue'
+<script setup lang="ts">
+import { ref, reactive, computed } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores";
+import { useAppToast } from "@/composables/useAppToast";
 
-@Component({
-  name: 'RegisterView'
-})
-export default class RegisterView extends Vue {
-  private authStore = useAuthStore()
-  private toast = useToast()
+const authStore = useAuthStore();
+const router = useRouter();
+const toast = useAppToast();
 
-  @Ref('form') readonly form!: any
+const form = ref<unknown>(null);
+const formData = reactive({
+  email: "",
+  fullName: "",
+  password: "",
+  currentLevel: "N5",
+  jlptGoal: "N3",
+  profilePicture: "",
+});
+const confirmPassword = ref("");
 
-  formData = reactive({
-    email: '',
-    fullName: '',
-    password: '',
-    currentLevel: 'N5',
-    jlptGoal: 'N3',
-    profilePicture: ''
-  })
+const loading = computed(() => authStore.loading);
+const isFormValid = computed(
+  () =>
+    !!formData.email &&
+    !!formData.fullName &&
+    !!formData.password &&
+    formData.password === confirmPassword.value,
+);
 
-  confirmPassword = ''
+const japaneseLevel = [
+  { value: "BEGINNER", title: "Beginner" },
+  { value: "N5", title: "N5" },
+  { value: "N4", title: "N4" },
+  { value: "N3", title: "N3" },
+  { value: "N2", title: "N2" },
+  { value: "N1", title: "N1" },
+];
 
-  get loading(): boolean {
-    return this.authStore.loading
+const jlptLevels = [
+  { value: "N5", title: "N5" },
+  { value: "N4", title: "N4" },
+  { value: "N3", title: "N3" },
+  { value: "N2", title: "N2" },
+  { value: "N1", title: "N1" },
+];
+
+function validateForm(): boolean {
+  const errors: string[] = [];
+
+  if (!formData.email) {
+    errors.push("Email is required");
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    errors.push("Email format is invalid");
   }
 
-  get isFormValid(): boolean {
-    return !!this.formData.email &&
-           !!this.formData.fullName &&
-           !!this.formData.password &&
-           this.formData.password === this.confirmPassword
+  if (!formData.fullName) {
+    errors.push("Full name is required");
+  } else if (formData.fullName.length < 2) {
+    errors.push("Full name must be at least 2 characters");
   }
 
-  get japaneseLevel() {
-    return [
-      { value: 'BEGINNER', title: 'Beginner' },
-      { value: 'N5', title: 'N5' },
-      { value: 'N4', title: 'N4' },
-      { value: 'N3', title: 'N3' },
-      { value: 'N2', title: 'N2' },
-      { value: 'N1', title: 'N1' }
-    ]
+  if (!formData.password) {
+    errors.push("Password is required");
+  } else if (formData.password.length < 6) {
+    errors.push("Password must be at least 6 characters");
   }
 
-  get jlptLevels() {
-    return [
-      { value: 'N5', title: 'N5' },
-      { value: 'N4', title: 'N4' },
-      { value: 'N3', title: 'N3' },
-      { value: 'N2', title: 'N2' },
-      { value: 'N1', title: 'N1' }
-    ]
+  if (formData.password !== confirmPassword.value) {
+    errors.push("Passwords do not match");
   }
 
-  validateForm(): boolean {
-    let isValid = true
-    const errors = []
+  errors.forEach((error) => toast.error(error));
+  return errors.length === 0;
+}
 
-    if (!this.formData.email) {
-      errors.push('Email is required')
-      isValid = false
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.formData.email)) {
-      errors.push('Email format is invalid')
-      isValid = false
+async function handleRegister() {
+  if (!validateForm()) return;
+
+  try {
+    const success = await authStore.register(formData);
+    if (success) {
+      toast.success("Registration successful! Please login.");
+      router.push({ name: "login" });
+    } else if (authStore.error) {
+      toast.error(authStore.error);
     }
-
-    if (!this.formData.fullName) {
-      errors.push('Full name is required')
-      isValid = false
-    } else if (this.formData.fullName.length < 2) {
-      errors.push('Full name must be at least 2 characters')
-      isValid = false
-    }
-
-    if (!this.formData.password) {
-      errors.push('Password is required')
-      isValid = false
-    } else if (this.formData.password.length < 6) {
-      errors.push('Password must be at least 6 characters')
-      isValid = false
-    }
-
-    if (this.formData.password !== this.confirmPassword) {
-      errors.push('Passwords do not match')
-      isValid = false
-    }
-
-    if (errors.length > 0) {
-      errors.forEach(error => {
-        this.toast.error(error, {
-          position: 'top',
-          duration: 3000
-        })
-      })
-    }
-
-    return isValid
-  }
-
-  async handleRegister(): Promise<void> {
-    if (!this.validateForm()) {
-      return
-    }
-
-    try {
-      const success = await this.authStore.register(this.formData)
-
-      if (success) {
-        this.toast.success('Registration successful! Please login.', {
-          position: 'top',
-          duration: 3000
-        })
-        this.$router.push({ name: 'login' })
-      } else if (this.authStore.error) {
-        this.toast.error(this.authStore.error, {
-          position: 'top',
-          duration: 5000
-        })
-      }
-    } catch (error) {
-      this.toast.error('Registration failed. Please try again.', {
-        position: 'top',
-        duration: 5000
-      })
-    }
+  } catch {
+    toast.error("Registration failed. Please try again.");
   }
 }
 </script>

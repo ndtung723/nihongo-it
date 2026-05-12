@@ -1,14 +1,14 @@
-import '@/assets/styles/main.sass';
-import 'vuetify/styles';
-import { createApp } from 'vue';
-import { createPinia } from 'pinia';
-import vuetify from './plugins/vuetify';
-import App from './App.vue';
-import router from './router';
-import VueToast from 'vue-toast-notification';
-import 'vue-toast-notification/dist/theme-sugar.css';
-import { useAuthStore } from './stores';
-import vue3GoogleLogin from 'vue3-google-login';
+import "@/assets/styles/main.sass";
+import "vuetify/styles";
+import { createApp } from "vue";
+import { createPinia } from "pinia";
+import vuetify from "./plugins/vuetify";
+import App from "./App.vue";
+import router from "./router";
+import VueToast from "vue-toast-notification";
+import "vue-toast-notification/dist/theme-sugar.css";
+import { useAuthStore } from "./stores";
+import vue3GoogleLogin from "vue3-google-login";
 
 const app = createApp(App);
 const pinia = createPinia();
@@ -18,11 +18,13 @@ app.use(pinia);
 app.use(router);
 app.use(VueToast);
 app.use(vue3GoogleLogin, {
-	clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID_HERE',
+  clientId:
+    import.meta.env.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID_HERE",
 });
 
-// Initialize auth state before mounting the app
+// Silently restore session from httpOnly refresh_token cookie before mounting
 const authStore = useAuthStore();
-authStore.initializeAuth();
-
-app.mount('#app');
+(async () => {
+  await authStore.initializeAuth();
+  app.mount("#app");
+})();

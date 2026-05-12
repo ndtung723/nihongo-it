@@ -23,7 +23,7 @@ data class FlashcardEntity(
     @Column(name = "front_text", columnDefinition = "text")
     var frontText: String,
 
-    @Column(name = "back_text",  columnDefinition = "text")
+    @Column(name = "back_text", columnDefinition = "text")
     var backText: String,
 
     // FSRS algorithm fields
@@ -61,5 +61,5 @@ data class FlashcardEntity(
     val createdAt: LocalDateTime = LocalDateTime.now(),
 
     @Column(name = "updated_at")
-    var updatedAt: LocalDateTime = LocalDateTime.now()
+    var updatedAt: LocalDateTime = LocalDateTime.now(),
 )

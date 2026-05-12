@@ -1,126 +1,92 @@
 package com.example.learningservice.scheduled
 
-import com.example.learningservice.repository.UserRepository
 import com.example.learningservice.repository.ReviewLogRepository
+import com.example.learningservice.repository.UserRepository
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDateTime
+import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.util.UUID
 
-/**
- * Scheduled job to track and update user streaks
- * This job runs every day at midnight to check which users have
- * maintained their streak and which ones need to be reset
- */
 @Component
 class StreakTrackerJob(
     private val userRepository: UserRepository,
-    private val reviewLogRepository: ReviewLogRepository
+    private val reviewLogRepository: ReviewLogRepository,
 ) {
     private val logger = LoggerFactory.getLogger(StreakTrackerJob::class.java)
-    
-    /**
-     * Reset streak counts for users who haven't completed reviews in the past 48 hours
-     * Runs daily at 11:59 PM
-     * Hiệu chỉnh: Cho phép bỏ lỡ 1 ngày và bảo vệ streak
-     */
-    @Scheduled(cron = "0 59 23 * * *") // Run at 11:59 PM every day
+
+    companion object {
+        private const val COL_USER_ID = 0
+        private const val COL_TODAY = 1
+        private const val COL_YESTERDAY = 2
+        private const val COL_TWO_DAYS_AGO = 3
+    }
+
+    @Scheduled(cron = "0 59 23 * * *")
     @Transactional
     fun resetStreaks() {
-        logger.info("==================== STREAK RESET JOB START ====================")
         logger.info("Running streak reset job at ${LocalDateTime.now()}")
-        
+
         val today = LocalDate.now()
-        val yesterday = today.minusDays(1)
-        val twoDaysAgo = today.minusDays(2)
-        
-        val startOfYesterday = yesterday.atStartOfDay()
-        val endOfYesterday = yesterday.plusDays(1).atStartOfDay().minusSeconds(1)
-        
-        val startOfTwoDaysAgo = twoDaysAgo.atStartOfDay()
-        val endOfTwoDaysAgo = twoDaysAgo.plusDays(1).atStartOfDay().minusSeconds(1)
-        
-        logger.info("Today: $today")
-        logger.info("Yesterday: $yesterday (${startOfYesterday} to ${endOfYesterday})")
-        logger.info("Two days ago: $twoDaysAgo (${startOfTwoDaysAgo} to ${endOfTwoDaysAgo})")
-        
-        // Get all active users with streak > 0
+        val startOfToday = today.atStartOfDay()
+        val startOfYesterday = today.minusDays(1).atStartOfDay()
+        val startOfTwoDaysAgo = today.minusDays(2).atStartOfDay()
+
         val allUsers = userRepository.findByIsActiveTrueAndStreakCountGreaterThan(0)
-        logger.info("Found ${allUsers.size} active users with positive streak")
-        
-        // Process each user
+        if (allUsers.isEmpty()) {
+            logger.info("No active users with positive streak — skipping")
+            return
+        }
+
+        val userIds = allUsers.mapNotNull { it.userId }
+
+        // Single aggregate query instead of 3 queries × N users
+        val activityRows = reviewLogRepository.getUserActivitySummary(
+            userIds,
+            startOfToday,
+            startOfYesterday,
+            startOfTwoDaysAgo,
+        )
+        val activityMap: Map<UUID, Triple<Boolean, Boolean, Boolean>> = activityRows.associate { row ->
+            val uid = UUID.fromString(row[COL_USER_ID].toString())
+            val reviewedToday = (row[COL_TODAY] as Number).toInt() > 0
+            val reviewedYesterday = (row[COL_YESTERDAY] as Number).toInt() > 0
+            val reviewedTwoDaysAgo = (row[COL_TWO_DAYS_AGO] as Number).toInt() > 0
+            uid to Triple(reviewedToday, reviewedYesterday, reviewedTwoDaysAgo)
+        }
+
+        val now = LocalDateTime.now()
         var resetCount = 0
         var reducedCount = 0
-        
-        allUsers.forEach { user ->
-            logger.info("Processing user ${user.email} (${user.userId}) with current streak: ${user.streakCount}")
-            
-            // Check if user studied yesterday
-            val yesterdayReviews = reviewLogRepository.findByUserIdAndReviewTimestampBetween(
-                user.userId!!, startOfYesterday, endOfYesterday
-            )
-            
-            // Check if user studied two days ago
-            val twoDaysAgoReviews = reviewLogRepository.findByUserIdAndReviewTimestampBetween(
-                user.userId!!, startOfTwoDaysAgo, endOfTwoDaysAgo
-            )
-            
-            // Check today's reviews as well (to handle edge cases)
-            val startOfToday = today.atStartOfDay()
-            val todayReviews = reviewLogRepository.findByUserIdAndReviewTimestampAfter(
-                user.userId!!, startOfToday
-            )
-            
-            logger.info("User activity: Today=${todayReviews.size} reviews, Yesterday=${yesterdayReviews.size} reviews, Two days ago=${twoDaysAgoReviews.size} reviews")
-            
-            // Handle streak logic with protected buffer
-            val updatedUser = when {
-                // If reviewed today, keep streak intact (job may run before user's usual study time)
-                todayReviews.isNotEmpty() -> {
-                    logger.info("User has reviewed today - keeping streak intact")
-                    null // No change needed
-                }
-                
-                // If reviewed yesterday, keep streak intact
-                yesterdayReviews.isNotEmpty() -> {
-                    logger.info("User reviewed yesterday - keeping streak intact")
-                    null // No change needed
-                }
-                
-                // If missed yesterday but reviewed two days ago, reduce streak by 1 but don't reset
-                // This gives a 1-day buffer to protect streaks (like Duolingo's streak freeze)
-                twoDaysAgoReviews.isNotEmpty() && user.streakCount > 1 -> {
-                    val newStreak = user.streakCount - 1
-                    logger.info("User missed yesterday but reviewed two days ago - reducing streak from ${user.streakCount} to $newStreak")
+
+        val updatedUsers = allUsers.mapNotNull { user ->
+            val userId = user.userId ?: return@mapNotNull null
+            val (reviewedToday, reviewedYesterday, reviewedTwoDaysAgo) = activityMap[userId]
+                ?: Triple(false, false, false)
+
+            when {
+                reviewedToday || reviewedYesterday -> null
+                reviewedTwoDaysAgo && user.streakCount > 1 -> {
                     reducedCount++
-                    user.copy(
-                        streakCount = newStreak,
-                        updatedAt = LocalDateTime.now()
-                    )
+                    user.copy(streakCount = user.streakCount - 1, updatedAt = Instant.now())
                 }
-                
-                // If missed both yesterday and day before, reset streak
                 else -> {
-                    logger.info("User has not reviewed in the past 48 hours - resetting streak from ${user.streakCount} to 0")
                     resetCount++
-                    user.copy(
-                        streakCount = 0,
-                        updatedAt = LocalDateTime.now()
-                    )
+                    user.copy(streakCount = 0, updatedAt = Instant.now())
                 }
-            }
-            
-            // Save changes if needed
-            if (updatedUser != null) {
-                userRepository.save(updatedUser)
-                logger.info("Updated streak for user ${user.email}: ${user.streakCount} -> ${updatedUser.streakCount}")
             }
         }
-        
-        logger.info("Streak job summary: Processed ${allUsers.size} users, Reset $resetCount streaks, Reduced $reducedCount streaks")
-        logger.info("==================== STREAK RESET JOB END ====================")
+
+        if (updatedUsers.isNotEmpty()) {
+            userRepository.saveAll(updatedUsers)
+        }
+
+        logger.info(
+            "Streak job done: processed ${allUsers.size} users, " +
+                "reset $resetCount, reduced $reducedCount",
+        )
     }
-} 
+}

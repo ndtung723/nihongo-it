@@ -2,7 +2,14 @@
   <div class="vocabulary-storage-container">
     <!-- Header with Back Button -->
     <div class="header-container d-flex align-center px-3 py-2">
-      <v-btn icon class="mr-2 back-btn" @click="goBack" variant="outlined" color="primary" size="x-small">
+      <v-btn
+        icon
+        class="mr-2 back-btn"
+        @click="goBack"
+        variant="outlined"
+        color="primary"
+        size="x-small"
+      >
         <v-icon>mdi-chevron-left</v-icon>
       </v-btn>
       <h1 class="text-h6 font-weight-bold">Thẻ của tôi</h1>
@@ -18,16 +25,22 @@
           :class="[
             'status-tab',
             'mr-2',
-            { 'active-tab': activeTabIndex === index }
+            { 'active-tab': activeTabIndex === index },
           ]"
           @click="activeTabIndex = index"
-          :style="activeTabIndex === index ? { color: 'white', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' } : {}"
+          :style="
+            activeTabIndex === index
+              ? { color: 'white', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }
+              : {}
+          "
           rounded="pill"
           variant="flat"
           density="compact"
         >
           {{ tab.name }}
-          <span class="tab-count ml-1" v-if="getTabCount(index) > 0">({{ getTabCount(index) }})</span>
+          <span class="tab-count ml-1" v-if="getTabCount(index) > 0"
+            >({{ getTabCount(index) }})</span
+          >
         </v-btn>
       </div>
     </div>
@@ -44,31 +57,51 @@
       </v-alert>
     </div>
 
-    <div v-else-if="!loading && filteredVocabulary.length === 0" class="empty-state-container text-center px-4">
+    <div
+      v-else-if="!loading && filteredVocabulary.length === 0"
+      class="empty-state-container text-center px-4"
+    >
       <v-img
         src="https://cdn.iconscout.com/icon/free/png-256/free-box-1439-1156305.png?f=webp"
         max-width="180"
         class="mx-auto my-12 empty-box-image"
       ></v-img>
       <div class="text-h6 text-grey-darken-1 empty-message mb-8">
-        {{ activeTabIndex === 0 ? 'Hiện không có thẻ nào đã được lưu.' : 'Không có thẻ nào trong trạng thái này.' }}
+        {{
+          activeTabIndex === 0
+            ? "Hiện không có thẻ nào đã được lưu."
+            : "Không có thẻ nào trong trạng thái này."
+        }}
       </div>
     </div>
 
     <template v-else>
       <!-- Group vocabulary by topic -->
-      <div v-for="(group, topic) in groupedVocabulary" :key="topic" class="mt-3">
+      <div
+        v-for="(group, topic) in groupedVocabulary"
+        :key="topic"
+        class="mt-3"
+      >
         <!-- Divider with Topic Information -->
         <div class="category-divider px-3 py-1">
           <div class="d-flex justify-space-between align-center">
-            <div class="category-label text-subtitle-2 font-weight-bold" :class="activeTabIndex === 0 ? 'text-primary' : 'text-grey'">
+            <div
+              class="category-label text-subtitle-2 font-weight-bold"
+              :class="activeTabIndex === 0 ? 'text-primary' : 'text-grey'"
+            >
               {{ topic }}
             </div>
-            <div class="count-label text-caption rounded-pill pa-1" :class="activeTabIndex === 0 ? 'primary-count' : 'grey-count'">
+            <div
+              class="count-label text-caption rounded-pill pa-1"
+              :class="activeTabIndex === 0 ? 'primary-count' : 'grey-count'"
+            >
               {{ group.length }} từ
             </div>
           </div>
-          <v-divider :color="activeTabIndex === 0 ? '#3B82F6' : '#e0e0e0'" class="mt-1 custom-divider"></v-divider>
+          <v-divider
+            :color="activeTabIndex === 0 ? '#3B82F6' : '#e0e0e0'"
+            class="mt-1 custom-divider"
+          ></v-divider>
         </div>
 
         <!-- Vocabulary List -->
@@ -90,8 +123,12 @@
               <v-icon>mdi-volume-high</v-icon>
             </v-btn>
             <div class="vocabulary-content" @click="openFlashcard(item)">
-              <div class="text-subtitle-1 font-weight-bold japanese-text">{{ item.term }}</div>
-              <div class="vocabulary-meaning text-caption text-grey">{{ item.meaning }}</div>
+              <div class="text-subtitle-1 font-weight-bold japanese-text">
+                {{ item.term }}
+              </div>
+              <div class="vocabulary-meaning text-caption text-grey">
+                {{ item.meaning }}
+              </div>
             </div>
           </div>
         </div>
@@ -114,7 +151,7 @@
 
     <!-- Flashcard Dialog -->
     <v-dialog v-model="showFlashcard" max-width="600" height="500" persistent>
-      <v-card class="flashcard-container" :class="{ 'flipped': isFlipped }">
+      <v-card class="flashcard-container" :class="{ flipped: isFlipped }">
         <!-- Close button in absolute top right position -->
         <v-btn
           icon="mdi-close"
@@ -138,9 +175,14 @@
                 {{ currentVocab.jlptLevel }}
               </v-chip>
 
-              <div class="text-h3 font-weight-bold japanese-text mb-6">{{ currentVocab?.term || '' }}</div>
+              <div class="text-h3 font-weight-bold japanese-text mb-6">
+                {{ currentVocab?.term || "" }}
+              </div>
 
-              <div v-if="currentVocab?.pronunciation" class="text-h6 japanese-text text-medium-emphasis mb-6">
+              <div
+                v-if="currentVocab?.pronunciation"
+                class="text-h6 japanese-text text-medium-emphasis mb-6"
+              >
                 {{ currentVocab.pronunciation }}
               </div>
 
@@ -163,17 +205,27 @@
                 {{ currentVocab.topicName }}
               </v-chip>
 
-              <div class="text-h4 font-weight-bold mb-4">{{ currentVocab?.meaning || '' }}</div>
+              <div class="text-h4 font-weight-bold mb-4">
+                {{ currentVocab?.meaning || "" }}
+              </div>
 
               <v-divider class="my-4"></v-divider>
 
-              <div v-if="currentVocab?.example" class="example-section pa-4 rounded-lg mb-4">
-                <div class="japanese-text text-h6 mb-2">{{ currentVocab.example }}</div>
-                <div class="text-body-1 text-medium-emphasis">{{ currentVocab.exampleMeaning }}</div>
+              <div
+                v-if="currentVocab?.example"
+                class="example-section pa-4 rounded-lg mb-4"
+              >
+                <div class="japanese-text text-h6 mb-2">
+                  {{ currentVocab.example }}
+                </div>
+                <div class="text-body-1 text-medium-emphasis">
+                  {{ currentVocab.exampleMeaning }}
+                </div>
               </div>
 
               <div class="term-reminder text-body-2 text-medium-emphasis mt-2">
-                <span class="font-weight-medium">Từ vựng:</span> {{ currentVocab?.term }}
+                <span class="font-weight-medium">Từ vựng:</span>
+                {{ currentVocab?.term }}
               </div>
 
               <div class="flip-hint">
@@ -198,8 +250,11 @@
               :loading="playingAudioId === currentVocab?.vocabId"
               :disabled="!currentVocab"
             ></v-btn>
-            <div class="text-body-1 text-medium-emphasis">Đánh giá mức độ ghi nhớ</div>
-            <div style="width: 48px"></div> <!-- Spacer to balance the layout -->
+            <div class="text-body-1 text-medium-emphasis">
+              Đánh giá mức độ ghi nhớ
+            </div>
+            <div style="width: 48px"></div>
+            <!-- Spacer to balance the layout -->
           </div>
 
           <div class="d-flex justify-space-between w-100 rating-buttons">
@@ -251,51 +306,50 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { useToast } from 'vue-toast-notification'
-import { useVocabularyStore, useAuthStore } from '@/stores'
-import type { VocabularyItem } from '@/services/vocabulary.service'
-import authService from '@/services/auth.service'
-import flashcardService from '@/services/flashcard.service'
-import aiService from '@/services/ai.service'
+import { ref, computed, onMounted, watch } from "vue";
+import { useRouter } from "vue-router";
+import { useAppToast } from "@/composables/useAppToast";
+import { useVocabularyStore, useAuthStore } from "@/stores";
+import type { VocabularyItem } from "@/types/learning.types";
+import flashcardService from "@/services/flashcard.service";
+import aiService from "@/services/ai.service";
 
-const router = useRouter()
-const toast = useToast()
-const vocabularyStore = useVocabularyStore()
-const authStore = useAuthStore()
+const router = useRouter();
+const toast = useAppToast();
+const vocabularyStore = useVocabularyStore();
+const authStore = useAuthStore();
 
 // State
-const loading = ref(false)
-const errorMessage = ref('')
-const savedVocabulary = ref<VocabularyItem[]>([])
-const filteredVocabulary = ref<VocabularyItem[]>([])
-const currentPage = ref(1)
-const pageSize = ref(20)
-const totalPages = ref(0)
-const totalItems = ref(0)
-const playingAudioId = ref<string | null>(null)
-const showFlashcard = ref(false)
-const isFlipped = ref(false)
-const currentVocab = ref<VocabularyItem | null>(null)
-const vocabFlashcardMap = ref<Map<string, any>>(new Map())
+const loading = ref(false);
+const errorMessage = ref("");
+const savedVocabulary = ref<VocabularyItem[]>([]);
+const filteredVocabulary = ref<VocabularyItem[]>([]);
+const currentPage = ref(1);
+const pageSize = ref(20);
+const totalPages = ref(0);
+const totalItems = ref(0);
+const playingAudioId = ref<string | null>(null);
+const showFlashcard = ref(false);
+const isFlipped = ref(false);
+const currentVocab = ref<VocabularyItem | null>(null);
+const vocabFlashcardMap = ref<Map<string, { state: string }>>(new Map());
 
 // Tab configuration
 const tabs = [
-  { name: 'Thẻ mới', activeColor: '#6366F1', state: 0 }, // New
-  { name: 'Đang học', activeColor: '#F97316', state: 1 }, // Learning
-  { name: 'Ôn tập', activeColor: '#22C55E', state: 2 }, // Review
-  { name: 'Học lại', activeColor: '#3B82F6', state: 3 } // Relearning
-]
+  { name: "Thẻ mới", activeColor: "#6366F1", state: 0 }, // New
+  { name: "Đang học", activeColor: "#F97316", state: 1 }, // Learning
+  { name: "Ôn tập", activeColor: "#22C55E", state: 2 }, // Review
+  { name: "Học lại", activeColor: "#3B82F6", state: 3 }, // Relearning
+];
 
-const activeTabIndex = ref(0)
+const activeTabIndex = ref(0);
 
 // Computed: Group vocabulary by topic
 const groupedVocabulary = computed(() => {
   const groups: Record<string, VocabularyItem[]> = {};
 
-  filteredVocabulary.value.forEach(item => {
-    const topic = item.topicName || 'Chưa phân loại';
+  filteredVocabulary.value.forEach((item) => {
+    const topic = item.topicName || "Chưa phân loại";
     if (!groups[topic]) {
       groups[topic] = [];
     }
@@ -323,15 +377,15 @@ watch(savedVocabulary, () => {
 // Methods
 async function fetchSavedVocabulary() {
   loading.value = true;
-  errorMessage.value = '';
+  errorMessage.value = "";
 
   try {
     // Use the store to fetch saved vocabulary
     await vocabularyStore.fetchSavedVocabulary(
       currentPage.value - 1,
       pageSize.value,
-      '',  // No search filter
-      'date_desc'  // Sort by date, newest first
+      "", // No search filter
+      "date_desc", // Sort by date, newest first
     );
 
     // Update local state from store
@@ -341,13 +395,9 @@ async function fetchSavedVocabulary() {
 
     // Fetch flashcard states for the vocabulary items
     await fetchFlashcardStates();
-
-  } catch (error) {
-    errorMessage.value = 'Không thể tải dữ liệu từ vựng đã lưu.';
-    toast.error('Không thể tải dữ liệu từ vựng đã lưu.', {
-      position: 'top',
-      duration: 3000
-    });
+  } catch {
+    errorMessage.value = "Không thể tải dữ liệu từ vựng đã lưu.";
+    toast.error("Không thể tải dữ liệu từ vựng đã lưu.");
   } finally {
     loading.value = false;
   }
@@ -361,12 +411,13 @@ async function fetchFlashcardStates() {
     if (!vocab.vocabId) return;
 
     try {
-      const flashcards = await flashcardService.getFlashcardsByVocabulary(vocab.vocabId);
+      const flashcards = await flashcardService.getFlashcardsByVocabulary(
+        vocab.vocabId,
+      );
       if (flashcards.length > 0) {
         vocabFlashcardMap.value.set(vocab.vocabId, flashcards[0]);
       }
-    } catch (error) {
-    }
+    } catch {}
   });
 
   await Promise.all(fetchPromises);
@@ -385,7 +436,7 @@ function filterVocabularyByState() {
     return;
   }
 
-  filteredVocabulary.value = savedVocabulary.value.filter(vocab => {
+  filteredVocabulary.value = savedVocabulary.value.filter((vocab) => {
     if (!vocab.vocabId) return false;
 
     const flashcard = vocabFlashcardMap.value.get(vocab.vocabId);
@@ -403,11 +454,16 @@ function filterVocabularyByState() {
 // Helper function to convert state number to string name
 function getStateNameFromValue(state: number): string {
   switch (state) {
-    case 0: return 'new';
-    case 1: return 'learning';
-    case 2: return 'review';
-    case 3: return 'relearning';
-    default: return 'new';
+    case 0:
+      return "new";
+    case 1:
+      return "learning";
+    case 2:
+      return "review";
+    case 3:
+      return "relearning";
+    default:
+      return "new";
   }
 }
 
@@ -429,22 +485,21 @@ async function playAudio(item: VocabularyItem) {
     } else {
       // Verify authentication before proceeding
       if (!authStore.isAuthenticated) {
-        toast.error('Vui lòng đăng nhập để sử dụng tính năng phát âm', {
-          position: 'top',
-          duration: 3000
-        });
+        toast.error("Vui lòng đăng nhập để sử dụng tính năng phát âm");
         return;
       }
 
       // Show loading indicator
-      toast.info('Đang tạo âm thanh...', {
-        position: 'top',
-        duration: 2000
-      });
+      toast.info("Đang tạo âm thanh...");
 
       // Use AI service to generate and play audio
       const textToSpeak = item.pronunciation || item.term;
-      const audioBlob = await aiService.generateTTS(textToSpeak, 'vocabulary', 0.9, true);
+      const audioBlob = await aiService.generateTTS(
+        textToSpeak,
+        "vocabulary",
+        0.9,
+        true,
+      );
 
       // Create custom audio element to track playback state
       const audioUrl = URL.createObjectURL(audioBlob);
@@ -457,11 +512,8 @@ async function playAudio(item: VocabularyItem) {
 
       await audio.play();
     }
-  } catch (error) {
-    toast.error('Không thể phát âm thanh. Vui lòng thử lại sau.', {
-      position: 'top',
-      duration: 3000
-    });
+  } catch {
+    toast.error("Không thể phát âm thanh. Vui lòng thử lại sau.");
   } finally {
     // Set audio ID to null if there was an issue
     if (item.audioPath) {
@@ -477,24 +529,24 @@ async function playAudio(item: VocabularyItem) {
 }
 
 function openFlashcard(item: VocabularyItem) {
-  currentVocab.value = item
-  isFlipped.value = false
-  showFlashcard.value = true
+  currentVocab.value = item;
+  isFlipped.value = false;
+  showFlashcard.value = true;
 }
 
 function closeFlashcard() {
-  showFlashcard.value = false
+  showFlashcard.value = false;
   setTimeout(() => {
-    currentVocab.value = null
-    isFlipped.value = false
-  }, 300)
+    currentVocab.value = null;
+    isFlipped.value = false;
+  }, 300);
 }
 
 function flipCard() {
-  isFlipped.value = !isFlipped.value
+  isFlipped.value = !isFlipped.value;
 }
 
-async function rateCard(rating: 'again' | 'hard' | 'good' | 'easy') {
+async function rateCard(rating: "again" | "hard" | "good" | "easy") {
   if (!currentVocab.value?.vocabId) return;
 
   // Convert text ratings to numeric values for FSRS (1-4 scale where 1 is Again, 4 is Easy)
@@ -502,7 +554,7 @@ async function rateCard(rating: 'again' | 'hard' | 'good' | 'easy') {
     again: 1, // Hardest rating
     hard: 2,
     good: 3,
-    easy: 4   // Easiest rating
+    easy: 4, // Easiest rating
   };
 
   const numericRating = ratingMap[rating];
@@ -510,46 +562,44 @@ async function rateCard(rating: 'again' | 'hard' | 'good' | 'easy') {
 
   try {
     // Get the flashcards for this vocabulary
-    const flashcards = await flashcardService.getFlashcardsByVocabulary(currentVocab.value.vocabId);
+    const flashcards = await flashcardService.getFlashcardsByVocabulary(
+      currentVocab.value.vocabId,
+    );
 
     if (flashcards.length > 0) {
       // Use the first flashcard found for this vocabulary
       const flashcard = flashcards[0];
 
       // Submit the rating with the flashcard ID
-      const response = await flashcardService.reviewFlashcard(flashcard.id, numericRating);
+      const response = await flashcardService.reviewFlashcard(
+        flashcard.id,
+        numericRating,
+      );
 
       // Show success message based on rating
       const ratingMessages = {
-        again: 'Bạn sẽ gặp lại từ này sớm',
-        hard: 'Từ này khó, sẽ lặp lại sau',
-        good: 'Tốt! Bạn đã nhớ được từ này',
-        easy: 'Rất tốt! Bạn đã nắm vững từ này'
+        again: "Bạn sẽ gặp lại từ này sớm",
+        hard: "Từ này khó, sẽ lặp lại sau",
+        good: "Tốt! Bạn đã nhớ được từ này",
+        easy: "Rất tốt! Bạn đã nắm vững từ này",
       };
 
       // Update next scheduled date in the UI if available
-      const nextReview = response?.data?.due ?
-        new Date(response.data.due).toLocaleDateString('vi-VN') :
-        'soon';
+      const nextReview = response?.data?.due
+        ? new Date(response.data.due).toLocaleDateString("vi-VN")
+        : "soon";
 
-      toast.success(`${ratingMessages[rating]} - Lần ôn tiếp theo: ${nextReview}`, {
-        position: 'top',
-        duration: 3000
-      });
+      toast.success(
+        `${ratingMessages[rating]} - Lần ôn tiếp theo: ${nextReview}`,
+      );
 
       // Close the flashcard after rating
       closeFlashcard();
     } else {
-      toast.warning('Không tìm thấy thẻ ghi nhớ cho từ vựng này', {
-        position: 'top',
-        duration: 3000
-      });
+      toast.warning("Không tìm thấy thẻ ghi nhớ cho từ vựng này");
     }
-  } catch (error) {
-    toast.error('Không thể lưu đánh giá cho thẻ này. Vui lòng thử lại.', {
-      position: 'top',
-      duration: 3000
-    });
+  } catch {
+    toast.error("Không thể lưu đánh giá cho thẻ này. Vui lòng thử lại.");
   } finally {
     loading.value = false;
   }
@@ -557,12 +607,18 @@ async function rateCard(rating: 'again' | 'hard' | 'good' | 'easy') {
 
 function getJlptLevelColor(level: string): string {
   switch (level) {
-    case 'N1': return 'deep-purple';
-    case 'N2': return 'indigo';
-    case 'N3': return 'blue';
-    case 'N4': return 'teal';
-    case 'N5': return 'green';
-    default: return 'grey';
+    case "N1":
+      return "deep-purple";
+    case "N2":
+      return "indigo";
+    case "N3":
+      return "blue";
+    case "N4":
+      return "teal";
+    case "N5":
+      return "green";
+    default:
+      return "grey";
   }
 }
 
@@ -577,18 +633,20 @@ function getTabCount(index: number): number {
 
   if (index === 0) {
     // For the first tab (New), include both new flashcards and vocabularies without flashcards
-    return savedVocabulary.value.filter(vocab => {
+    return savedVocabulary.value.filter((vocab) => {
       if (!vocab.vocabId) return false;
       const flashcard = vocabFlashcardMap.value.get(vocab.vocabId);
-      return !flashcard || flashcard.state === 'new';
+      return !flashcard || flashcard.state === "new";
     }).length;
   }
 
   // For other tabs, only count flashcards with the matching state
-  return savedVocabulary.value.filter(vocab => {
+  return savedVocabulary.value.filter((vocab) => {
     if (!vocab.vocabId) return false;
     const flashcard = vocabFlashcardMap.value.get(vocab.vocabId);
-    return flashcard && flashcard.state === getStateNameFromValue(selectedState);
+    return (
+      flashcard && flashcard.state === getStateNameFromValue(selectedState)
+    );
   }).length;
 }
 </script>
@@ -645,7 +703,7 @@ function getTabCount(index: number): number {
 
 .primary-count {
   background-color: rgba(59, 130, 246, 0.1);
-  color: #3B82F6;
+  color: #3b82f6;
   font-weight: 500;
   font-size: 0.75rem;
 }
@@ -706,7 +764,7 @@ function getTabCount(index: number): number {
 }
 
 .japanese-text {
-  font-family: 'Noto Sans JP', sans-serif;
+  font-family: "Noto Sans JP", sans-serif;
   letter-spacing: 0.02em;
 }
 
@@ -732,7 +790,8 @@ function getTabCount(index: number): number {
   transform: rotateY(180deg);
 }
 
-.flashcard-front, .flashcard-back {
+.flashcard-front,
+.flashcard-back {
   position: absolute;
   width: 100%;
   height: 100%;
@@ -814,8 +873,14 @@ function getTabCount(index: number): number {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .close-btn {

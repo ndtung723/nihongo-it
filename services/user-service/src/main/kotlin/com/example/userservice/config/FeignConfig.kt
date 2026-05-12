@@ -10,9 +10,9 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class FeignConfig {
-    
+
     @Bean
     fun multipartFormEncoder(converters: ObjectFactory<HttpMessageConverters>): Encoder {
         return SpringFormEncoder(SpringEncoder(converters))
     }
-} 
+}

@@ -30,11 +30,7 @@
             clearable
           >
           </v-select>
-          <v-btn
-            color="primary"
-            prepend-icon="mdi-plus"
-            @click="openAddDialog"
-          >
+          <v-btn color="primary" prepend-icon="mdi-plus" @click="openAddDialog">
             Thêm hội thoại mới
           </v-btn>
         </div>
@@ -57,18 +53,14 @@
 
         <!-- Description column -->
         <template v-slot:item.description="{ item }">
-          <div class="text-truncate" style="max-width: 250px;">
+          <div class="text-truncate" style="max-width: 250px">
             {{ item.description }}
           </div>
         </template>
 
         <!-- JLPT Level column -->
         <template v-slot:item.jlptLevel="{ item }">
-          <v-chip
-            size="small"
-            color="primary"
-            variant="tonal"
-          >
+          <v-chip size="small" color="primary" variant="tonal">
             {{ item.jlptLevel }}
           </v-chip>
         </template>
@@ -80,11 +72,7 @@
 
         <!-- Line count column -->
         <template v-slot:item.lineCount="{ item }">
-          <v-chip
-            size="small"
-            color="info"
-            variant="tonal"
-          >
+          <v-chip size="small" color="info" variant="tonal">
             {{ item.lines?.length || 0 }} dòng
           </v-chip>
         </template>
@@ -106,7 +94,9 @@
               @click="viewDetail(item)"
             >
               <v-icon>mdi-eye</v-icon>
-              <v-tooltip activator="parent" location="top">Xem chi tiết</v-tooltip>
+              <v-tooltip activator="parent" location="top"
+                >Xem chi tiết</v-tooltip
+              >
             </v-btn>
             <v-btn
               icon
@@ -135,9 +125,15 @@
         <!-- No data template -->
         <template v-slot:no-data>
           <div class="text-center pa-5">
-            <v-icon size="large" icon="mdi-text-box-search-outline" class="mb-2"></v-icon>
+            <v-icon
+              size="large"
+              icon="mdi-text-box-search-outline"
+              class="mb-2"
+            ></v-icon>
             <div v-if="error" class="text-body-1 text-error">{{ error }}</div>
-            <div v-else-if="loading" class="text-body-1">Đang tải dữ liệu...</div>
+            <div v-else-if="loading" class="text-body-1">
+              Đang tải dữ liệu...
+            </div>
             <div v-else class="text-body-1">Không tìm thấy hội thoại nào</div>
           </div>
         </template>
@@ -160,7 +156,7 @@
                     v-model="editedItem.title"
                     label="Tiêu đề hội thoại"
                     prepend-icon="mdi-format-title"
-                    :rules="[v => !!v || 'Tiêu đề là bắt buộc']"
+                    :rules="[(v) => !!v || 'Tiêu đề là bắt buộc']"
                     required
                     autofocus
                   ></v-text-field>
@@ -182,7 +178,7 @@
                     item-value="value"
                     label="Trình độ JLPT"
                     prepend-icon="mdi-certificate-outline"
-                    :rules="[v => !!v || 'Trình độ JLPT là bắt buộc']"
+                    :rules="[(v) => !!v || 'Trình độ JLPT là bắt buộc']"
                     required
                   ></v-select>
                 </v-col>
@@ -192,7 +188,7 @@
                     label="Bài học (Unit)"
                     prepend-icon="mdi-book-open-variant"
                     type="number"
-                    :rules="[v => !!v || 'Bài học là bắt buộc']"
+                    :rules="[(v) => !!v || 'Bài học là bắt buộc']"
                     required
                   ></v-text-field>
                 </v-col>
@@ -204,7 +200,12 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="grey" variant="text" @click="closeDialog">Hủy</v-btn>
-          <v-btn color="primary" variant="elevated" @click="saveConversation" :disabled="!valid">
+          <v-btn
+            color="primary"
+            variant="elevated"
+            @click="saveConversation"
+            :disabled="!valid"
+          >
             Lưu
           </v-btn>
         </v-card-actions>
@@ -228,12 +229,10 @@
         <v-divider></v-divider>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="grey" variant="text" @click="deleteDialog = false">Hủy</v-btn>
-          <v-btn
-            color="error"
-            variant="elevated"
-            @click="deleteConversation"
+          <v-btn color="grey" variant="text" @click="deleteDialog = false"
+            >Hủy</v-btn
           >
+          <v-btn color="error" variant="elevated" @click="deleteConversation">
             Xóa
           </v-btn>
         </v-card-actions>
@@ -243,20 +242,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { useToast } from 'vue-toast-notification';
-import conversationService from '@/services/conversation.service';
-import type { Conversation, ConversationLine } from '@/services/conversation.service';
-import { format, parseISO } from 'date-fns';
-import { vi } from 'date-fns/locale';
-import type { VForm } from 'vuetify/components';
-import draggable from 'vuedraggable';
+import { ref, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { useAppToast } from "@/composables/useAppToast";
+import conversationService from "@/services/conversation.service";
+import type { Conversation } from "@/services/conversation.service";
+import { format, parseISO } from "date-fns";
+import { vi } from "date-fns/locale";
+import type { VForm } from "vuetify/components";
 
 // Tạo global declaration cho lodash/debounce
-const debounce = (fn: Function, delay: number) => {
+const debounce = (fn: (...args: unknown[]) => unknown, delay: number) => {
   let timer: number | null = null;
-  return function(this: any, ...args: any[]) {
+  return function (this: unknown, ...args: unknown[]) {
     if (timer) clearTimeout(timer);
     timer = window.setTimeout(() => {
       fn.apply(this, args);
@@ -267,7 +265,7 @@ const debounce = (fn: Function, delay: number) => {
 
 // Khai báo toast và router
 const router = useRouter();
-const toast = useToast();
+const toast = useAppToast();
 
 // Data
 const conversations = ref<Conversation[]>([]);
@@ -276,39 +274,38 @@ const error = ref<string | null>(null);
 const valid = ref(false);
 const dialog = ref(false);
 const deleteDialog = ref(false);
-const form = ref<any>(null);
-const searchQuery = ref('');
+const form = ref<unknown>(null);
+const searchQuery = ref("");
 const selectedJlptLevel = ref<string | null>(null);
 const jlptLevels = conversationService.getJlptLevels();
-const speakerOptions = conversationService.getSpeakerOptions();
 const expandedLines = ref<Record<string, boolean>>({});
 
 // Table headers
 const headers = ref([
-  { title: 'Tiêu đề', key: 'title', sortable: true },
-  { title: 'Mô tả', key: 'description', sortable: false },
-  { title: 'Trình độ JLPT', key: 'jlptLevel', sortable: true },
-  { title: 'Bài học', key: 'unit', sortable: true },
-  { title: 'Số dòng', key: 'lineCount', sortable: false },
-  { title: 'Cập nhật lúc', key: 'updatedAt', sortable: true },
-  { title: 'Thao tác', key: 'actions', sortable: false }
+  { title: "Tiêu đề", key: "title", sortable: true },
+  { title: "Mô tả", key: "description", sortable: false },
+  { title: "Trình độ JLPT", key: "jlptLevel", sortable: true },
+  { title: "Bài học", key: "unit", sortable: true },
+  { title: "Số dòng", key: "lineCount", sortable: false },
+  { title: "Cập nhật lúc", key: "updatedAt", sortable: true },
+  { title: "Thao tác", key: "actions", sortable: false },
 ]);
 
 // Edit/Add dialog
 const editedIndex = ref(-1);
 const editedItem = ref<Conversation>({
-  title: '',
-  description: '',
-  jlptLevel: 'N5',
+  title: "",
+  description: "",
+  jlptLevel: "N5",
   unit: 1,
-  lines: []
+  lines: [],
 });
 const defaultItem: Conversation = {
-  title: '',
-  description: '',
-  jlptLevel: 'N5',
+  title: "",
+  description: "",
+  jlptLevel: "N5",
   unit: 1,
-  lines: []
+  lines: [],
 };
 
 // Delete dialog
@@ -317,13 +314,13 @@ const deleteItem = ref<Conversation | null>(null);
 // Fetch data
 onMounted(() => {
   fetchConversations();
-  // Debug: Log token
-  const token = localStorage.getItem('auth_token');
 });
 
 // Computed
 const formTitle = computed(() => {
-  return editedIndex.value === -1 ? 'Thêm hội thoại mới' : 'Chỉnh sửa hội thoại';
+  return editedIndex.value === -1
+    ? "Thêm hội thoại mới"
+    : "Chỉnh sửa hội thoại";
 });
 
 // Methods
@@ -334,8 +331,8 @@ const fetchConversations = async () => {
     // Call API to get conversations with pagination
     const response = await conversationService.adminGetConversations();
     conversations.value = response.data.content || [];
-  } catch (err) {
-    error.value = 'Không thể tải dữ liệu, vui lòng thử lại sau.';
+  } catch {
+    error.value = "Không thể tải dữ liệu, vui lòng thử lại sau.";
   } finally {
     loading.value = false;
   }
@@ -344,10 +341,14 @@ const fetchConversations = async () => {
 const debouncedSearch = debounce(async () => {
   loading.value = true;
   try {
-    const response = await conversationService.adminGetConversations(0, 10, searchQuery.value);
+    const response = await conversationService.adminGetConversations(
+      0,
+      10,
+      searchQuery.value,
+    );
     conversations.value = response.data.content || [];
-  } catch (err) {
-    toast.error('Lỗi tìm kiếm hội thoại');
+  } catch {
+    toast.error("Lỗi tìm kiếm hội thoại");
   } finally {
     loading.value = false;
   }
@@ -357,29 +358,30 @@ const fetchConversationsByLevel = async () => {
   loading.value = true;
   try {
     if (selectedJlptLevel.value) {
-      const response = await conversationService.adminGetConversationsByJlptLevel(selectedJlptLevel.value, 0, 10);
+      const response =
+        await conversationService.adminGetConversationsByJlptLevel(
+          selectedJlptLevel.value,
+          0,
+          10,
+        );
       conversations.value = response.data.content || [];
     } else {
       fetchConversations();
     }
-  } catch (err) {
-    toast.error('Lỗi lọc hội thoại theo trình độ');
+  } catch {
+    toast.error("Lỗi lọc hội thoại theo trình độ");
   } finally {
     loading.value = false;
   }
 };
 
 const formatDate = (dateString?: string) => {
-  if (!dateString) return 'N/A';
+  if (!dateString) return "N/A";
   try {
-    return format(parseISO(dateString), 'dd/MM/yyyy HH:mm', { locale: vi });
-  } catch (error) {
+    return format(parseISO(dateString), "dd/MM/yyyy HH:mm", { locale: vi });
+  } catch {
     return dateString;
   }
-};
-
-const getSpeakerDisplayName = (speaker: string) => {
-  return speaker === 'bot' ? 'Nihongo IT' : 'Người dùng';
 };
 
 // Dialog methods
@@ -410,10 +412,10 @@ const saveConversation = async () => {
     // Tạo một object mới chỉ chứa các thông tin cơ bản cần thiết
     const basicConversation = {
       title: editedItem.value.title,
-      description: editedItem.value.description || '',
+      description: editedItem.value.description || "",
       jlptLevel: editedItem.value.jlptLevel,
       unit: editedItem.value.unit,
-      lines: [] // Luôn gửi mảng rỗng
+      lines: [], // Luôn gửi mảng rỗng
     };
 
     loading.value = true;
@@ -425,29 +427,34 @@ const saveConversation = async () => {
           editedItem.value.conversationId,
           {
             ...basicConversation,
-            conversationId: editedItem.value.conversationId
-          }
+            conversationId: editedItem.value.conversationId,
+          },
         );
-        toast.success('Hội thoại đã được cập nhật thành công');
+        toast.success("Hội thoại đã được cập nhật thành công");
       }
     } else {
       // Create new conversation
-      const response = await conversationService.adminCreateConversation(basicConversation);
+      const response =
+        await conversationService.adminCreateConversation(basicConversation);
       const newConversation = response.data;
-      toast.success('Đã thêm hội thoại mới thành công');
+      toast.success("Đã thêm hội thoại mới thành công");
 
       // Nếu thành công và có conversationId, chuyển đến trang chỉnh sửa
       if (newConversation && newConversation.conversationId) {
         closeDialog();
-        router.push(`/admin/conversations/${newConversation.conversationId}/edit`);
+        router.push(
+          `/admin/conversations/${newConversation.conversationId}/edit`,
+        );
         return; // Thoát sớm để không gọi closeDialog() lần nữa
       }
     }
     closeDialog();
     fetchConversations();
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Không thể lưu hội thoại';
-    toast.error(error.value || 'Không thể lưu hội thoại');
+  } catch (err: unknown) {
+    error.value =
+      (err as { response?: { data?: { message?: string } } }).response?.data
+        ?.message || "Không thể lưu hội thoại";
+    toast.error(error.value || "Không thể lưu hội thoại");
   } finally {
     loading.value = false;
   }
@@ -460,7 +467,7 @@ const confirmDelete = (item: Conversation) => {
 
 const deleteConversation = async () => {
   if (!deleteItem.value || !deleteItem.value.conversationId) {
-    toast.error('Không thể xóa: ID hội thoại không tồn tại');
+    toast.error("Không thể xóa: ID hội thoại không tồn tại");
     return;
   }
 
@@ -472,12 +479,16 @@ const deleteConversation = async () => {
     // Gọi qua service
     await conversationService.adminDeleteConversation(conversationId);
 
-    toast.success('Đã xóa hội thoại thành công');
+    toast.success("Đã xóa hội thoại thành công");
     deleteDialog.value = false;
     fetchConversations();
-  } catch (err: any) {
-    error.value = err.response?.data?.message || err.message || 'Không thể xóa hội thoại';
-    toast.error(error.value || 'Không thể xóa hội thoại');
+  } catch (err: unknown) {
+    error.value =
+      (err as { response?: { data?: { message?: string }; message?: string } })
+        .response?.data?.message ||
+      (err as { message?: string }).message ||
+      "Không thể xóa hội thoại";
+    toast.error(error.value || "Không thể xóa hội thoại");
   } finally {
     loading.value = false;
   }
@@ -487,81 +498,6 @@ const viewDetail = (item: Conversation) => {
   if (item.conversationId) {
     router.push(`/admin/conversations/${item.conversationId}`);
   }
-};
-
-// Line management methods
-const addLine = () => {
-  // Đảm bảo lines đã được khởi tạo
-  if (!editedItem.value.lines) {
-    editedItem.value.lines = [];
-  }
-
-  const orderIndex = editedItem.value.lines.length > 0
-    ? Math.max(...editedItem.value.lines.map(line => line.orderIndex)) + 1
-    : 1;
-
-  // Xác định speaker dựa trên orderIndex
-  const speaker = orderIndex % 2 === 1 ? 'bot' : 'user';
-
-  const newLine = {
-    speaker,
-    japaneseText: '',
-    vietnameseTranslation: '',
-    notes: '',
-    importantVocab: '',
-    orderIndex,
-    tempId: 'temp-' + Date.now() // ID tạm thời cho việc kéo thả
-  };
-
-  editedItem.value.lines.push(newLine);
-
-  // Expand the newly added line
-  expandedLines.value[newLine.tempId] = true;
-
-  // Collapse other lines
-  for (const id in expandedLines.value) {
-    if (id !== newLine.tempId) {
-      expandedLines.value[id] = false;
-    }
-  }
-};
-
-const removeLine = (index: number) => {
-  // Đảm bảo lines đã được khởi tạo
-  if (!editedItem.value.lines) {
-    return;
-  }
-
-  // Remove line from array
-  const removedLine = editedItem.value.lines[index];
-  editedItem.value.lines.splice(index, 1);
-
-  // Remove from expanded lines
-  if (removedLine.tempId) {
-    delete expandedLines.value[removedLine.tempId];
-  }
-
-  // Update orderIndex for remaining lines
-  updateOrderIndices();
-};
-
-const updateOrderIndices = () => {
-  // Đảm bảo lines đã được khởi tạo
-  if (!editedItem.value.lines) {
-    return;
-  }
-
-  // Update orderIndex based on current array order
-  editedItem.value.lines.forEach((line, idx) => {
-    const newOrderIndex = idx + 1;
-    line.orderIndex = newOrderIndex;
-    // Cập nhật speaker dựa trên orderIndex: lẻ (1,3,5...) là bot, chẵn (2,4,6...) là user
-    line.speaker = newOrderIndex % 2 === 1 ? 'bot' : 'user';
-  });
-};
-
-const toggleLineExpand = (tempId: string) => {
-  expandedLines.value[tempId] = !expandedLines.value[tempId];
 };
 </script>
 

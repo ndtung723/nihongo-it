@@ -1,7 +1,6 @@
 package com.example.common.security
 
-import com.example.common.dto.ResponseDto
-import com.example.common.dto.ResponseType
+import com.example.common.dto.ErrorResponseDto
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -23,8 +22,7 @@ class JwtAuthenticationEntryPoint : AuthenticationEntryPoint {
         response.contentType = MediaType.APPLICATION_JSON_VALUE
         response.status = HttpServletResponse.SC_UNAUTHORIZED
 
-        val body = ResponseDto(
-            status = ResponseType.NG,
+        val body = ErrorResponseDto(
             message = authException.message ?: "Invalid authentication token",
         )
 

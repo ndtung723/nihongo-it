@@ -1,11 +1,11 @@
 ﻿package com.example.learningservice.service
 
+import com.example.common.exception.BusinessException
 import com.example.learningservice.dto.CreateTopicRequest
 import com.example.learningservice.dto.TopicDTO
 import com.example.learningservice.dto.UpdateTopicRequest
 import com.example.learningservice.dto.toDTO
 import com.example.learningservice.entity.TopicEntity
-import com.example.common.exception.BusinessException
 import com.example.learningservice.repository.CategoryRepository
 import com.example.learningservice.repository.TopicRepository
 import com.example.learningservice.repository.UserRepository
@@ -20,8 +20,8 @@ class TopicService(
     private val topicRepository: TopicRepository,
     private val categoryRepository: CategoryRepository,
     private val userRepository: UserRepository,
-    private val userAuthUtil: UserAuthUtil
-)  {
+    private val userAuthUtil: UserAuthUtil,
+) {
 
     @Transactional(readOnly = true)
     fun getAllTopics(): List<TopicDTO> {
@@ -65,7 +65,7 @@ class TopicService(
             isActive = request.isActive,
             category = category,
             createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now()
+            updatedAt = LocalDateTime.now(),
         )
 
         val savedTopic = topicRepository.save(topic)
@@ -89,7 +89,8 @@ class TopicService(
         if (request.name != null &&
             request.name != topic.name &&
             request.categoryId == topic.category.categoryId &&
-            topicRepository.existsByNameAndCategory(request.name, topic.category)) {
+            topicRepository.existsByNameAndCategory(request.name, topic.category)
+        ) {
             throw BusinessException("A topic with the name '${request.name}' already exists in this category")
         }
 
@@ -99,7 +100,7 @@ class TopicService(
             displayOrder = request.displayOrder ?: topic.displayOrder,
             isActive = request.isActive ?: topic.isActive,
             category = category,
-            updatedAt = LocalDateTime.now()
+            updatedAt = LocalDateTime.now(),
         )
 
         val savedTopic = topicRepository.save(updatedTopic)
@@ -113,7 +114,7 @@ class TopicService(
 
         val updatedTopic = topic.copy(
             isActive = !topic.isActive,
-            updatedAt = LocalDateTime.now()
+            updatedAt = LocalDateTime.now(),
         )
 
         val savedTopic = topicRepository.save(updatedTopic)
@@ -138,7 +139,10 @@ class TopicService(
 
         // Tìm kiếm theo cả name và meaning
         val topics = topicRepository.findByCategoryAndNameContainingIgnoreCaseOrCategoryAndMeaningContainingIgnoreCase(
-            category, query, category, query
+            category,
+            query,
+            category,
+            query,
         )
         return topics.map { it.toDTO() }
     }

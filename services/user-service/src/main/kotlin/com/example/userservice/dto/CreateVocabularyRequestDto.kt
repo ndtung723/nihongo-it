@@ -6,7 +6,6 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
-import java.util.UUID
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class CreateVocabularyRequestDto(
@@ -26,11 +25,11 @@ data class CreateVocabularyRequestDto(
 
     @get:Size(max = 500, message = "Example cannot exceed 500 characters")
     @JsonProperty("example")
-    val example: String? = null, //example sentence
+    val example: String? = null, // example sentence
 
     @get:Size(max = 500, message = "Example meaning cannot exceed 500 characters")
     @JsonProperty("exampleMeaning")
-    val exampleMeaning: String? = null, //vietnamese meaning
+    val exampleMeaning: String? = null, // vietnamese meaning
 
     @JsonProperty("audioPath")
     val audioPath: String? = null,

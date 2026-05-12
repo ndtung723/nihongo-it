@@ -2,7 +2,11 @@
   <div class="conversation-detail-container">
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
-      <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+      <v-progress-circular
+        indeterminate
+        color="primary"
+        size="64"
+      ></v-progress-circular>
       <span class="mt-4 text-body-1">Đang tải dữ liệu hội thoại...</span>
     </div>
 
@@ -20,10 +24,19 @@
       <!-- Conversation Header -->
       <div class="conversation-header mb-1">
         <div class="d-flex align-center">
-          <v-btn icon @click="goBack" class="mr-1" size="small" color="secondary" variant="text">
+          <v-btn
+            icon
+            @click="goBack"
+            class="mr-1"
+            size="small"
+            color="secondary"
+            variant="text"
+          >
             <v-icon>mdi-arrow-left</v-icon>
           </v-btn>
-          <span class="text-subtitle-1 font-weight-medium">Chi tiết hội thoại</span>
+          <span class="text-subtitle-1 font-weight-medium"
+            >Chi tiết hội thoại</span
+          >
           <v-spacer></v-spacer>
           <v-btn
             color="primary"
@@ -49,10 +62,16 @@
               <!-- Tiêu đề trên một hàng riêng -->
               <v-list-item density="compact" class="py-1">
                 <template v-slot:prepend>
-                  <v-icon color="primary" size="small" class="mr-1">mdi-format-title</v-icon>
+                  <v-icon color="primary" size="small" class="mr-1"
+                    >mdi-format-title</v-icon
+                  >
                 </template>
-                <v-list-item-title class="text-body-2 font-weight-medium">Tiêu đề</v-list-item-title>
-                <v-list-item-subtitle class="text-caption">{{ conversation.title }}</v-list-item-subtitle>
+                <v-list-item-title class="text-body-2 font-weight-medium"
+                  >Tiêu đề</v-list-item-title
+                >
+                <v-list-item-subtitle class="text-caption">{{
+                  conversation.title
+                }}</v-list-item-subtitle>
               </v-list-item>
 
               <v-divider inset></v-divider>
@@ -60,10 +79,16 @@
               <!-- Mô tả trên một hàng riêng -->
               <v-list-item density="compact" class="py-1">
                 <template v-slot:prepend>
-                  <v-icon color="primary" size="small" class="mr-1">mdi-text-box-outline</v-icon>
+                  <v-icon color="primary" size="small" class="mr-1"
+                    >mdi-text-box-outline</v-icon
+                  >
                 </template>
-                <v-list-item-title class="text-body-2 font-weight-medium">Mô tả</v-list-item-title>
-                <v-list-item-subtitle class="text-caption">{{ conversation.description }}</v-list-item-subtitle>
+                <v-list-item-title class="text-body-2 font-weight-medium"
+                  >Mô tả</v-list-item-title
+                >
+                <v-list-item-subtitle class="text-caption">{{
+                  conversation.description
+                }}</v-list-item-subtitle>
               </v-list-item>
 
               <v-divider inset></v-divider>
@@ -73,11 +98,20 @@
                 <v-col cols="3" class="pa-0">
                   <v-list-item density="compact" class="py-1">
                     <template v-slot:prepend>
-                      <v-icon color="primary" size="small" class="mr-1">mdi-certificate-outline</v-icon>
+                      <v-icon color="primary" size="small" class="mr-1"
+                        >mdi-certificate-outline</v-icon
+                      >
                     </template>
-                    <v-list-item-title class="text-body-2 font-weight-medium">JLPT</v-list-item-title>
+                    <v-list-item-title class="text-body-2 font-weight-medium"
+                      >JLPT</v-list-item-title
+                    >
                     <v-list-item-subtitle>
-                      <v-chip :color="getJlptColor(conversation.jlptLevel)" size="x-small" class="mt-1">{{ conversation.jlptLevel }}</v-chip>
+                      <v-chip
+                        :color="getJlptColor(conversation.jlptLevel)"
+                        size="x-small"
+                        class="mt-1"
+                        >{{ conversation.jlptLevel }}</v-chip
+                      >
                     </v-list-item-subtitle>
                   </v-list-item>
                 </v-col>
@@ -85,30 +119,48 @@
                 <v-col cols="3" class="pa-0">
                   <v-list-item density="compact" class="py-1">
                     <template v-slot:prepend>
-                      <v-icon color="primary" size="small" class="mr-1">mdi-book-open-variant</v-icon>
+                      <v-icon color="primary" size="small" class="mr-1"
+                        >mdi-book-open-variant</v-icon
+                      >
                     </template>
-                    <v-list-item-title class="text-body-2 font-weight-medium">Bài học</v-list-item-title>
-                    <v-list-item-subtitle class="text-caption">{{ conversation.unit }}</v-list-item-subtitle>
+                    <v-list-item-title class="text-body-2 font-weight-medium"
+                      >Bài học</v-list-item-title
+                    >
+                    <v-list-item-subtitle class="text-caption">{{
+                      conversation.unit
+                    }}</v-list-item-subtitle>
                   </v-list-item>
                 </v-col>
 
                 <v-col cols="3" class="pa-0">
                   <v-list-item density="compact" class="py-1">
                     <template v-slot:prepend>
-                      <v-icon color="primary" size="small" class="mr-1">mdi-chat-outline</v-icon>
+                      <v-icon color="primary" size="small" class="mr-1"
+                        >mdi-chat-outline</v-icon
+                      >
                     </template>
-                    <v-list-item-title class="text-body-2 font-weight-medium">Số dòng</v-list-item-title>
-                    <v-list-item-subtitle class="text-caption">{{ conversation.lines?.length || 0 }}</v-list-item-subtitle>
+                    <v-list-item-title class="text-body-2 font-weight-medium"
+                      >Số dòng</v-list-item-title
+                    >
+                    <v-list-item-subtitle class="text-caption">{{
+                      conversation.lines?.length || 0
+                    }}</v-list-item-subtitle>
                   </v-list-item>
                 </v-col>
 
                 <v-col cols="3" class="pa-0">
                   <v-list-item density="compact" class="py-1">
                     <template v-slot:prepend>
-                      <v-icon color="primary" size="small" class="mr-1">mdi-clock-outline</v-icon>
+                      <v-icon color="primary" size="small" class="mr-1"
+                        >mdi-clock-outline</v-icon
+                      >
                     </template>
-                    <v-list-item-title class="text-body-2 font-weight-medium">Cập nhật</v-list-item-title>
-                    <v-list-item-subtitle class="text-caption">{{ formatDate(conversation.updatedAt) }}</v-list-item-subtitle>
+                    <v-list-item-title class="text-body-2 font-weight-medium"
+                      >Cập nhật</v-list-item-title
+                    >
+                    <v-list-item-subtitle class="text-caption">{{
+                      formatDate(conversation.updatedAt)
+                    }}</v-list-item-subtitle>
                   </v-list-item>
                 </v-col>
               </v-row>
@@ -123,25 +175,39 @@
             </v-chip>
           </div>
 
-          <template v-if="!conversation.lines || conversation.lines.length === 0">
+          <template
+            v-if="!conversation.lines || conversation.lines.length === 0"
+          >
             <div class="text-center pa-6 bg-grey-lighten-4 rounded-lg">
-              <v-icon icon="mdi-chat-outline" size="large" class="mb-2 text-grey"></v-icon>
-              <div class="text-body-2 text-grey-darken-1">Hội thoại này chưa có nội dung.</div>
+              <v-icon
+                icon="mdi-chat-outline"
+                size="large"
+                class="mb-2 text-grey"
+              ></v-icon>
+              <div class="text-body-2 text-grey-darken-1">
+                Hội thoại này chưa có nội dung.
+              </div>
             </div>
           </template>
 
           <template v-else>
             <!-- Chat Messages Container -->
             <div class="chat-container">
-              <template v-for="(line, i) in sortedLines" :key="line.lineId || i">
+              <template
+                v-for="(line, i) in sortedLines"
+                :key="line.lineId || i"
+              >
                 <div
                   class="message-row mb-2"
                   :class="[
-                    line.speaker === 'user' ? 'justify-end' : 'justify-start'
+                    line.speaker === 'user' ? 'justify-end' : 'justify-start',
                   ]"
                 >
                   <!-- Avatar for Nihongo IT -->
-                  <div v-if="line.speaker !== 'user'" class="avatar-container mr-2">
+                  <div
+                    v-if="line.speaker !== 'user'"
+                    class="avatar-container mr-2"
+                  >
                     <v-avatar size="36" color="info">
                       <v-icon color="white">mdi-robot</v-icon>
                     </v-avatar>
@@ -152,17 +218,21 @@
                     class="message-container"
                     :class="{
                       'user-message': line.speaker === 'user',
-                      'bot-message': line.speaker !== 'user'
+                      'bot-message': line.speaker !== 'user',
                     }"
                     :style="{
                       maxWidth: '80%',
-                      minWidth: '270px'
+                      minWidth: '270px',
                     }"
                   >
                     <!-- Message Content -->
                     <div class="message-content pa-2">
-                      <div class="d-flex justify-space-between align-center mb-1">
-                        <div class="japanese-text text-subtitle-1 font-weight-medium word-break-wrap">
+                      <div
+                        class="d-flex justify-space-between align-center mb-1"
+                      >
+                        <div
+                          class="japanese-text text-subtitle-1 font-weight-medium word-break-wrap"
+                        >
                           {{ line.japaneseText }}
                         </div>
                         <!-- Audio Button - Dummy for design -->
@@ -179,23 +249,38 @@
                           <v-icon size="small">mdi-volume-high</v-icon>
                         </v-btn>
                       </div>
-                      <div class="text-body-2 text-medium-emphasis word-break-wrap">
+                      <div
+                        class="text-body-2 text-medium-emphasis word-break-wrap"
+                      >
                         {{ line.vietnameseTranslation }}
                       </div>
 
                       <!-- Notes and Vocabulary -->
-                      <div v-if="line.notes" class="mt-2 text-caption notes-section word-break-wrap">
-                        <span class="font-weight-medium">Ghi chú:</span> {{ line.notes }}
+                      <div
+                        v-if="line.notes"
+                        class="mt-2 text-caption notes-section word-break-wrap"
+                      >
+                        <span class="font-weight-medium">Ghi chú:</span>
+                        {{ line.notes }}
                       </div>
 
-                      <div v-if="line.importantVocab" class="mt-2 vocab-section">
-                        <div class="text-caption font-weight-medium mb-1">Từ vựng quan trọng:</div>
+                      <div
+                        v-if="line.importantVocab"
+                        class="mt-2 vocab-section"
+                      >
+                        <div class="text-caption font-weight-medium mb-1">
+                          Từ vựng quan trọng:
+                        </div>
                         <div class="d-flex flex-wrap">
                           <v-chip
-                            v-for="(vocab, idx) in line.importantVocab.split(',')"
+                            v-for="(vocab, idx) in line.importantVocab.split(
+                              ',',
+                            )"
                             :key="idx"
                             size="x-small"
-                            :color="line.speaker === 'user' ? 'primary' : 'info'"
+                            :color="
+                              line.speaker === 'user' ? 'primary' : 'info'
+                            "
                             variant="outlined"
                             class="mr-1 mb-1"
                           >
@@ -207,7 +292,10 @@
                   </div>
 
                   <!-- Avatar for User -->
-                  <div v-if="line.speaker === 'user'" class="avatar-container ml-2">
+                  <div
+                    v-if="line.speaker === 'user'"
+                    class="avatar-container ml-2"
+                  >
                     <v-avatar size="36" color="primary">
                       <v-icon>mdi-account</v-icon>
                     </v-avatar>
@@ -223,12 +311,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import conversationService from '@/services/conversation.service';
-import type { Conversation } from '@/services/conversation.service';
-import { format, parseISO } from 'date-fns';
-import { vi } from 'date-fns/locale';
+import { ref, onMounted, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import conversationService from "@/services/conversation.service";
+import type { Conversation } from "@/services/conversation.service";
+import { format, parseISO } from "date-fns";
+import { vi } from "date-fns/locale";
 
 // Utilities
 const route = useRoute();
@@ -242,7 +330,9 @@ const error = ref<string | null>(null);
 // Computed
 const sortedLines = computed(() => {
   if (!conversation.value || !conversation.value.lines) return [];
-  return [...conversation.value.lines].sort((a, b) => a.orderIndex - b.orderIndex);
+  return [...conversation.value.lines].sort(
+    (a, b) => a.orderIndex - b.orderIndex,
+  );
 });
 
 // Lifecycle hooks
@@ -251,8 +341,8 @@ onMounted(async () => {
   if (conversationId) {
     await fetchConversation(conversationId);
   } else {
-    error.value = 'Không tìm thấy ID hội thoại';
-    router.push({ name: 'adminConversations' });
+    error.value = "Không tìm thấy ID hội thoại";
+    router.push({ name: "adminConversations" });
   }
 });
 
@@ -264,45 +354,43 @@ const fetchConversation = async (id: string) => {
   try {
     const response = await conversationService.adminGetConversationById(id);
     conversation.value = response.data;
-  } catch (err) {
-    error.value = 'Không thể tải dữ liệu hội thoại. Vui lòng thử lại sau.';
+  } catch {
+    error.value = "Không thể tải dữ liệu hội thoại. Vui lòng thử lại sau.";
   } finally {
     loading.value = false;
   }
 };
 
 const formatDate = (dateString?: string) => {
-  if (!dateString) return 'N/A';
+  if (!dateString) return "N/A";
   try {
-    return format(parseISO(dateString), 'dd/MM/yyyy HH:mm', { locale: vi });
-  } catch (error) {
+    return format(parseISO(dateString), "dd/MM/yyyy HH:mm", { locale: vi });
+  } catch {
     return dateString;
   }
 };
 
 const getJlptColor = (level: string | undefined): string => {
-  if (!level) return 'grey';
+  if (!level) return "grey";
   const colors: Record<string, string> = {
-    'N1': 'red',
-    'N2': 'orange',
-    'N3': 'amber',
-    'N4': 'light-green',
-    'N5': 'green'
-  }
-  return colors[level] || 'grey'
-}
-
-const getSpeakerName = (speaker: string) => {
-  return speaker === 'bot' ? 'Nihongo IT' : 'Người dùng';
+    N1: "red",
+    N2: "orange",
+    N3: "amber",
+    N4: "light-green",
+    N5: "green",
+  };
+  return colors[level] || "grey";
 };
 
 const goBack = () => {
-  router.push({ name: 'adminConversations' });
+  router.push({ name: "adminConversations" });
 };
 
 const goToEdit = () => {
   if (conversation.value?.conversationId) {
-    router.push(`/admin/conversations/${conversation.value.conversationId}/edit`);
+    router.push(
+      `/admin/conversations/${conversation.value.conversationId}/edit`,
+    );
   }
 };
 </script>
@@ -349,7 +437,7 @@ const goToEdit = () => {
   }
 
   .japanese-text {
-    font-family: 'Noto Sans JP', sans-serif;
+    font-family: "Noto Sans JP", sans-serif;
   }
 
   .chat-container {
@@ -382,13 +470,13 @@ const goToEdit = () => {
     }
 
     &.user-message {
-      background-color: #E3F2FD; // Màu xanh nhạt cho tin nhắn người dùng
+      background-color: #e3f2fd; // Màu xanh nhạt cho tin nhắn người dùng
       border-top-right-radius: 4px;
       align-self: flex-end;
     }
 
     &.bot-message {
-      background-color: #E8F5E9; // Màu xanh lá nhạt cho tin nhắn của Nihongo IT
+      background-color: #e8f5e9; // Màu xanh lá nhạt cho tin nhắn của Nihongo IT
       border-top-left-radius: 4px;
       align-self: flex-start;
     }

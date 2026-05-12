@@ -13,25 +13,35 @@ const val CORRELATION_ID_HEADER = "X-Correlation-Id"
 
 @Component
 class CorrelationIdGlobalFilter : GlobalFilter, Ordered {
+    companion object {
+        private const val FILTER_ORDER = -200
+    }
 
     private val logger = LoggerFactory.getLogger(CorrelationIdGlobalFilter::class.java)
 
+    @Suppress("ForbiddenVoid")
     override fun filter(exchange: ServerWebExchange, chain: GatewayFilterChain): Mono<Void> {
         val correlationId = exchange.request.headers.getFirst(CORRELATION_ID_HEADER)
             ?: UUID.randomUUID().toString()
 
-        logger.debug("correlationId={} method={} path={}", correlationId,
-            exchange.request.method, exchange.request.path.value())
+        logger.debug(
+            "correlationId={} method={} path={}",
+            correlationId,
+            exchange.request.method,
+            exchange.request.path.value(),
+        )
 
         val mutatedRequest = exchange.request.mutate()
             .header(CORRELATION_ID_HEADER, correlationId)
             .build()
 
         return chain.filter(exchange.mutate().request(mutatedRequest).build())
-            .then(Mono.fromRunnable {
-                exchange.response.headers.set(CORRELATION_ID_HEADER, correlationId)
-            })
+            .then(
+                Mono.fromRunnable {
+                    exchange.response.headers.set(CORRELATION_ID_HEADER, correlationId)
+                },
+            )
     }
 
-    override fun getOrder(): Int = -200
+    override fun getOrder(): Int = FILTER_ORDER
 }

@@ -1,26 +1,33 @@
 ﻿package com.example.learningservice.service
 
-import com.example.learningservice.entity.UserEntity
 import com.example.common.exception.BusinessException
+import com.example.learningservice.entity.UserEntity
 import com.example.learningservice.repository.ReviewLogRepository
 import com.example.learningservice.repository.UserRepository
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 @Service
 class UserService(
     private val userRepository: UserRepository,
-    private val reviewLogRepository: ReviewLogRepository
+    private val reviewLogRepository: ReviewLogRepository,
 ) {
     private val logger = LoggerFactory.getLogger(UserService::class.java)
 
     /**
      * Get user by ID
      */
+    @Transactional(readOnly = true)
     fun getUserById(userId: UUID): UserEntity {
         return userRepository.findById(userId)
             .orElseThrow { BusinessException("User not found with ID: $userId") }
@@ -31,6 +38,7 @@ class UserService(
     /**
      * Get total number of users in the system
      */
+    @Transactional(readOnly = true)
     fun getUserCount(): Int {
         return userRepository.count().toInt()
     }
@@ -38,13 +46,15 @@ class UserService(
     /**
      * Get number of new users registered since the given date
      */
-    fun getNewUserCount(sinceDate: LocalDateTime): Int {
+    @Transactional(readOnly = true)
+    fun getNewUserCount(sinceDate: Instant): Int {
         return userRepository.countByCreatedAtAfter(sinceDate).toInt()
     }
 
     /**
      * Get number of active users who logged in since the given date
      */
+    @Transactional(readOnly = true)
     fun getActiveUserCount(sinceDate: LocalDateTime): Int {
         return userRepository.countByLastLoginAfter(sinceDate).toInt()
     }
@@ -52,25 +62,29 @@ class UserService(
     /**
      * Get recent user activities for the dashboard
      */
+    @Transactional(readOnly = true)
     fun getRecentUserActivities(limit: Int): List<Map<String, Any>> {
         // This is a placeholder implementation.
         // In a real application, you would retrieve this data from an activity log table
         val recentUsersWithActivity = userRepository.findTop10ByOrderByLastLoginDesc()
 
         val activities = recentUsersWithActivity.mapIndexedNotNull { index, user ->
-            if (index < limit && user.lastLogin != null) {
+            val lastLogin = user.lastLogin
+            if (index < limit && lastLogin != null) {
                 val action = when {
-                    user.lastLogin!!.isAfter(LocalDateTime.now().minusHours(1)) -> "Đã đăng nhập"
-                    user.createdAt.isAfter(LocalDateTime.now().minusDays(1)) -> "Đã tạo tài khoản mới"
+                    lastLogin.isAfter(LocalDateTime.now().minusHours(1)) -> "Đã đăng nhập"
+                    user.createdAt.isAfter(Instant.now().minus(1, ChronoUnit.DAYS)) -> "Đã tạo tài khoản mới"
                     else -> "Đã truy cập hệ thống"
                 }
 
                 mapOf(
                     "user" to user.email,
                     "action" to action,
-                    "timestamp" to user.lastLogin
+                    "timestamp" to user.lastLogin,
                 )
-            } else null
+            } else {
+                null
+            }
         }
 
         // Ensure we always return a list, even if empty
@@ -80,6 +94,7 @@ class UserService(
     /**
      * Get top performing users by retention rate
      */
+    @Transactional(readOnly = true)
     fun getTopPerformingUsers(limit: Int): List<UserEntity> {
         // Find users with the highest retention rates
         val thirtyDaysAgo = LocalDateTime.now().minusDays(30)
@@ -90,8 +105,9 @@ class UserService(
 
         val userStats = allUsers.map { user ->
             // Get review data for each user
-            val reviews = reviewLogRepository.findByUserIdAndReviewTimestampAfterOrderByReviewTimestampDesc(
-                user.userId!!, thirtyDaysAgo
+            val reviews = reviewLogRepository.findRecentReviewsByUser(
+                requireNotNull(user.userId) { "User ID missing" },
+                thirtyDaysAgo,
             )
 
             // Skip users with no reviews
@@ -117,6 +133,7 @@ class UserService(
     /**
      * Get most active users by number of reviews
      */
+    @Transactional(readOnly = true)
     fun getMostActiveUsers(limit: Int): List<UserEntity> {
         val thirtyDaysAgo = LocalDateTime.now().minusDays(30)
 
@@ -127,7 +144,8 @@ class UserService(
         val userStats = allUsers.map { user ->
             // Count reviews for each user
             val reviewCount = reviewLogRepository.countByUserIdAndReviewTimestampAfter(
-                user.userId!!, thirtyDaysAgo
+                requireNotNull(user.userId) { "User ID missing" },
+                thirtyDaysAgo,
             )
 
             Pair(user, reviewCount)
@@ -144,6 +162,7 @@ class UserService(
     /**
      * Get count of users by current level
      */
+    @Transactional(readOnly = true)
     fun getUserCountByCurrentLevel(): Map<out Any, Int> {
         val allUsers = userRepository.findAll()
 
@@ -156,6 +175,7 @@ class UserService(
     /**
      * Get count of users by JLPT goal
      */
+    @Transactional(readOnly = true)
     fun getUserCountByJlptGoal(): Map<out Any, Int> {
         val allUsers = userRepository.findAll()
 
@@ -211,7 +231,7 @@ class UserService(
                         logger.info("Last review was today but streak is 0 - setting streak to 1")
                         user.copy(
                             streakCount = 1,
-                            updatedAt = now
+                            updatedAt = Instant.now(),
                         )
                     } else {
                         logger.info("Last review was today - not changing streak")
@@ -223,15 +243,15 @@ class UserService(
                     logger.info("Last review was yesterday - incrementing streak from ${user.streakCount} to ${user.streakCount + 1}")
                     user.copy(
                         streakCount = user.streakCount + 1,
-                        updatedAt = now
+                        updatedAt = Instant.now(),
                     )
                 }
                 // If the user missed a day or more, reset streak to 1
                 else -> {
-                    logger.info("Last review was before yesterday (${previousReviewDate}) - resetting streak to 1")
+                    logger.info("Last review was before yesterday ($previousReviewDate) - resetting streak to 1")
                     user.copy(
                         streakCount = 1,
-                        updatedAt = now
+                        updatedAt = Instant.now(),
                     )
                 }
             }
@@ -240,7 +260,7 @@ class UserService(
             logger.info("First time user is reviewing - setting streak to 1")
             user.copy(
                 streakCount = 1,
-                updatedAt = now
+                updatedAt = Instant.now(),
             )
         }
 
@@ -257,7 +277,9 @@ class UserService(
     /**
      * Get all users with pagination
      */
-    fun getAllUsers(pageable: org.springframework.data.domain.Pageable, search: String? = null): org.springframework.data.domain.Page<UserEntity> {
+    @Transactional(readOnly = true)
+    @Suppress("LongMethod", "CyclomaticComplexMethod")
+    fun getAllUsers(pageable: Pageable, search: String? = null): Page<UserEntity> {
         // Since lastActive is not a field in UserEntity, we need special handling
         val sortBy = pageable.sort.map { order -> order.property }.firstOrNull() ?: "lastActive"
 
@@ -269,7 +291,7 @@ class UserService(
             val searchTerm = search.lowercase()
             userRepository.findAll().filter { user ->
                 user.fullName.lowercase().contains(searchTerm) ||
-                        user.email.lowercase().contains(searchTerm)
+                    user.email.lowercase().contains(searchTerm)
             }
         }
 
@@ -277,14 +299,17 @@ class UserService(
         if (sortBy == "lastActive") {
             // Get review dates for all users
             val userLastActiveDates = allUsers.associate { user ->
-                val lastReview = reviewLogRepository.findTopByUserIdOrderByReviewTimestampDesc(user.userId!!)
-                val lastActive = lastReview?.reviewTimestamp ?: user.updatedAt ?: user.lastLogin ?: user.createdAt
+                val uid = requireNotNull(user.userId) { "User ID missing" }
+                val lastReview = reviewLogRepository.findTopByUserIdOrderByReviewTimestampDesc(uid)
+                val lastActive: Instant = lastReview?.reviewTimestamp
+                    ?.atZone(ZoneOffset.UTC)?.toInstant()
+                    ?: user.updatedAt
                 user to lastActive
             }
 
             // Sort based on the lastActive dates
-            val direction = pageable.sort.getOrderFor(sortBy)?.direction ?: org.springframework.data.domain.Sort.Direction.DESC
-            val sortedUsers = if (direction == org.springframework.data.domain.Sort.Direction.ASC) {
+            val direction = pageable.sort.getOrderFor(sortBy)?.direction ?: Sort.Direction.DESC
+            val sortedUsers = if (direction == Sort.Direction.ASC) {
                 allUsers.sortedBy { userLastActiveDates[it] }
             } else {
                 allUsers.sortedByDescending { userLastActiveDates[it] }
@@ -296,28 +321,28 @@ class UserService(
             val pagedContent = if (start < sortedUsers.size) sortedUsers.subList(start, end) else emptyList()
 
             // Create a custom Page implementation
-            return org.springframework.data.domain.PageImpl(
+            return PageImpl(
                 pagedContent,
                 pageable,
-                sortedUsers.size.toLong()
+                sortedUsers.size.toLong(),
             )
         } else if (!search.isNullOrBlank()) {
             // If we have a search term but not sorting by lastActive, we still need to do in-memory pagination
             // Sort users based on the standard field
-            val direction = pageable.sort.getOrderFor(sortBy)?.direction ?: org.springframework.data.domain.Sort.Direction.ASC
+            val direction = pageable.sort.getOrderFor(sortBy)?.direction ?: Sort.Direction.ASC
 
             val sortedUsers = when (sortBy) {
-                "userName", "fullName" -> if (direction == org.springframework.data.domain.Sort.Direction.ASC) {
+                "userName", "fullName" -> if (direction == Sort.Direction.ASC) {
                     allUsers.sortedBy { it.fullName }
                 } else {
                     allUsers.sortedByDescending { it.fullName }
                 }
-                "email" -> if (direction == org.springframework.data.domain.Sort.Direction.ASC) {
+                "email" -> if (direction == Sort.Direction.ASC) {
                     allUsers.sortedBy { it.email }
                 } else {
                     allUsers.sortedByDescending { it.email }
                 }
-                "userId" -> if (direction == org.springframework.data.domain.Sort.Direction.ASC) {
+                "userId" -> if (direction == Sort.Direction.ASC) {
                     allUsers.sortedBy { it.userId }
                 } else {
                     allUsers.sortedByDescending { it.userId }
@@ -331,14 +356,14 @@ class UserService(
             val pagedContent = if (start < sortedUsers.size) sortedUsers.subList(start, end) else emptyList()
 
             // Create a custom Page implementation
-            return org.springframework.data.domain.PageImpl(
+            return PageImpl(
                 pagedContent,
                 pageable,
-                sortedUsers.size.toLong()
+                sortedUsers.size.toLong(),
             )
         }
 
         // For standard fields with no search, use repository's built-in pagination
         return userRepository.findAll(pageable)
     }
-} 
+}

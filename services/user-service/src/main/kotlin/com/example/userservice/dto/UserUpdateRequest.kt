@@ -46,5 +46,5 @@ data class UserUpdateRequest(
     val notificationPreferences: String? = null,
 
     @JsonProperty("minCardThreshold")
-    val minCardThreshold: Int? = null
-) 
+    val minCardThreshold: Int? = null,
+)

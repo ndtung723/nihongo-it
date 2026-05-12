@@ -14,13 +14,13 @@ import java.util.UUID
 data class FlashcardDTO(
     @JsonProperty("id")
     val id: UUID? = null,
-    
+
     @JsonProperty("frontText")
-    val frontText: String ?= null,
-    
+    val frontText: String? = null,
+
     @JsonProperty("backText")
-    val backText: String ?= null,
-    
+    val backText: String? = null,
+
     @JsonProperty("vocabularyId")
     val vocabularyId: UUID? = null,
 
@@ -29,22 +29,22 @@ data class FlashcardDTO(
     @JsonSerialize(using = LocalDateTimeSerializer::class)
     @JsonProperty("due")
     val due: LocalDateTime? = null,
-    
+
     @JsonProperty("reps")
     val reps: Int? = null,
-    
+
     @JsonProperty("lapses")
     val lapses: Int? = null,
-    
+
     @JsonProperty("state")
     val state: String? = null,
-    
+
     @JsonProperty("difficulty")
     val difficulty: Double? = null,
-    
+
     @JsonProperty("stability")
     val stability: Double? = null,
-    
+
     @JsonProperty("interval")
     val interval: Double? = null,
 
@@ -58,5 +58,5 @@ data class FlashcardDTO(
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
     @JsonSerialize(using = LocalDateTimeSerializer::class)
     @JsonProperty("updatedAt")
-    val updatedAt: LocalDateTime? = null
+    val updatedAt: LocalDateTime? = null,
 )

@@ -12,6 +12,7 @@ postgres-data/
 **/postgres-data/
 *.sql
 !ddl/*.sql
+!**/db/migration/*.sql
 db-backups/*.sql
 !db-backups/drop_all_tables.sql
 
@@ -341,4 +342,4 @@ deployment-history/
 setup-env.sh
 local-config.properties
 
-ai-service/src/main/resources/conversation/
+services/*/detekt-baseline.xml

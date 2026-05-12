@@ -1,11 +1,17 @@
 <template>
   <div class="lesson-detail-container">
-
     <!-- Coach Header -->
     <div class="header px-4 py-3 d-flex justify-space-between align-center">
       <div class="d-flex align-center">
-        <img src="https://via.placeholder.com/40/1abc9c/ffffff?text=TC" alt="The Coach" class="coach-logo mr-2" />
-        <div class="text-h6 font-weight-bold text-dark">the<span class="primary--text">coach</span></div>
+        <img
+          src="https://via.placeholder.com/40/1abc9c/ffffff?text=TC"
+          alt="The Coach"
+          class="coach-logo mr-2"
+          loading="lazy"
+        />
+        <div class="text-h6 font-weight-bold text-dark">
+          the<span class="primary--text">coach</span>
+        </div>
       </div>
       <div class="d-flex align-center">
         <v-btn
@@ -37,8 +43,13 @@
           cover
           class="position-relative"
         >
-          <div class="course-overlay d-flex flex-column justify-center align-center">
-            <div class="level-badge position-absolute" style="top: 12px; left: 12px;">
+          <div
+            class="course-overlay d-flex flex-column justify-center align-center"
+          >
+            <div
+              class="level-badge position-absolute"
+              style="top: 12px; left: 12px"
+            >
               <div class="text-uppercase font-weight-medium">DỄ</div>
             </div>
             <div class="text-h5 font-weight-bold text-white text-center pb-4">
@@ -63,22 +74,40 @@
     <!-- Lessons List -->
     <div class="lessons-list px-4">
       <!-- Lesson 1 -->
-      <v-card class="lesson-item mb-4" variant="outlined" rounded="lg" elevation="0" @click="openLesson('1')">
+      <v-card
+        class="lesson-item mb-4"
+        variant="outlined"
+        rounded="lg"
+        elevation="0"
+        @click="openLesson('1')"
+      >
         <div class="d-flex pa-4">
           <v-avatar color="#f8ecde" size="60" class="lesson-avatar mr-4">
-            <img src="https://via.placeholder.com/60/ff9955/ffffff?text=A" alt="Avatar" />
+            <img
+              src="https://via.placeholder.com/60/ff9955/ffffff?text=A"
+              alt="Avatar"
+              loading="lazy"
+            />
           </v-avatar>
           <div class="flex-grow-1">
             <div class="d-flex">
               <div class="text-subtitle-2 text-grey">01 | HỌC CỤM CHUNKING</div>
             </div>
-            <div class="text-h6 font-weight-bold mt-1">Which company do you work at?</div>
+            <div class="text-h6 font-weight-bold mt-1">
+              Which company do you work at?
+            </div>
           </div>
         </div>
       </v-card>
 
       <!-- Lesson 2 -->
-      <v-card class="lesson-item mb-4" variant="outlined" rounded="lg" elevation="0" @click="openLesson('2')">
+      <v-card
+        class="lesson-item mb-4"
+        variant="outlined"
+        rounded="lg"
+        elevation="0"
+        @click="openLesson('2')"
+      >
         <div class="d-flex pa-4">
           <v-avatar color="#e3f2fd" size="60" class="lesson-avatar mr-4">
             <v-icon color="primary" size="24">mdi-video</v-icon>
@@ -87,83 +116,105 @@
             <div class="d-flex">
               <div class="text-subtitle-2 text-grey">02 | VIDEO HƯỚNG DẪN</div>
             </div>
-            <div class="text-h6 font-weight-bold mt-1">Tại sao bạn hiểu nhưng không nói được</div>
+            <div class="text-h6 font-weight-bold mt-1">
+              Tại sao bạn hiểu nhưng không nói được
+            </div>
           </div>
         </div>
       </v-card>
 
       <!-- Lesson 3 -->
-      <v-card class="lesson-item mb-4" variant="outlined" rounded="lg" elevation="0" @click="openLesson('3')">
+      <v-card
+        class="lesson-item mb-4"
+        variant="outlined"
+        rounded="lg"
+        elevation="0"
+        @click="openLesson('3')"
+      >
         <div class="d-flex pa-4">
           <v-avatar color="#f8ecde" size="60" class="lesson-avatar mr-4">
-            <img src="https://via.placeholder.com/60/ff9955/ffffff?text=A" alt="Avatar" />
+            <img
+              src="https://via.placeholder.com/60/ff9955/ffffff?text=A"
+              alt="Avatar"
+              loading="lazy"
+            />
           </v-avatar>
           <div class="flex-grow-1">
             <div class="d-flex">
               <div class="text-subtitle-2 text-grey">03 | HỌC CỤM CHUNKING</div>
             </div>
-            <div class="text-h6 font-weight-bold mt-1">How long have you been working there?</div>
+            <div class="text-h6 font-weight-bold mt-1">
+              How long have you been working there?
+            </div>
           </div>
         </div>
       </v-card>
 
       <!-- Lesson 4 -->
-      <v-card class="lesson-item mb-4" variant="outlined" rounded="lg" elevation="0" @click="openLesson('4')">
+      <v-card
+        class="lesson-item mb-4"
+        variant="outlined"
+        rounded="lg"
+        elevation="0"
+        @click="openLesson('4')"
+      >
         <div class="d-flex pa-4">
           <v-avatar color="#f8ecde" size="60" class="lesson-avatar mr-4">
-            <img src="https://via.placeholder.com/60/ff9955/ffffff?text=A" alt="Avatar" />
+            <img
+              src="https://via.placeholder.com/60/ff9955/ffffff?text=A"
+              alt="Avatar"
+              loading="lazy"
+            />
           </v-avatar>
           <div class="flex-grow-1">
             <div class="d-flex">
               <div class="text-subtitle-2 text-grey">04 | HỌC CỤM CHUNKING</div>
             </div>
-            <div class="text-h6 font-weight-bold mt-1">What do you like about our company?</div>
+            <div class="text-h6 font-weight-bold mt-1">
+              What do you like about our company?
+            </div>
           </div>
         </div>
       </v-card>
     </div>
-
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, onMounted } from "vue";
 
-const router = useRouter()
-const route = useRoute()
-const currentTime = ref('21:21')
-const dataRate = ref('0.16 KB/s')
+const currentTime = ref("21:21");
+const dataRate = ref("0.16 KB/s");
 
 // Methods
 function updateTime() {
-  const date = new Date()
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  currentTime.value = `${hours}:${minutes}`
+  const date = new Date();
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  currentTime.value = `${hours}:${minutes}`;
 }
 
 function updateDataRate() {
-  const rates = ['0.16 KB/s', '2.36 KB/s', '23.0 KB/s']
-  dataRate.value = rates[Math.floor(Math.random() * rates.length)]
+  const rates = ["0.16 KB/s", "2.36 KB/s", "23.0 KB/s"];
+  dataRate.value = rates[Math.floor(Math.random() * rates.length)];
 }
 
-function openLesson(lessonId: string) {
-  // For demonstration, we'll just log the lesson ID
-  // router.push(`/learning/lesson/${courseId}/${lessonId}`)
+function openLesson(_lessonId: string) {
+  // For demonstration, navigation is disabled
+  // router.push(`/learning/lesson/${courseId}/${_lessonId}`)
 }
 
 // Lifecycle hooks
 onMounted(() => {
-  updateTime()
-  updateDataRate()
+  updateTime();
+  updateDataRate();
 
   // Update time every minute
-  setInterval(updateTime, 60000)
+  setInterval(updateTime, 60000);
 
   // Update data rate occasionally (for demonstration only)
-  setInterval(updateDataRate, 10000)
-})
+  setInterval(updateDataRate, 10000);
+});
 </script>
 
 <style scoped lang="scss">
@@ -213,7 +264,11 @@ onMounted(() => {
 }
 
 .course-overlay {
-  background: linear-gradient(0deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 100%);
+  background: linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.7) 0%,
+    rgba(0, 0, 0, 0.3) 100%
+  );
   position: absolute;
   top: 0;
   left: 0;
@@ -231,7 +286,9 @@ onMounted(() => {
 }
 
 .lesson-item {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
   cursor: pointer;
 
   &:hover {

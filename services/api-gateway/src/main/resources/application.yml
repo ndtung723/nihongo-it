@@ -4,6 +4,9 @@ server:
 spring:
   application:
     name: api-gateway
+  threads:
+    virtual:
+      enabled: true
   cloud:
     gateway:
       discovery:
@@ -68,7 +71,7 @@ management:
       percentiles-histogram:
         http.server.requests: true
     health:
-      show-details: always
+      show-details: when-authorized
 
 springdoc:
   swagger-ui:
@@ -79,6 +82,7 @@ springdoc:
 
 jwt:
   secret: ${JWT_SECRET}
+  secret-previous: ${JWT_SECRET_PREVIOUS:}  # set during key rotation; empty = disabled
 
 app:
   cors:

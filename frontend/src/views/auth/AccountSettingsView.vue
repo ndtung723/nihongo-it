@@ -9,7 +9,11 @@
 
     <div class="settings-options">
       <!-- Update Profile -->
-      <v-card variant="outlined" class="setting-card mb-3" @click="navigateTo('/account/profile')">
+      <v-card
+        variant="outlined"
+        class="setting-card mb-3"
+        @click="navigateTo('/account/profile')"
+      >
         <div class="d-flex align-center pa-4">
           <v-avatar color="primary" class="setting-icon">
             <v-icon color="white">mdi-account</v-icon>
@@ -21,7 +25,11 @@
       </v-card>
 
       <!-- Change Password -->
-      <v-card variant="outlined" class="setting-card mb-3" @click="navigateTo('/account/change-password')">
+      <v-card
+        variant="outlined"
+        class="setting-card mb-3"
+        @click="navigateTo('/account/change-password')"
+      >
         <div class="d-flex align-center pa-4">
           <v-avatar color="primary" class="setting-icon">
             <v-icon color="white">mdi-key</v-icon>
@@ -32,9 +40,12 @@
         </div>
       </v-card>
 
-
       <!-- Feedback -->
-      <v-card variant="outlined" class="setting-card mb-3" @click="navigateTo('/feedback')">
+      <v-card
+        variant="outlined"
+        class="setting-card mb-3"
+        @click="navigateTo('/feedback')"
+      >
         <div class="d-flex align-center pa-4">
           <v-avatar color="primary" class="setting-icon">
             <v-icon color="white">mdi-message-text</v-icon>
@@ -46,7 +57,11 @@
       </v-card>
 
       <!-- Notifications -->
-      <v-card variant="outlined" class="setting-card mb-3" @click="navigateTo('/account/notifications')">
+      <v-card
+        variant="outlined"
+        class="setting-card mb-3"
+        @click="navigateTo('/account/notifications')"
+      >
         <div class="d-flex align-center pa-4">
           <v-avatar color="primary" class="setting-icon">
             <v-icon color="white">mdi-bell</v-icon>
@@ -55,7 +70,6 @@
           <v-spacer></v-spacer>
         </div>
       </v-card>
-
     </div>
 
     <!-- App Version -->
@@ -73,34 +87,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores'
-import { useToast } from 'vue-toast-notification'
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores";
+import { useAppToast } from "@/composables/useAppToast";
 
-const router = useRouter()
-const authStore = useAuthStore()
-const toast = useToast()
-const notificationsEnabled = ref(true)
-const appVersion = ref('1.0.0')
+const router = useRouter();
+const authStore = useAuthStore();
+const toast = useAppToast();
+const appVersion = ref("1.0.0");
 
 function navigateTo(path: string) {
-  router.push(path)
+  router.push(path);
 }
 
 async function logout() {
   try {
-    await authStore.logout()
-    toast.success('Đã đăng xuất thành công', {
-      position: 'top',
-      duration: 2000
-    })
-    router.push({ name: 'login' })
-  } catch (error) {
-    toast.error('Có lỗi xảy ra khi đăng xuất', {
-      position: 'top',
-      duration: 3000
-    })
+    await authStore.logout();
+    toast.success("Đã đăng xuất thành công");
+    router.push({ name: "login" });
+  } catch {
+    toast.error("Có lỗi xảy ra khi đăng xuất");
   }
 }
 </script>

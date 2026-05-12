@@ -1,0 +1,48 @@
+version: 2
+
+updates:
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels: ["dependencies", "ci"]
+
+  # Frontend (npm)
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+    groups:
+      security-updates:
+        applies-to: security-updates
+        patterns: ["*"]
+      vue-ecosystem:
+        patterns: ["vue*", "@vue*", "vite*", "vitest*", "vuetify*"]
+    labels: ["dependencies", "frontend"]
+
+  # Python
+  - package-ecosystem: "pip"
+    directory: "/python"
+    schedule:
+      interval: "weekly"
+    labels: ["dependencies", "python"]
+
+  # Docker base images
+  - package-ecosystem: "docker"
+    directory: "/services/user-service"
+    schedule:
+      interval: "monthly"
+    labels: ["dependencies", "docker"]
+
+  - package-ecosystem: "docker"
+    directory: "/services/learning-service"
+    schedule:
+      interval: "monthly"
+    labels: ["dependencies", "docker"]
+
+  - package-ecosystem: "docker"
+    directory: "/services/api-gateway"
+    schedule:
+      interval: "monthly"
+    labels: ["dependencies", "docker"]

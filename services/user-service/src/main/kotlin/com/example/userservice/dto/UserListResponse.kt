@@ -13,5 +13,5 @@ data class UserListResponse(
     val totalPages: Int,
 
     @JsonProperty("currentPage")
-    val currentPage: Int
+    val currentPage: Int,
 )

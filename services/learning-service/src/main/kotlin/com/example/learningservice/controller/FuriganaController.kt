@@ -1,4 +1,4 @@
-package com.example.learningservice.controller
+﻿package com.example.learningservice.controller
 
 import com.atilika.kuromoji.ipadic.Tokenizer
 import io.swagger.v3.oas.annotations.Operation
@@ -16,63 +16,63 @@ import org.springframework.web.bind.annotation.*
 class FuriganaController {
 
     private val tokenizer = Tokenizer()
-    
+
     // Cache for frequently accessed readings
     private val readingCache = mutableMapOf<String, String?>()
-    
+
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(
         summary = "Generate furigana",
-        description = "Analyzes Japanese text and returns tokens with kanji and furigana readings"
+        description = "Analyzes Japanese text and returns tokens with kanji and furigana readings",
     )
     @ApiResponses(
         value = [
             ApiResponse(
                 responseCode = "200",
                 description = "Successfully generated furigana",
-                content = [Content(mediaType = "application/json")]
-            )
-        ]
+                content = [Content(mediaType = "application/json")],
+            ),
+        ],
     )
     fun generateFurigana(
         @Parameter(description = "Japanese text to analyze", required = true)
-        @RequestParam text: String
+        @RequestParam text: String,
     ): List<FuriganaToken> {
         return analyzeSentence(text)
     }
-    
+
     private fun analyzeSentence(sentence: String): List<FuriganaToken> {
         val tokens = tokenizer.tokenize(sentence)
         return tokens.map { token ->
             val surface = token.surface // Original text (kanji or not)
             val reading = getReading(token)
             val isKanji = surface.any { it.isKanji() }
-            
+
             FuriganaToken(
                 text = surface,
                 reading = if (isKanji && reading != null && reading != surface) reading else null,
-                isKanji = isKanji
+                isKanji = isKanji,
             )
         }
     }
-    
+
     private fun getReading(token: com.atilika.kuromoji.ipadic.Token): String? {
         val surface = token.surface
-        
+
         // Check cache first
         if (readingCache.containsKey(surface)) {
             return readingCache[surface]
         }
-        
+
         // Get reading from token and convert to hiragana
         val reading = token.reading?.let { katakanaToHiragana(it) }
-        
+
         // Cache the result
         readingCache[surface] = reading
-        
+
         return reading
     }
-    
+
     // Convert katakana to hiragana
     private fun katakanaToHiragana(katakana: String): String {
         return katakana.map { char ->
@@ -83,7 +83,7 @@ class FuriganaController {
             }
         }.joinToString("")
     }
-    
+
     // Check if character is kanji
     private fun Char.isKanji(): Boolean = this in '\u4E00'..'\u9FFF'
 }
@@ -91,5 +91,5 @@ class FuriganaController {
 data class FuriganaToken(
     val text: String,
     val reading: String?,
-    val isKanji: Boolean
-) 
+    val isKanji: Boolean,
+)

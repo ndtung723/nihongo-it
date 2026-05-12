@@ -5,10 +5,11 @@ import java.time.LocalDateTime
 import java.util.*
 
 @Entity
-@Table(name = "vocabulary", 
+@Table(
+    name = "vocabulary",
     uniqueConstraints = [
-        UniqueConstraint(columnNames = ["term"], name = "uk_vocabulary_term")
-    ]
+        UniqueConstraint(columnNames = ["term"], name = "uk_vocabulary_term"),
+    ],
 )
 data class VocabularyEntity(
     @Id

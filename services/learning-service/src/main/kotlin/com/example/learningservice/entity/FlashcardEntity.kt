@@ -1,6 +1,7 @@
 package com.example.learningservice.entity
 
 import jakarta.persistence.*
+import java.time.Instant
 import java.time.LocalDateTime
 import java.util.*
 
@@ -23,7 +24,7 @@ data class FlashcardEntity(
     @Column(name = "front_text", columnDefinition = "text")
     var frontText: String,
 
-    @Column(name = "back_text",  columnDefinition = "text")
+    @Column(name = "back_text", columnDefinition = "text")
     var backText: String,
 
     // FSRS algorithm fields
@@ -57,9 +58,9 @@ data class FlashcardEntity(
     @OneToMany(mappedBy = "flashcard", cascade = [CascadeType.ALL], orphanRemoval = true)
     var reviewLogs: MutableList<ReviewLogEntity> = mutableListOf(),
 
-    @Column(name = "created_at")
-    val createdAt: LocalDateTime = LocalDateTime.now(),
+    @Column(name = "created_at", columnDefinition = "TIMESTAMP")
+    val createdAt: Instant = Instant.now(),
 
-    @Column(name = "updated_at")
-    var updatedAt: LocalDateTime = LocalDateTime.now()
+    @Column(name = "updated_at", columnDefinition = "TIMESTAMP")
+    var updatedAt: Instant = Instant.now(),
 )

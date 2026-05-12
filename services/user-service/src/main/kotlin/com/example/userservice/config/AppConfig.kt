@@ -17,9 +17,9 @@ class AppConfig {
             .registerModule(KotlinModule.Builder().build())
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     }
-    
+
     @Bean
     fun restTemplate(): RestTemplate {
         return RestTemplate()
     }
-} 
+}

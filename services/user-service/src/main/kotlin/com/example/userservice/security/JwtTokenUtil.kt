@@ -23,11 +23,18 @@ class JwtTokenUtil {
     @Value("\${jwt.secret}")
     private lateinit var secret: String
 
+    @Value("\${jwt.secret-previous:}")
+    private var previousSecret: String = ""
+
     @Value("\${jwt.expiration}")
     private val jwtExpiration: Long = 2592000000 // 24 hours by default
 
     private val secretKey: SecretKey by lazy {
         Keys.hmacShaKeyFor(secret.toByteArray())
+    }
+
+    private val previousSecretKey: SecretKey? by lazy {
+        if (previousSecret.isNotBlank()) Keys.hmacShaKeyFor(previousSecret.toByteArray()) else null
     }
 
     private val logger = LoggerFactory.getLogger(JwtTokenUtil::class.java)
@@ -36,13 +43,13 @@ class JwtTokenUtil {
 
     fun generateToken(user: UserEntity): String {
         val claims: Map<String, Any> = mapOf(
-            "userId" to (user.userId?.toString() ?: ""),
-            "role" to (user.role?.roleId ?: 2), // Default to ROLE_USER
+            "userId" to user.userId?.toString().orEmpty(),
+            "role" to user.role.roleId,
             "email" to user.email,
-            "fullName" to (user.fullName ?: ""),
-            "profilePicture" to (user.profilePicture ?: ""),
-            "currentLevel" to (user.currentLevel?.name ?: ""),
-            "jlptGoal" to (user.jlptGoal?.name ?: ""),
+            "fullName" to user.fullName,
+            "profilePicture" to user.profilePicture.orEmpty(),
+            "currentLevel" to user.currentLevel?.name.orEmpty(),
+            "jlptGoal" to user.jlptGoal?.name.orEmpty(),
             "lastLogin" to (user.lastLogin?.format(dateTimeFormatter) ?: LocalDateTime.now().format(dateTimeFormatter)),
         )
         return createToken(claims, user.email)
@@ -84,11 +91,12 @@ class JwtTokenUtil {
     }
 
     private fun extractAllClaims(token: String): Claims {
-        return Jwts.parserBuilder()
-            .setSigningKey(secretKey)
-            .build()
-            .parseClaimsJws(token)
-            .body
+        return try {
+            Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token).body
+        } catch (e: Exception) {
+            val prevKey = previousSecretKey ?: throw e
+            Jwts.parserBuilder().setSigningKey(prevKey).build().parseClaimsJws(token).body
+        }
     }
 
     private fun isTokenExpired(token: String): Boolean {

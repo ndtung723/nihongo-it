@@ -1,21 +1,24 @@
 package com.example.aiservice.controller
 
 import com.example.aiservice.service.ChatService
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.springframework.ai.chat.client.ChatClient
 import org.springframework.ai.converter.ListOutputConverter
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.core.convert.support.DefaultConversionService
+import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.bind.annotation.RequestBody
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import reactor.core.publisher.Flux
 
 @RestController
 @RequestMapping("/api/v1/ai/chat")
+@Suppress("TooManyFunctions")
 class ChatController(
     private val chatService: ChatService,
     private val chatClient: ChatClient,
@@ -37,13 +40,14 @@ class ChatController(
      * This endpoint requires authentication
      */
     @PostMapping("/translate")
+    @Suppress("SwallowedException")
     fun translate(
         @RequestBody text: String,
-        @RequestParam direction: String // "vn-to-jp" or "jp-to-vn"
+        @RequestParam direction: String, // "vn-to-jp" or "jp-to-vn"
     ): TranslationResponse {
         val sourceLang = if (direction == "vn-to-jp") "Vietnamese" else "Japanese"
         val targetLang = if (direction == "vn-to-jp") "Japanese" else "Vietnamese"
-        
+
         val prompt = """
             Act as a professional translator from $sourceLang to $targetLang.
             Translate the following text accurately and naturally:
@@ -56,15 +60,15 @@ class ChatController(
             Return the response as JSON in this format:
             {"translation":"<translated text here>"}
         """.trimIndent()
-        
+
         val response = chatService.getResponseOptions(prompt)
-        
+
         // Clean the response by removing markdown code blocks
         val cleanedResponse = response
             .replace("```json", "")
             .replace("```", "")
             .trim()
-        
+
         return try {
             // Parse the JSON response
             objectMapper.readValue(cleanedResponse, TranslationResponse::class.java)
@@ -73,19 +77,20 @@ class ChatController(
             TranslationResponse(cleanedResponse)
         }
     }
-    
+
     /**
      * Economy translation endpoint using GPT-3.5 Turbo for lower cost translations
      * This endpoint requires authentication
      */
     @PostMapping("/translate/economy")
+    @Suppress("SwallowedException")
     fun translateEconomy(
         @RequestBody text: String,
-        @RequestParam direction: String // "vn-to-jp" or "jp-to-vn"
+        @RequestParam direction: String, // "vn-to-jp" or "jp-to-vn"
     ): TranslationResponse {
         val sourceLang = if (direction == "vn-to-jp") "Vietnamese" else "Japanese"
         val targetLang = if (direction == "vn-to-jp") "Japanese" else "Vietnamese"
-        
+
         val prompt = """
             Act as a professional translator from $sourceLang to $targetLang.
             Translate the following text accurately and naturally:
@@ -98,15 +103,15 @@ class ChatController(
             Return the response as JSON in this format:
             {"translation":"<translated text here>"}
         """.trimIndent()
-        
+
         val response = chatService.getEconomyResponse(prompt)
-        
+
         // Clean the response by removing markdown code blocks
         val cleanedResponse = response
             .replace("```json", "")
             .replace("```", "")
             .trim()
-        
+
         return try {
             // Parse the JSON response
             objectMapper.readValue(cleanedResponse, TranslationResponse::class.java)
@@ -117,6 +122,7 @@ class ChatController(
     }
 
     @PostMapping("/vocabulary/list")
+    @Suppress("MaxLineLength")
     fun getListVocabulary(
         @RequestParam category: String,
         @RequestParam(required = false, defaultValue = "N5") level: String,
@@ -134,12 +140,13 @@ class ChatController(
     }
 
     @PostMapping("/vocabulary/explain")
+    @Suppress("SwallowedException", "UnusedParameter")
     fun explainVocabulary(
         @RequestParam term: String,
         @RequestParam(required = false) pronunciation: String?,
         @RequestParam meaning: String,
         @RequestParam(required = false) topicName: String?,
-        @RequestParam(required = false) example: String?
+        @RequestParam(required = false) example: String?,
     ): String {
         val wordDisplay = if (pronunciation.isNullOrBlank()) term else "$term ($pronunciation)"
         val prompt = """
@@ -151,7 +158,7 @@ class ChatController(
         2. Hai câu ví dụ kèm bản dịch tiếng Việt
         Định dạng theo kiểu JSON như ví dụ này:
         {"explanation":"Unit testing là việc kiểm tra các thành phần hoặc module riêng lẻ của phần mềm một cách độc lập để xác minh chúng hoạt động chính xác.","examples":[{"japanese":"単体テストを行うことで、バグを早期に発見できます。","vietnamese":"Bằng cách thực hiện kiểm thử đơn vị, có thể phát hiện lỗi sớm."},{"japanese":"プログラムの各モジュールに対して単体テストを作成しました。","vietnamese":"Tôi đã tạo các bài kiểm tra đơn vị cho mỗi module của chương trình."}]}
-    """.trimIndent()
+        """.trimIndent()
         val response = chatService.getResponseOptions(prompt)
         // Clean the response by removing markdown code blocks
         val cleanedResponse = response
@@ -170,12 +177,12 @@ class ChatController(
             "explanation": "Không thể phân tích cú pháp phản hồi AI. Phản hồi gốc là: ${
                 cleanedResponse.replace(
                     "\"",
-                    "\\\""
+                    "\\\"",
                 ).replace("\n", "\\n")
             }",
             "examples": []
         }
-        """.trimIndent()
+            """.trimIndent()
         }
     }
 
@@ -183,16 +190,17 @@ class ChatController(
      * Respond to user messages about vocabulary
      */
     @PostMapping("/vocabulary/chat")
+    @Suppress("SwallowedException")
     fun vocabularyChat(
         @RequestParam vocabWord: String,
-        @RequestParam userMessage: String
+        @RequestParam userMessage: String,
     ): String {
         val prompt = """
         Hãy đóng vai trò như một giáo viên tiếng Nhật cho học sinh Việt Nam liên quan đến từ vựng "$vocabWord". Học sinh đã hỏi về từ "$vocabWord".:
         "$userMessage"
         Vui lòng cung cấp một phản hồi hữu ích, giới hạn tối đa 150 từ bằng tiếng Việt với các ví dụ theo định dạng JSON như sau:
         {"message":"Động từ 思う (omou) có nghĩa là 'nghĩ' trong tiếng Việt."}
-    """.trimIndent()
+        """.trimIndent()
         val response = chatService.getResponseOptions(prompt)
         // Clean the response by removing markdown code blocks
         val cleanedResponse = response
@@ -209,6 +217,12 @@ class ChatController(
             """{"message": "${cleanedResponse.replace("\"", "\\\"").replace("\n", "\\n")}"}"""
         }
     }
+
+    @GetMapping("/vocabulary/chat/stream", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
+    fun vocabularyChatStream(
+        @RequestParam vocabWord: String,
+        @RequestParam userMessage: String,
+    ): Flux<String> = chatService.streamVocabularyChatResponse(vocabWord, userMessage)
 
     // using ListOutputConverter
     @PostMapping("/list-output")
@@ -261,12 +275,12 @@ data class VocabularyInfo(
     val word: String,
     val reading: String,
     val meaning: String,
-    val example: String
+    val example: String,
 )
 
 /**
  * Data class for translation response
  */
 data class TranslationResponse(
-    val translation: String
+    val translation: String,
 )

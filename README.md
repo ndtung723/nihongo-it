@@ -1,5 +1,9 @@
 # Nihongo IT - Microservice Architecture
 
+![Backend Tests](https://img.shields.io/badge/backend%20tests-passing-brightgreen)
+![Frontend Tests](https://img.shields.io/badge/frontend%20tests-vitest-blue)
+![Python Tests](https://img.shields.io/badge/python%20tests-pytest-yellow)
+
 Nền tảng học tiếng Nhật IT xây dựng theo kiến trúc microservice.
 
 ## Architecture Overview

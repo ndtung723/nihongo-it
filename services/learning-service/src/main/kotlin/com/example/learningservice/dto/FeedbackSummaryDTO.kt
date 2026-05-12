@@ -1,4 +1,4 @@
-package com.example.learningservice.dto
+﻿package com.example.learningservice.dto
 
 import java.util.UUID
 
@@ -10,5 +10,5 @@ data class FeedbackSummaryDTO(
     val improvementTips: List<String>,
     val attempts: Int,
     val avgScore: Double,
-    val maxScore: Int
-) 
+    val maxScore: Int,
+)

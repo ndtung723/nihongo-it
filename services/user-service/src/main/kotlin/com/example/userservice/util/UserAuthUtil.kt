@@ -142,7 +142,7 @@ class UserAuthUtil(
             val userId = getIdFromToken(token)
             val email = getEmailFromToken(token)
             val roleId = getRoleIdFromToken(token)
-            val fullName = getFullNameFromToken(token) ?: ""
+            val fullName = getFullNameFromToken(token).orEmpty()
             val profilePicture = getProfilePictureFromToken(token)
             val currentLevel = getCurrentLevelFromToken(token)
             val jlptGoal = getJlptGoalFromToken(token)
@@ -284,9 +284,10 @@ class UserAuthUtil(
     fun isAuthenticated(): Boolean {
         val authentication = SecurityContextHolder.getContext().authentication
         return authentication != null && authentication.isAuthenticated &&
-                authentication.principal != "anonymousUser"
+            authentication.principal != "anonymousUser"
     }
 }
+
 /**
  * CustomUserDetails interface - should match your application's user details implementation
  */

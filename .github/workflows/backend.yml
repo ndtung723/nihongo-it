@@ -1,0 +1,79 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/**'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'services/**'
+      - '.github/workflows/backend.yml'
+
+jobs:
+  build-and-test:
+    name: Build & Test (${{ matrix.service }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - user-service
+          - learning-service
+          - notification-service
+          - ai-service
+          - api-gateway
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('services/**/*.gradle.kts') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission
+        run: chmod +x services/gradlew
+
+      - name: Build common module
+        run: ./gradlew :common:build -x test
+        working-directory: services
+
+      - name: Build service
+        run: ./gradlew :${{ matrix.service }}:build -x test
+        working-directory: services
+
+      - name: Run tests
+        run: ./gradlew :${{ matrix.service }}:test
+        working-directory: services
+
+      - name: Upload JaCoCo report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-${{ matrix.service }}
+          path: services/${{ matrix.service }}/build/reports/jacoco/
+          retention-days: 7
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-${{ matrix.service }}
+          path: services/${{ matrix.service }}/build/reports/tests/
+          retention-days: 7

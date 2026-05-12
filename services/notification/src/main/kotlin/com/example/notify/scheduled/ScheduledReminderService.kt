@@ -5,7 +5,6 @@ import com.example.notify.repository.FlashcardRepository
 import com.example.notify.repository.UserRepository
 import com.example.notify.service.NotificationService
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
@@ -21,14 +20,21 @@ import java.time.temporal.ChronoUnit
 class ScheduledReminderService(
     private val userRepository: UserRepository,
     private val flashcardRepository: FlashcardRepository,
-    private val notificationService: NotificationService
+    private val notificationService: NotificationService,
 ) {
     private val logger = LoggerFactory.getLogger(ScheduledReminderService::class.java)
+
+    companion object {
+        private const val MINUTES_PER_DAY = 24 * 60
+        private const val REMINDER_WINDOW_MINUTES = 15L
+    }
+
     /**
      * Base URL for the frontend application, used for generating action URLs in notifications
      */
     @Value("\${app.frontend.url:http://localhost:5173}")
     private lateinit var baseFrontendUrl: String
+
     /**
      * Scheduled task that runs every 10 seconds to check for users who need flashcard review reminders
      * Note: This is a testing frequency; change to a longer interval for production use
@@ -38,7 +44,7 @@ class ScheduledReminderService(
     fun checkAndSendFlashcardReminders() {
         try {
             logger.info("=== SCHEDULER: Starting flashcard reminder check at ${LocalDateTime.now()} ===")
-            
+
             val now = LocalDateTime.now()
             val currentTime = now.toLocalTime()
 
@@ -53,7 +59,7 @@ class ScheduledReminderService(
 
             // Process each user
             var remindersSent = 0
-            users.forEach { user -> 
+            users.forEach { user ->
                 val result = processUserReminderWithLogging(user, now, currentTime)
                 if (result) remindersSent++
             }
@@ -68,52 +74,54 @@ class ScheduledReminderService(
      * Process reminders for a single user with detailed logging
      * @return true if a notification was sent, false otherwise
      */
+    @Suppress("ReturnCount")
     private fun processUserReminderWithLogging(user: UserEntity, now: LocalDateTime, currentTime: LocalTime): Boolean {
         try {
             logger.debug("SCHEDULER: Processing reminders for user ${user.userId} (${user.email})")
-            
+
             // Check if it's time to send a reminder for this user
             if (!isReminderTime(user.reminderTime, currentTime)) {
                 logger.debug("SCHEDULER: Not reminder time for user ${user.userId}. Current: $currentTime, Reminder: ${user.reminderTime}")
                 return false
             }
-            
+
             logger.debug("SCHEDULER: It's reminder time for user ${user.userId}")
-            
+
             // Get due cards for this user
-            val dueCards = flashcardRepository.findDueCards(user.userId!!, now)
+            val userId = user.userId ?: return false
+            val dueCards = flashcardRepository.findDueCards(userId, now)
             logger.debug("SCHEDULER: User ${user.userId} has ${dueCards.size} due cards")
-            
+
             // Only send reminder if there are due cards
             if (dueCards.isEmpty()) {
                 logger.debug("SCHEDULER: No due cards for user ${user.userId}")
                 return false
             }
-            
+
             // Check for minimum card threshold
             val threshold = user.minCardThreshold ?: 1
             if (dueCards.size < threshold) {
                 logger.debug("SCHEDULER: User ${user.userId} has ${dueCards.size} cards, below threshold of $threshold")
                 return false
             }
-            
+
             // Create action URL for the notification
             val actionUrl = "/flashcards/study"
-            
+
             // Send notification
             logger.info("SCHEDULER: Sending reminder to user ${user.userId} for ${dueCards.size} due cards")
-            
+
             // If email notification is enabled for this user
             if (user.notificationPreferences.contains("email")) {
                 // Get the base URL from environment or config
                 val baseUrl = baseFrontendUrl // or fetch from config
                 val fullActionUrl = "$baseUrl$actionUrl"
-                
+
                 // Send specialized flashcard reminder email
                 notificationService.sendFlashcardReminderEmail(
                     to = user.email,
                     cardCount = dueCards.size,
-                    actionUrl = fullActionUrl
+                    actionUrl = fullActionUrl,
                 )
             }
 
@@ -129,14 +137,13 @@ class ScheduledReminderService(
      */
     private fun isReminderTime(reminderTime: LocalTime?, currentTime: LocalTime): Boolean {
         if (reminderTime == null) return false
-        
+
         // Check if current time is within 15 minutes of the reminder time
         val minuteDifference = ChronoUnit.MINUTES.between(
-            reminderTime, 
-            currentTime
-        ).let { if (it < 0) it + 24 * 60 else it } // Handle wrapping around midnight
+            reminderTime,
+            currentTime,
+        ).let { if (it < 0) it + MINUTES_PER_DAY else it }
 
-//        return minuteDifference < 15
-        return minuteDifference < 15
+        return minuteDifference < REMINDER_WINDOW_MINUTES
     }
-} 
+}

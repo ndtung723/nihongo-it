@@ -1,7 +1,6 @@
-server:
-  port: 8088
-
 spring:
+  config:
+    import: classpath:application-common.yml
   application:
     name: learning-service
   datasource:
@@ -14,70 +13,46 @@ spring:
       connection-timeout: 20000 # 20 seconds
       idle-timeout: 300000 # 5 minutes
       max-lifetime: 1200000 # 20 minutes
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: false
-  flyway:
-    enabled: true
-    baseline-on-migrate: true
-    locations: classpath:db/migration
+      leak-detection-threshold: 60000 # 60 seconds
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=600s
 
-eureka:
-  client:
-    service-url:
-      defaultZone: ${EUREKA_SERVICE_URL:http://localhost:8761/eureka/}
-    fetch-registry: true
-    register-with-eureka: true
-  instance:
-    prefer-ip-address: true
-    instance-id: ${spring.application.name}:${random.uuid}
+server:
+  port: 8088
 
-# Ribbon configuration for load balancing
-ribbon:
-  eureka:
-    enabled: true
-  ConnectTimeout: 5000
-  ReadTimeout: 5000
-  MaxAutoRetries: 1
-  MaxAutoRetriesNextServer: 1
-  OkToRetryOnAllOperations: true
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,prometheus,metrics
-  endpoint:
-    health:
-      show-details: always
-
-springdoc:
-  swagger-ui:
-    path: /swagger-ui.html
-  api-docs:
-    enabled: true
-    path: /v3/api-docs
+app:
+  fsrs:
+    request-retention: 0.9
+    maximum-interval: 36500.0
+    weights:
+      - 0.4
+      - 0.6
+      - 2.4
+      - 5.8
+      - 4.93
+      - 0.94
+      - 0.86
+      - 0.01
+      - 1.49
+      - 0.14
+      - 0.94
+      - 2.18
+      - 0.05
+      - 0.34
+      - 1.26
+      - 0.29
+      - 2.61
 
 # JWT Configuration - Sử dụng cùng secret key với user-service để xác thực token
 jwt:
   secret: ${JWT_SECRET}
   expiration: 7200000 # 2h, sync với user-service
 
-# Cấu hình logging
 logging:
   level:
     root: WARN
     com.example.learningservice: INFO
     org.springframework.web: WARN
     org.springframework.security: WARN
-
-  metrics:
-    tags:
-      application: \${spring.application.name}
-    distribution:
-      percentiles-histogram:
-        http.server.requests: true

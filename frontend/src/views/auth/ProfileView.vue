@@ -22,12 +22,18 @@
                     v-if="user.profilePicture"
                     :src="user.profilePicture"
                     alt="Ảnh đại diện"
+                    lazy-src="/img/default-avatar.png"
+                    cover
                   ></v-img>
-                  <span v-else class="text-h4 white--text">{{ avatarInitials }}</span>
+                  <span v-else class="text-h4 white--text">{{
+                    avatarInitials
+                  }}</span>
                 </v-avatar>
                 <div class="profile-name">
                   <h2 class="text-h5 mb-1">{{ user.fullName }}</h2>
-                  <p class="email text-subtitle-1 text-medium-emphasis">{{ user.email }}</p>
+                  <p class="email text-subtitle-1 text-medium-emphasis">
+                    {{ user.email }}
+                  </p>
                 </div>
               </div>
 
@@ -35,34 +41,37 @@
 
               <v-list>
                 <v-list-item>
-                  <v-list-item-title class="detail-label">Trình Độ Hiện Tại:</v-list-item-title>
-                  <v-list-item-subtitle class="detail-value">{{ user.currentLevel || 'Chưa thiết lập' }}</v-list-item-subtitle>
+                  <v-list-item-title class="detail-label"
+                    >Trình Độ Hiện Tại:</v-list-item-title
+                  >
+                  <v-list-item-subtitle class="detail-value">{{
+                    user.currentLevel || "Chưa thiết lập"
+                  }}</v-list-item-subtitle>
                 </v-list-item>
 
                 <v-list-item>
-                  <v-list-item-title class="detail-label">Mục Tiêu JLPT:</v-list-item-title>
-                  <v-list-item-subtitle class="detail-value">{{ user.jlptGoal || 'Chưa thiết lập' }}</v-list-item-subtitle>
+                  <v-list-item-title class="detail-label"
+                    >Mục Tiêu JLPT:</v-list-item-title
+                  >
+                  <v-list-item-subtitle class="detail-value">{{
+                    user.jlptGoal || "Chưa thiết lập"
+                  }}</v-list-item-subtitle>
                 </v-list-item>
 
                 <v-list-item>
-                  <v-list-item-title class="detail-label">Lần đăng nhập cuối:</v-list-item-title>
-                  <v-list-item-subtitle class="detail-value">{{ formatDate(user.lastLogin) }}</v-list-item-subtitle>
+                  <v-list-item-title class="detail-label"
+                    >Lần đăng nhập cuối:</v-list-item-title
+                  >
+                  <v-list-item-subtitle class="detail-value">{{
+                    formatDate(user.lastLogin)
+                  }}</v-list-item-subtitle>
                 </v-list-item>
               </v-list>
             </template>
 
-            <v-alert
-              v-else
-              type="error"
-              class="my-4"
-            >
+            <v-alert v-else type="error" class="my-4">
               Không thể tải thông tin hồ sơ. Vui lòng thử lại sau.
-              <v-btn
-                color="error"
-                text
-                @click="fetchProfile"
-                class="mt-2"
-              >
+              <v-btn color="error" text @click="fetchProfile" class="mt-2">
                 Thử Lại
               </v-btn>
             </v-alert>
@@ -101,7 +110,10 @@
               v-model="profileForm.fullName"
               label="Họ và tên"
               variant="outlined"
-              :rules="[v => !!v || 'Vui lòng nhập họ tên', v => v.length >= 2 || 'Họ tên phải có ít nhất 2 ký tự']"
+              :rules="[
+                (v) => !!v || 'Vui lòng nhập họ tên',
+                (v) => v.length >= 2 || 'Họ tên phải có ít nhất 2 ký tự',
+              ]"
               required
               class="mb-3"
             ></v-text-field>
@@ -113,8 +125,10 @@
               :items="jlptLevels"
               variant="outlined"
               :rules="[
-                v => !!v || 'Vui lòng chọn trình độ hiện tại',
-                () => isValidJlptProgression() || 'Trình độ hiện tại không thể cao hơn mục tiêu JLPT'
+                (v) => !!v || 'Vui lòng chọn trình độ hiện tại',
+                () =>
+                  isValidJlptProgression() ||
+                  'Trình độ hiện tại không thể cao hơn mục tiêu JLPT',
               ]"
               required
               class="mb-3"
@@ -127,8 +141,10 @@
               :items="jlptLevels"
               variant="outlined"
               :rules="[
-                v => !!v || 'Vui lòng chọn mục tiêu JLPT',
-                () => isValidJlptProgression() || 'Trình độ hiện tại không thể cao hơn mục tiêu JLPT'
+                (v) => !!v || 'Vui lòng chọn mục tiêu JLPT',
+                () =>
+                  isValidJlptProgression() ||
+                  'Trình độ hiện tại không thể cao hơn mục tiêu JLPT',
               ]"
               required
               class="mb-3"
@@ -161,182 +177,171 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores'
-import type { UserInfo } from '@/services/auth.service'
-import { useToast } from 'vue-toast-notification'
-import authService from '@/services/auth.service'
+import { computed, onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores";
+import type { UserInfo } from "@/services/auth.service";
+import { useAppToast } from "@/composables/useAppToast";
+import authService from "@/services/auth.service";
 
-const router = useRouter()
-const authStore = useAuthStore()
-const toast = useToast()
-const form = ref(null)
+const router = useRouter();
+const authStore = useAuthStore();
+const toast = useAppToast();
+const form = ref(null);
 
 const user = computed<UserInfo | null>(() => {
-  return authStore.user
-})
+  return authStore.user;
+});
 
 const loading = computed<boolean>(() => {
-  return authStore.loading
-})
+  return authStore.loading;
+});
 
 const avatarInitials = computed<string>(() => {
-  if (!user.value?.fullName) return ''
+  if (!user.value?.fullName) return "";
 
   return user.value.fullName
-    .split(' ')
-    .map(name => name.charAt(0))
-    .join('')
-    .toUpperCase()
-})
+    .split(" ")
+    .map((name) => name.charAt(0))
+    .join("")
+    .toUpperCase();
+});
 
 // Update profile related
-const showUpdateDialog = ref<boolean>(false)
-const updating = ref<boolean>(false)
-const jlptLevels = ref<string[]>(['N1', 'N2', 'N3', 'N4', 'N5'])
+const showUpdateDialog = ref<boolean>(false);
+const updating = ref<boolean>(false);
+const jlptLevels = ref<string[]>(["N1", "N2", "N3", "N4", "N5"]);
 
 // Add JLPT level comparison function
 const getJlptLevelValue = (level: string): number => {
   // Convert JLPT levels to numeric values for comparison
   // N5(5) < N4(4) < N3(3) < N2(2) < N1(1) - smaller value is higher level
-  const match = level.match(/N(\d)/)
-  return match ? parseInt(match[1]) : 5
-}
+  const match = level.match(/N(\d)/);
+  return match ? parseInt(match[1]) : 5;
+};
 
 // Check if currentLevel is less than or equal to jlptGoal
 const isValidJlptProgression = (): boolean => {
-  if (!profileForm.value.currentLevel || !profileForm.value.jlptGoal) return true
+  if (!profileForm.value.currentLevel || !profileForm.value.jlptGoal)
+    return true;
 
-  const currentValue = getJlptLevelValue(profileForm.value.currentLevel)
-  const goalValue = getJlptLevelValue(profileForm.value.jlptGoal)
+  const currentValue = getJlptLevelValue(profileForm.value.currentLevel);
+  const goalValue = getJlptLevelValue(profileForm.value.jlptGoal);
 
   // Current level should be less than or equal to goal level
   // Since N5(5) < N4(4) < N3(3) < N2(2) < N1(1)
   // Current N5(5), Goal N3(3): currentValue(5) > goalValue(3) - INVALID
   // Current N3(3), Goal N5(5): currentValue(3) < goalValue(5) - VALID
   // Current N3(3), Goal N1(1): currentValue(3) > goalValue(1) - INVALID
-  return currentValue >= goalValue // Higher numerical value = lower JLPT level
-}
-
-const validateJlptLevels = (): string | true => {
-  if (!isValidJlptProgression()) {
-    return 'Mục tiêu JLPT phải cao hơn hoặc bằng trình độ hiện tại (N5 < N4 < N3 < N2 < N1)'
-  }
-  return true
-}
+  return currentValue >= goalValue; // Higher numerical value = lower JLPT level
+};
 
 const profileForm = ref({
-  fullName: '',
-  currentLevel: 'N5' as string,
-  jlptGoal: 'N5' as string
-})
+  fullName: "",
+  currentLevel: "N5" as string,
+  jlptGoal: "N5" as string,
+});
 
 const formatDate = (dateString?: string): string => {
-  if (!dateString) return 'Chưa bao giờ'
+  if (!dateString) return "Chưa bao giờ";
 
   try {
-    const date = new Date(dateString)
+    const date = new Date(dateString);
     const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    };
 
-    return date.toLocaleDateString('vi-VN', options)
-  } catch (e) {
-    return dateString
+    return date.toLocaleDateString("vi-VN", options);
+  } catch {
+    return dateString;
   }
-}
+};
 
 const fetchProfile = async (): Promise<void> => {
   try {
-    await authStore.fetchCurrentUser()
-  } catch (error) {
-    toast.error('Không thể tải thông tin hồ sơ')
+    await authStore.fetchCurrentUser();
+  } catch {
+    toast.error("Không thể tải thông tin hồ sơ");
   }
-}
+};
 
 const navigateToSettings = (): void => {
-  router.push({ name: 'accountSettings' })
-}
+  router.push({ name: "accountSettings" });
+};
 
 const closeUpdateDialog = (): void => {
-  showUpdateDialog.value = false
+  showUpdateDialog.value = false;
   // Reset form to current user values
   if (user.value) {
     profileForm.value = {
-      fullName: user.value.fullName || '',
-      currentLevel: user.value.currentLevel || 'N5',
-      jlptGoal: user.value.jlptGoal || 'N5'
-    }
+      fullName: user.value.fullName || "",
+      currentLevel: user.value.currentLevel || "N5",
+      jlptGoal: user.value.jlptGoal || "N5",
+    };
   }
-}
+};
 
 const updateProfile = async (): Promise<void> => {
   // Validate form
-  if (form.value && typeof (form.value as any).validate === 'function') {
-    const { valid } = await (form.value as any).validate()
-    if (!valid) return
+  const formEl = form.value as {
+    validate?: () => Promise<{ valid: boolean }>;
+  } | null;
+  if (formEl && typeof formEl.validate === "function") {
+    const { valid } = await formEl.validate();
+    if (!valid) return;
   }
 
-  updating.value = true
+  updating.value = true;
   try {
     // Call API to update profile
     const response = await authService.updateProfile({
       fullName: profileForm.value.fullName,
-      currentLevel: profileForm.value.currentLevel || 'N5',
-      jlptGoal: profileForm.value.jlptGoal || 'N5'
-    })
+      currentLevel: profileForm.value.currentLevel || "N5",
+      jlptGoal: profileForm.value.jlptGoal || "N5",
+    });
 
-    if (response.status === 'OK') {
-      toast.success('Hồ sơ đã được cập nhật thành công', {
-        position: 'top',
-        duration: 3000
-      })
+    if (response.status === "OK") {
+      toast.success("Hồ sơ đã được cập nhật thành công");
 
       // Refresh user data
-      await authStore.fetchCurrentUser()
+      await authStore.fetchCurrentUser();
 
       // Close dialog
-      showUpdateDialog.value = false
+      showUpdateDialog.value = false;
     } else {
-      toast.error('Cập nhật hồ sơ thất bại', {
-        position: 'top',
-        duration: 3000
-      })
+      toast.error("Cập nhật hồ sơ thất bại");
     }
-  } catch (error) {
-    toast.error('Không thể cập nhật hồ sơ. Vui lòng thử lại sau.', {
-      position: 'top',
-      duration: 3000
-    })
+  } catch {
+    toast.error("Không thể cập nhật hồ sơ. Vui lòng thử lại sau.");
   } finally {
-    updating.value = false
+    updating.value = false;
   }
-}
+};
 
 // Add validateForm function
 const validateForm = (): void => {
-  if (form.value && typeof (form.value as any).validate === 'function') {
-    (form.value as any).validate()
+  const formEl = form.value as { validate?: () => void } | null;
+  if (formEl && typeof formEl.validate === "function") {
+    formEl.validate();
   }
-}
+};
 
 onMounted((): void => {
   if (!user.value) {
-    fetchProfile()
+    fetchProfile();
   } else {
     // Initialize form with current user data
     profileForm.value = {
-      fullName: user.value.fullName || '',
-      currentLevel: user.value.currentLevel || 'N5',
-      jlptGoal: user.value.jlptGoal || 'N5'
-    }
+      fullName: user.value.fullName || "",
+      currentLevel: user.value.currentLevel || "N5",
+      jlptGoal: user.value.jlptGoal || "N5",
+    };
   }
-})
+});
 </script>
 
 <style lang="scss" scoped>

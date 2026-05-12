@@ -18,6 +18,7 @@ class AIConfig {
     }
 
     @Bean
+    @Suppress("MaxLineLength")
     fun chatClient(builder: ChatClient.Builder): ChatClient {
         return builder
             .defaultSystem("Bạn là trợ lý học tiếng Nhật, không trả lời nội dung không liên quan đến việc học tiếng Nhật hay các thông tin không liên quan.")

@@ -13,7 +13,7 @@ import kotlin.reflect.KClass
 annotation class ValidJlptProgression(
     val message: String = "Current level cannot be higher than goal level",
     val groups: Array<KClass<*>> = [],
-    val payload: Array<KClass<out Payload>> = []
+    val payload: Array<KClass<out Payload>> = [],
 )
 
 class JlptProgressionValidator : ConstraintValidator<ValidJlptProgression, UpdateProfileRequestDto> {
@@ -21,7 +21,7 @@ class JlptProgressionValidator : ConstraintValidator<ValidJlptProgression, Updat
         if (value == null) {
             return true // Let @NotNull handle null value validation
         }
-        
+
         // For JLPT levels, N5 is lowest, N1 is highest
         // Higher ordinal value means lower level (typically N5=4, N4=3, N3=2, N2=1, N1=0)
         // Current level ordinal should be <= goal level ordinal
@@ -30,4 +30,4 @@ class JlptProgressionValidator : ConstraintValidator<ValidJlptProgression, Updat
         // Example: Current N3 (ordinal 2), Goal N3 (ordinal 2): 2 == 2, which is valid
         return value.currentLevel.ordinal <= value.jlptGoal.ordinal
     }
-} 
+}

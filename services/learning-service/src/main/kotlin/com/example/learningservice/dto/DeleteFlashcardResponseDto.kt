@@ -1,10 +1,5 @@
-﻿package com.example.learningservice.dto
-
-import com.example.common.dto.ResponseDto
-
-import com.fasterxml.jackson.annotation.JsonProperty
+package com.example.learningservice.dto
 
 data class DeleteFlashcardResponseDto(
-    @JsonProperty("result")
-    val result: ResponseDto
-) 
+    val message: String = "Flashcard deleted successfully",
+)

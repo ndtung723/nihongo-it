@@ -1,34 +1,20 @@
-import api from '../utils/api';
+import api from "../utils/api";
+import type { NotificationItem } from "@/types/notification.types";
+import type { PagedResponse } from "@/types/common.types";
 
-export interface NotificationItem {
-  id: string;
-  title: string;
-  message: string;
-  type: 'STUDY_REMINDER' | 'REVIEW_DUE' | 'SYSTEM_ANNOUNCEMENT';
-  isRead: boolean;
-  actionUrl?: string;
-  sentAt: string;
-  readAt?: string;
-  reviewCount?: number;
-  priorityLevel: number;
-}
-
-export interface NotificationPage {
-  content: NotificationItem[];
-  totalElements: number;
-  totalPages: number;
-  page: number;
-  size: number;
-}
+export type { NotificationItem };
+type NotificationPage = PagedResponse<NotificationItem>;
 
 class NotificationService {
   async getNotifications(page = 0, size = 20): Promise<NotificationPage> {
-    const response = await api.get('/api/v1/notify/notifications', { params: { page, size } });
+    const response = await api.get("/api/v1/notify/notifications", {
+      params: { page, size },
+    });
     return response.data;
   }
 
   async getUnreadCount(): Promise<number> {
-    const response = await api.get('/api/v1/notify/notifications/unread-count');
+    const response = await api.get("/api/v1/notify/notifications/unread-count");
     return response.data.count;
   }
 
@@ -37,7 +23,7 @@ class NotificationService {
   }
 
   async markAllAsRead(): Promise<void> {
-    await api.put('/api/v1/notify/notifications/read-all');
+    await api.put("/api/v1/notify/notifications/read-all");
   }
 
   async deleteNotification(id: string): Promise<void> {

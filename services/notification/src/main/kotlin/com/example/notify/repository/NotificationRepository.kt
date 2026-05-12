@@ -17,10 +17,13 @@ interface NotificationRepository : JpaRepository<NotificationEntity, UUID> {
 
     fun findFirstByUserAndTypeOrderBySentAtDesc(user: UserEntity, type: NotificationType): NotificationEntity?
 
+    @Suppress("FunctionNaming")
     fun findByUser_UserIdOrderBySentAtDesc(userId: UUID, pageable: Pageable): Page<NotificationEntity>
 
+    @Suppress("FunctionNaming")
     fun countByUser_UserIdAndIsReadFalse(userId: UUID): Long
 
+    @Suppress("FunctionNaming")
     fun findByNotificationIdAndUser_UserId(notificationId: UUID, userId: UUID): NotificationEntity?
 
     @Modifying

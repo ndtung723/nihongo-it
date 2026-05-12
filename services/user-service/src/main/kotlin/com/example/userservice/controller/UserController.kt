@@ -4,7 +4,6 @@ import com.example.userservice.service.UserService
 import com.example.userservice.util.UserAuthUtil
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -14,7 +13,7 @@ import org.springframework.web.bind.annotation.*
 @Tag(name = "User Management", description = "API endpoints for managing user profiles and preferences")
 class UserController(
     private val userService: UserService,
-    private val userAuthUtil: UserAuthUtil
+    private val userAuthUtil: UserAuthUtil,
 ) {
 
     /**
@@ -25,7 +24,7 @@ class UserController(
     fun getUserProfile(): ResponseEntity<Any> {
         val userId = userAuthUtil.getCurrentUserId()
             ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated")
-            
+
         return try {
             val profile = userService.getUserProfile(userId)
             ResponseEntity.ok(profile)
@@ -43,7 +42,7 @@ class UserController(
     fun updateNotificationPreferences(@RequestBody request: UpdatePreferencesRequest): ResponseEntity<Any> {
         val userId = userAuthUtil.getCurrentUserId()
             ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated")
-            
+
         return try {
             userService.updateNotificationPreferences(userId, request)
             ResponseEntity.ok(mapOf("message" to "Preferences updated successfully"))
@@ -52,7 +51,7 @@ class UserController(
                 .body(mapOf("error" to "Failed to update preferences: ${e.message}"))
         }
     }
-    
+
     /**
      * Get user preferences including notification settings
      */
@@ -61,7 +60,7 @@ class UserController(
     fun getNotificationPreferences(): ResponseEntity<Any> {
         val userId = userAuthUtil.getCurrentUserId()
             ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated")
-            
+
         return try {
             val preferences = userService.getNotificationPreferences(userId)
             ResponseEntity.ok(preferences)
@@ -80,5 +79,5 @@ data class UpdatePreferencesRequest(
     val reminderEnabled: Boolean? = null,
     val reminderTime: String? = null,
     val minCardThreshold: Int? = null,
-    val leechNotificationsEnabled: Boolean? = null
-) 
+    val leechNotificationsEnabled: Boolean? = null,
+)

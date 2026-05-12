@@ -1,19 +1,28 @@
 <script setup>
 // Footer component for Nihongo IT
+defineOptions({ name: "AppFooter" });
 </script>
 
 <template>
   <footer class="footer">
     <div class="footer-container">
       <div class="footer-logo">
-        <img src="/logo-ngang.svg" alt="Logo" class="logo-image" />
+        <img
+          src="/logo-ngang.svg"
+          alt="Logo"
+          class="logo-image"
+          loading="lazy"
+        />
       </div>
 
       <div class="footer-content">
         <div class="footer-section">
           <h3>Thông tin liên hệ</h3>
           <p><strong>Họ tên:</strong> Nguyễn Đức Tùng</p>
-          <p><strong>Email:</strong> <a href="mailto:ndtung723@gmail.com">ndtung723@gmail.com</a></p>
+          <p>
+            <strong>Email:</strong>
+            <a href="mailto:ndtung723@gmail.com">ndtung723@gmail.com</a>
+          </p>
         </div>
 
         <div class="footer-section">
@@ -25,14 +34,13 @@
       </div>
     </div>
   </footer>
-
-
 </template>
 
 <style scoped>
 .footer {
   padding: 30px 0 0;
-  background: url(https://www.haui.edu.vn/dnn/web/haui/assets/images/footer.png) #0d4e96 no-repeat center;
+  background: url(https://www.haui.edu.vn/dnn/web/haui/assets/images/footer.png)
+    #0d4e96 no-repeat center;
   position: relative;
   width: 100%;
   margin-top: 2rem;
@@ -85,7 +93,7 @@
 }
 
 .footer-section h3:after {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   bottom: 0;

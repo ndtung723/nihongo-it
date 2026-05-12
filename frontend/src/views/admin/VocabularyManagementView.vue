@@ -19,7 +19,6 @@
                 variant="outlined"
                 bg-color="surface"
                 style="max-width: 300px; width: 300px"
-                @input="debouncedSearch"
               ></v-text-field>
 
               <v-select
@@ -32,7 +31,7 @@
                 density="compact"
                 variant="outlined"
                 bg-color="surface"
-                style="max-width: 250px ; width: 250px"
+                style="max-width: 250px; width: 250px"
                 hide-details
                 @update:model-value="fetchVocabularyByTopic"
                 clearable
@@ -86,7 +85,9 @@
           <!-- Term column -->
           <template v-slot:item.term="{ item }">
             <div class="d-flex flex-column">
-              <div class="font-weight-bold mb-1 text-body-1">{{ item.term }}</div>
+              <div class="font-weight-bold mb-1 text-body-1">
+                {{ item.term }}
+              </div>
               <div class="text-body-2 text-grey">{{ item.pronunciation }}</div>
             </div>
           </template>
@@ -100,10 +101,14 @@
           <template v-slot:item.example="{ item }">
             <div v-if="item.example" class="example-container">
               <div class="mb-1 font-italic text-body-2">{{ item.example }}</div>
-              <div class="text-grey text-caption">{{ item.exampleMeaning }}</div>
+              <div class="text-grey text-caption">
+                {{ item.exampleMeaning }}
+              </div>
             </div>
             <div v-else class="text-caption text-grey text-center font-italic">
-              <v-icon size="small" color="grey" class="mr-1">mdi-minus-circle</v-icon>
+              <v-icon size="small" color="grey" class="mr-1"
+                >mdi-minus-circle</v-icon
+              >
               Không có ví dụ
             </div>
           </template>
@@ -145,7 +150,9 @@
                 @click="openEditDialog(item)"
               >
                 <v-icon>mdi-pencil</v-icon>
-                <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
+                <v-tooltip activator="parent" location="top"
+                  >Chỉnh sửa</v-tooltip
+                >
               </v-btn>
               <v-btn
                 icon
@@ -163,9 +170,15 @@
           <!-- No data template -->
           <template v-slot:no-data>
             <div class="text-center pa-5">
-              <v-icon size="large" icon="mdi-text-box-search-outline" class="mb-2"></v-icon>
+              <v-icon
+                size="large"
+                icon="mdi-text-box-search-outline"
+                class="mb-2"
+              ></v-icon>
               <div v-if="error" class="text-body-1 text-error">{{ error }}</div>
-              <div v-else-if="loading" class="text-body-1">Đang tải dữ liệu...</div>
+              <div v-else-if="loading" class="text-body-1">
+                Đang tải dữ liệu...
+              </div>
               <div v-else class="text-body-1">Không tìm thấy từ vựng nào</div>
             </div>
           </template>
@@ -186,7 +199,7 @@
                 <v-text-field
                   v-model="editedItem.term"
                   label="Từ vựng (tiếng Nhật)"
-                  :rules="[v => !!v || 'Từ vựng là bắt buộc']"
+                  :rules="[(v) => !!v || 'Từ vựng là bắt buộc']"
                   density="compact"
                   variant="outlined"
                   bg-color="surface"
@@ -208,7 +221,7 @@
                 <v-text-field
                   v-model="editedItem.meaning"
                   label="Ý nghĩa (tiếng Việt)"
-                  :rules="[v => !!v || 'Ý nghĩa là bắt buộc']"
+                  :rules="[(v) => !!v || 'Ý nghĩa là bắt buộc']"
                   density="compact"
                   variant="outlined"
                   bg-color="surface"
@@ -247,7 +260,7 @@
                   item-title="name"
                   item-value="name"
                   label="Chủ đề"
-                  :rules="[v => !!v || 'Chủ đề là bắt buộc']"
+                  :rules="[(v) => !!v || 'Chủ đề là bắt buộc']"
                   density="compact"
                   variant="outlined"
                   bg-color="surface"
@@ -260,7 +273,7 @@
                   v-model="editedItem.jlptLevel"
                   :items="jlptLevels"
                   label="JLPT Level"
-                  :rules="[v => !!v || 'JLPT Level là bắt buộc']"
+                  :rules="[(v) => !!v || 'JLPT Level là bắt buộc']"
                   density="compact"
                   variant="outlined"
                   bg-color="surface"
@@ -274,10 +287,13 @@
         <v-divider></v-divider>
         <v-card-actions class="px-4 py-3">
           <v-spacer></v-spacer>
-          <v-btn color="grey" variant="text" @click="closeDialog">
-            Hủy
-          </v-btn>
-          <v-btn color="primary" variant="elevated" @click="saveVocabulary" :disabled="!valid">
+          <v-btn color="grey" variant="text" @click="closeDialog"> Hủy </v-btn>
+          <v-btn
+            color="primary"
+            variant="elevated"
+            @click="saveVocabulary"
+            :disabled="!valid"
+          >
             <v-icon left>mdi-content-save</v-icon>
             Lưu
           </v-btn>
@@ -294,11 +310,13 @@
         </v-card-title>
         <v-card-text class="pt-4 px-4">
           <p class="text-body-1 mb-3">
-            Bạn có chắc chắn muốn xóa từ vựng <span class="font-weight-bold">"{{ deleteItem?.term }}"</span>?
+            Bạn có chắc chắn muốn xóa từ vựng
+            <span class="font-weight-bold">"{{ deleteItem?.term }}"</span>?
           </p>
           <div class="mt-2 font-weight-bold bg-error-lighten-5 pa-3 rounded">
             <v-icon color="error" class="mr-2">mdi-alert</v-icon>
-            Cảnh báo: Hành động này không thể hoàn tác và sẽ xóa tất cả dữ liệu liên quan!
+            Cảnh báo: Hành động này không thể hoàn tác và sẽ xóa tất cả dữ liệu
+            liên quan!
           </div>
         </v-card-text>
         <v-divider></v-divider>
@@ -307,11 +325,7 @@
           <v-btn color="grey" variant="text" @click="deleteDialog = false">
             Hủy
           </v-btn>
-          <v-btn
-            color="error"
-            variant="elevated"
-            @click="deleteVocabulary"
-          >
+          <v-btn color="error" variant="elevated" @click="deleteVocabulary">
             <v-icon left>mdi-delete</v-icon>
             Xác nhận xóa
           </v-btn>
@@ -322,24 +336,33 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import vocabularyService from '@/services/vocabularyService';
-import topicService from '@/services/topicService';
-import type { Vocabulary, CreateVocabularyRequest, UpdateVocabularyRequest } from '@/services/vocabularyService';
-import type { Topic } from '@/services/topicService';
-import { useToast } from 'vue-toast-notification';
-import { format, parseISO } from 'date-fns';
-import { vi } from 'date-fns/locale';
+import { ref, computed, watch, onMounted } from "vue";
+import vocabularyService from "@/services/vocabulary.service";
+import topicService from "@/services/topic.service";
+import type {
+  VocabularyItem as Vocabulary,
+  CreateVocabularyRequest,
+  UpdateVocabularyRequest,
+  Topic,
+} from "@/types/learning.types";
+import type { JlptLevel } from "@/types/common.types";
+import { useAppToast } from "@/composables/useAppToast";
+import { useDebounce } from "@/composables/useDebounce";
 
-const $toast = useToast();
+const $toast = useAppToast();
 
 // Data
 const vocabulary = ref<Vocabulary[]>([]);
 const topics = ref<Topic[]>([]);
-const jlptLevels = ref<string[]>(['N1', 'N2', 'N3', 'N4', 'N5']);
+const jlptLevels = ref<string[]>(["N1", "N2", "N3", "N4", "N5"]);
 const selectedTopicId = ref<string | null>(null);
 const selectedJlptLevel = ref<string | null>(null);
-const searchQuery = ref<string>('');
+const searchQuery = ref<string>("");
+
+const debouncedSearchQuery = useDebounce(searchQuery, 400);
+watch(debouncedSearchQuery, () =>
+  fetchVocabulary(0, pagination.value.itemsPerPage),
+);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const valid = ref(false);
@@ -348,7 +371,7 @@ const pagination = ref({
   page: 1,
   itemsPerPage: 10,
   pageCount: 0,
-  itemsLength: 0
+  itemsLength: 0,
 });
 
 // Dialog state
@@ -356,59 +379,67 @@ const dialog = ref(false);
 const deleteDialog = ref(false);
 const editedIndex = ref(-1);
 const editedItem = ref<CreateVocabularyRequest | UpdateVocabularyRequest>({
-  term: '',
-  meaning: '',
-  pronunciation: '',
-  example: '',
-  exampleMeaning: '',
-  topicName: '',
-  jlptLevel: ''
+  term: "",
+  meaning: "",
+  pronunciation: "",
+  example: "",
+  exampleMeaning: "",
+  topicName: "",
+  jlptLevel: "" as JlptLevel,
 });
 const defaultItem: CreateVocabularyRequest = {
-  term: '',
-  meaning: '',
-  pronunciation: '',
-  example: '',
-  exampleMeaning: '',
-  topicName: '',
-  jlptLevel: 'N3'
+  term: "",
+  meaning: "",
+  pronunciation: "",
+  example: "",
+  exampleMeaning: "",
+  topicName: "",
+  jlptLevel: "N3",
 };
 const deleteItem = ref<Vocabulary | null>(null);
 
+const DRAFT_KEY = "vocab_admin_draft";
+
 // Table headers
 const headers = [
-  { title: 'Từ vựng', key: 'term', align: 'start' as const, sortable: true },
-  { title: 'Ý nghĩa', key: 'meaning', align: 'start' as const, sortable: true },
-  { title: 'Ví dụ', key: 'example', align: 'start' as const, sortable: false },
-  { title: 'Chủ đề', key: 'topicName', align: 'center' as const, sortable: true },
-  { title: 'JLPT', key: 'jlptLevel', align: 'center' as const, sortable: true },
-  { title: 'Thao tác', key: 'actions', align: 'center' as const, sortable: false }
+  { title: "Từ vựng", key: "term", align: "start" as const, sortable: true },
+  { title: "Ý nghĩa", key: "meaning", align: "start" as const, sortable: true },
+  { title: "Ví dụ", key: "example", align: "start" as const, sortable: false },
+  {
+    title: "Chủ đề",
+    key: "topicName",
+    align: "center" as const,
+    sortable: true,
+  },
+  { title: "JLPT", key: "jlptLevel", align: "center" as const, sortable: true },
+  {
+    title: "Thao tác",
+    key: "actions",
+    align: "center" as const,
+    sortable: false,
+  },
 ];
-
-// Format dates with Vietnamese locale
-const formatDate = (dateString: string | undefined) => {
-  if (!dateString) return 'N/A';
-  try {
-    return format(parseISO(dateString), 'dd/MM/yyyy', { locale: vi });
-  } catch (e) {
-    return 'Ngày không hợp lệ';
-  }
-};
 
 // Computed properties
 const formTitle = computed(() => {
-  return editedIndex.value === -1 ? 'Thêm từ vựng mới' : 'Chỉnh sửa từ vựng';
+  return editedIndex.value === -1 ? "Thêm từ vựng mới" : "Chỉnh sửa từ vựng";
 });
 
 // JLPT Level color
 const getJlptLevelColor = (level: string): string => {
   switch (level) {
-    case 'N1': return 'red';
-    case 'N2': return 'deep-orange';
-    case 'N3': return 'amber';
-    case 'N4': return 'light-green';
-    case 'N5': return 'green';
-    default: return 'grey';
+    case "N1":
+      return "red";
+    case "N2":
+      return "deep-orange";
+    case "N3":
+      return "amber";
+    case "N4":
+      return "light-green";
+    case "N5":
+      return "green";
+    default:
+      return "grey";
   }
 };
 
@@ -426,14 +457,14 @@ async function fetchVocabulary(page: number = 0, size: number = 10) {
         selectedTopicId.value || undefined,
         selectedJlptLevel.value || undefined,
         page,
-        size
+        size,
       );
     } else if (selectedTopicId.value && selectedJlptLevel.value) {
       // Khi cả topic và JLPT level đều được chọn, sử dụng tham số jlptLevel trong API
       response = await vocabularyService.adminGetVocabularyByTopicId(
         selectedTopicId.value,
         page,
-        size
+        size,
       );
       // JLPT level sẽ được lọc bởi backend theo logic đã cập nhật
     } else if (selectedJlptLevel.value) {
@@ -441,14 +472,14 @@ async function fetchVocabulary(page: number = 0, size: number = 10) {
       response = await vocabularyService.adminGetVocabularyByJlptLevel(
         selectedJlptLevel.value,
         page,
-        size
+        size,
       );
     } else if (selectedTopicId.value) {
       // Khi chỉ chọn topic
       response = await vocabularyService.adminGetVocabularyByTopicId(
         selectedTopicId.value,
         page,
-        size
+        size,
       );
     } else {
       // Khi không có điều kiện lọc
@@ -460,11 +491,13 @@ async function fetchVocabulary(page: number = 0, size: number = 10) {
       page: response.data.page + 1, // Convert from 0-based to 1-based for display
       itemsPerPage: response.data.size,
       pageCount: response.data.totalPages,
-      itemsLength: response.data.totalElements
+      itemsLength: response.data.totalElements,
     };
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Không thể tải danh sách từ vựng';
-    $toast.error(error.value || 'Không thể tải danh sách từ vựng');
+  } catch (err: unknown) {
+    error.value =
+      (err as { response?: { data?: { message?: string } } }).response?.data
+        ?.message || "Không thể tải danh sách từ vựng";
+    $toast.error(error.value || "Không thể tải danh sách từ vựng");
     vocabulary.value = [];
   } finally {
     loading.value = false;
@@ -473,10 +506,9 @@ async function fetchVocabulary(page: number = 0, size: number = 10) {
 
 async function fetchTopics() {
   try {
-    const response = await topicService.adminGetAllTopics();
-    topics.value = response.data;
-  } catch (err: any) {
-    $toast.error('Không thể tải danh sách chủ đề');
+    topics.value = await topicService.adminGetAllTopics();
+  } catch {
+    $toast.error("Không thể tải danh sách chủ đề");
     topics.value = [];
   }
 }
@@ -485,18 +517,7 @@ function fetchVocabularyByTopic() {
   fetchVocabulary(0, pagination.value.itemsPerPage);
 }
 
-// Debounce function for search
-let debounceTimeout: number | null = null;
-function debouncedSearch() {
-  if (debounceTimeout) {
-    clearTimeout(debounceTimeout);
-  }
-  debounceTimeout = setTimeout(() => {
-    fetchVocabulary(0, pagination.value.itemsPerPage);
-  }, 500) as unknown as number;
-}
-
-function handleTableOptions(options: any) {
+function handleTableOptions(options: { page: number; itemsPerPage: number }) {
   const { page, itemsPerPage } = options;
   if (itemsPerPage !== pagination.value.itemsPerPage) {
     pagination.value.itemsPerPage = itemsPerPage;
@@ -506,7 +527,8 @@ function handleTableOptions(options: any) {
 
 function openAddDialog() {
   editedIndex.value = -1;
-  editedItem.value = { ...defaultItem };
+  const saved = localStorage.getItem(DRAFT_KEY);
+  editedItem.value = saved ? JSON.parse(saved) : { ...defaultItem };
   dialog.value = true;
 }
 
@@ -515,11 +537,11 @@ function openEditDialog(item: Vocabulary) {
   editedItem.value = {
     term: item.term,
     meaning: item.meaning,
-    pronunciation: item.pronunciation || '',
-    example: item.example || '',
-    exampleMeaning: item.exampleMeaning || '',
-    topicName: item.topicName || '',
-    jlptLevel: item.jlptLevel
+    pronunciation: item.pronunciation || "",
+    example: item.example || "",
+    exampleMeaning: item.exampleMeaning || "",
+    topicName: item.topicName || "",
+    jlptLevel: item.jlptLevel,
   };
   dialog.value = true;
 }
@@ -542,18 +564,23 @@ async function saveVocabulary() {
       const updateData = { ...editedItem.value } as UpdateVocabularyRequest;
 
       await vocabularyService.adminUpdateVocabulary(vocabId, updateData);
-      $toast.success('Cập nhật từ vựng thành công');
+      $toast.success("Cập nhật từ vựng thành công");
     } else {
       // Create new vocabulary
-      await vocabularyService.adminCreateVocabulary(editedItem.value as CreateVocabularyRequest);
-      $toast.success('Thêm từ vựng mới thành công');
+      await vocabularyService.adminCreateVocabulary(
+        editedItem.value as CreateVocabularyRequest,
+      );
+      localStorage.removeItem(DRAFT_KEY);
+      $toast.success("Thêm từ vựng mới thành công");
     }
 
     closeDialog();
     fetchVocabulary(pagination.value.page - 1, pagination.value.itemsPerPage);
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Không thể lưu từ vựng';
-    $toast.error(error.value || 'Không thể lưu từ vựng');
+  } catch (err: unknown) {
+    error.value =
+      (err as { response?: { data?: { message?: string } } }).response?.data
+        ?.message || "Không thể lưu từ vựng";
+    $toast.error(error.value || "Không thể lưu từ vựng");
   }
 }
 
@@ -567,14 +594,26 @@ async function deleteVocabulary() {
 
   try {
     await vocabularyService.adminDeleteVocabulary(deleteItem.value.vocabId);
-    $toast.success('Đã xóa từ vựng thành công');
+    $toast.success("Đã xóa từ vựng thành công");
     deleteDialog.value = false;
     fetchVocabulary(pagination.value.page - 1, pagination.value.itemsPerPage);
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Không thể xóa từ vựng';
-    $toast.error(error.value || 'Không thể xóa từ vựng');
+  } catch (err: unknown) {
+    error.value =
+      (err as { response?: { data?: { message?: string } } }).response?.data
+        ?.message || "Không thể xóa từ vựng";
+    $toast.error(error.value || "Không thể xóa từ vựng");
   }
 }
+
+watch(
+  editedItem,
+  (val) => {
+    if (editedIndex.value === -1 && dialog.value) {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(val));
+    }
+  },
+  { deep: true },
+);
 
 // Initialize data
 onMounted(async () => {
@@ -680,7 +719,9 @@ onMounted(async () => {
     width: 100%;
   }
 
-  .search-field, .topic-select, .jlpt-select {
+  .search-field,
+  .topic-select,
+  .jlpt-select {
     margin-bottom: 8px;
   }
 }

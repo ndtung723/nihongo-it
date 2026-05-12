@@ -1,15 +1,20 @@
-import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
-import authService from '@/services/auth.service.ts';
-import { isTokenExpired } from '@/utils/jwt';
+import axios from "axios";
+import { defineStore } from "pinia";
+import { ref, computed } from "vue";
+import authService from "@/services/auth.service";
+import { isTokenExpired } from "@/utils/jwt";
+import { setAccessToken } from "@/utils/tokenStore";
 import type {
   UserInfo,
   LoginRequest,
   SignupRequest,
   ChangePasswordRequest,
-} from '@/services/auth.service.ts';
+} from "@/types/user.types";
+import { extractApiError } from "@/types/common.types";
 
-export const useAuthStore = defineStore('auth', () => {
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
+export const useAuthStore = defineStore("auth", () => {
   // State
   const user = ref<UserInfo | null>(null);
   const loading = ref(false);
@@ -33,10 +38,10 @@ export const useAuthStore = defineStore('auth', () => {
         await fetchCurrentUser();
         return true;
       }
-      error.value = 'Invalid credentials';
+      error.value = "Invalid credentials";
       return false;
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Login failed. Please try again.';
+    } catch (err: unknown) {
+      error.value = extractApiError(err, "Login failed. Please try again.");
       return false;
     } finally {
       loading.value = false;
@@ -50,8 +55,11 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       await authService.signup(userData);
       return true;
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Registration failed. Please try again.';
+    } catch (err: unknown) {
+      error.value = extractApiError(
+        err,
+        "Registration failed. Please try again.",
+      );
       return false;
     } finally {
       loading.value = false;
@@ -70,7 +78,7 @@ export const useAuthStore = defineStore('auth', () => {
       }
       user.value = null;
       return false;
-    } catch (err: any) {
+    } catch {
       user.value = null;
       return false;
     } finally {
@@ -83,13 +91,21 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null;
   }
 
-  // Initialize user if token exists and is valid
-  function initializeAuth() {
-    const token = authService.getToken();
-    if (token && !isTokenExpired(token)) {
-      fetchCurrentUser();
-    } else if (token) {
-      authService.removeToken();
+  // Silently restore session on page load using the httpOnly refresh_token cookie
+  async function initializeAuth() {
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/v1/user/auth/refresh-token`,
+        {},
+        { withCredentials: true },
+      );
+      const { token } = response.data;
+      if (token && !isTokenExpired(token)) {
+        setAccessToken(token);
+        await fetchCurrentUser();
+      }
+    } catch {
+      // No valid refresh token — user is not authenticated, that's fine
     }
   }
 
@@ -104,10 +120,13 @@ export const useAuthStore = defineStore('auth', () => {
         await fetchCurrentUser();
         return true;
       }
-      error.value = 'Google login failed';
+      error.value = "Google login failed";
       return false;
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Google login failed. Please try again.';
+    } catch (err: unknown) {
+      error.value = extractApiError(
+        err,
+        "Google login failed. Please try again.",
+      );
       return false;
     } finally {
       loading.value = false;
@@ -121,9 +140,11 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       await authService.requestPasswordReset(email);
       return true;
-    } catch (err: any) {
-      error.value =
-        err.response?.data?.message || 'Password reset request failed. Please try again.';
+    } catch (err: unknown) {
+      error.value = extractApiError(
+        err,
+        "Password reset request failed. Please try again.",
+      );
       return false;
     } finally {
       loading.value = false;
@@ -137,8 +158,11 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       await authService.resetPassword(token, password);
       return true;
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Password reset failed. Please try again.';
+    } catch (err: unknown) {
+      error.value = extractApiError(
+        err,
+        "Password reset failed. Please try again.",
+      );
       return false;
     } finally {
       loading.value = false;
@@ -152,8 +176,11 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       await authService.changePassword(request);
       return true;
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Password change failed. Please try again.';
+    } catch (err: unknown) {
+      error.value = extractApiError(
+        err,
+        "Password change failed. Please try again.",
+      );
       return false;
     } finally {
       loading.value = false;

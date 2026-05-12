@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets
 
 @Configuration
 class FeignErrorDecoderConfig {
-    
+
     @Bean
     fun feignErrorDecoder(objectMapper: ObjectMapper): ErrorDecoder {
         return CustomErrorDecoder(objectMapper)
@@ -20,23 +20,23 @@ class FeignErrorDecoderConfig {
 }
 
 class CustomErrorDecoder(private val objectMapper: ObjectMapper) : ErrorDecoder {
-    
+
     private val logger = LoggerFactory.getLogger(CustomErrorDecoder::class.java)
     private val defaultDecoder = ErrorDecoder.Default()
-    
+
     override fun decode(methodKey: String, response: Response): Exception {
         try {
             // Đọc body response
             val responseBody = getResponseBody(response)
-            
+
             if (responseBody.isNotBlank()) {
                 try {
                     // Parse response body to get error message
                     val jsonNode = objectMapper.readTree(responseBody)
-                    
+
                     // Kiểm tra các định dạng response có thể có
                     val errorMessage = extractErrorMessage(jsonNode)
-                    
+
                     if (errorMessage.isNotBlank()) {
                         logger.warn("Feign client error from $methodKey: $errorMessage")
                         return BusinessException(errorMessage)
@@ -45,9 +45,9 @@ class CustomErrorDecoder(private val objectMapper: ObjectMapper) : ErrorDecoder 
                     logger.warn("Error parsing error response: ${e.message}")
                 }
             }
-            
+
             // Các lỗi HTTP phổ biến
-            return when(response.status()) {
+            return when (response.status()) {
                 400 -> BusinessException("Bad request: Invalid input data")
                 401 -> BusinessException("Unauthorized: Authentication required")
                 403 -> BusinessException("Forbidden: You don't have permission to access this resource")
@@ -65,7 +65,7 @@ class CustomErrorDecoder(private val objectMapper: ObjectMapper) : ErrorDecoder 
             return defaultDecoder.decode(methodKey, response)
         }
     }
-    
+
     private fun getResponseBody(response: Response): String {
         return try {
             if (response.body() != null) {
@@ -79,12 +79,12 @@ class CustomErrorDecoder(private val objectMapper: ObjectMapper) : ErrorDecoder 
             ""
         }
     }
-    
+
     private fun extractErrorMessage(jsonNode: JsonNode): String {
         // Kiểm tra định dạng response của api-service
         return when {
             jsonNode.has("message") -> jsonNode.get("message").asText("")
-            jsonNode.has("error") && jsonNode.get("error").has("message") -> 
+            jsonNode.has("error") && jsonNode.get("error").has("message") ->
                 jsonNode.get("error").get("message").asText("")
             jsonNode.has("status") && jsonNode.has("error") && jsonNode.has("message") ->
                 jsonNode.get("message").asText("")
@@ -93,7 +93,7 @@ class CustomErrorDecoder(private val objectMapper: ObjectMapper) : ErrorDecoder 
             else -> ""
         }
     }
-    
+
     private fun extractErrorsFromMap(errorsNode: JsonNode): String {
         val errorMessages = mutableListOf<String>()
         errorsNode.fields().forEach { (field, value) ->
@@ -102,4 +102,4 @@ class CustomErrorDecoder(private val objectMapper: ObjectMapper) : ErrorDecoder 
         }
         return errorMessages.joinToString(", ")
     }
-} 
+}

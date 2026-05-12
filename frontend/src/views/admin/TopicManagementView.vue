@@ -14,7 +14,6 @@
               hide-details
               class="search-field mb-2 mb-md-0 mr-md-2"
               density="compact"
-              @input="debouncedSearch"
             ></v-text-field>
 
             <v-select
@@ -66,11 +65,7 @@
 
           <!-- Category column -->
           <template v-slot:item.categoryName="{ item }">
-            <v-chip
-              size="small"
-              color="info"
-              variant="tonal"
-            >
+            <v-chip size="small" color="info" variant="tonal">
               {{ item.categoryName }}
             </v-chip>
           </template>
@@ -83,7 +78,7 @@
               :text="item.isActive ? 'Đang hoạt động' : 'Vô hiệu hóa'"
               :variant="item.isActive ? 'elevated' : 'tonal'"
             >
-              {{ item.isActive ? 'Đang hoạt động' : 'Vô hiệu hóa' }}
+              {{ item.isActive ? "Đang hoạt động" : "Vô hiệu hóa" }}
             </v-chip>
           </template>
 
@@ -104,7 +99,9 @@
                 @click="openEditDialog(item)"
               >
                 <v-icon>mdi-pencil</v-icon>
-                <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
+                <v-tooltip activator="parent" location="top"
+                  >Chỉnh sửa</v-tooltip
+                >
               </v-btn>
               <v-btn
                 icon
@@ -114,9 +111,11 @@
                 class="mr-1"
                 @click="confirmToggleStatus(item)"
               >
-                <v-icon>{{ item.isActive ? 'mdi-close-circle' : 'mdi-check-circle' }}</v-icon>
+                <v-icon>{{
+                  item.isActive ? "mdi-close-circle" : "mdi-check-circle"
+                }}</v-icon>
                 <v-tooltip activator="parent" location="top">
-                  {{ item.isActive ? 'Vô hiệu hóa' : 'Kích hoạt' }}
+                  {{ item.isActive ? "Vô hiệu hóa" : "Kích hoạt" }}
                 </v-tooltip>
               </v-btn>
               <!-- <v-btn
@@ -135,9 +134,15 @@
           <!-- No data template -->
           <template v-slot:no-data>
             <div class="text-center pa-5">
-              <v-icon size="large" icon="mdi-text-box-search-outline" class="mb-2"></v-icon>
+              <v-icon
+                size="large"
+                icon="mdi-text-box-search-outline"
+                class="mb-2"
+              ></v-icon>
               <div v-if="error" class="text-body-1 text-error">{{ error }}</div>
-              <div v-else-if="loading" class="text-body-1">Đang tải dữ liệu...</div>
+              <div v-else-if="loading" class="text-body-1">
+                Đang tải dữ liệu...
+              </div>
               <div v-else class="text-body-1">Không tìm thấy chủ đề nào</div>
             </div>
           </template>
@@ -158,7 +163,7 @@
                 <v-text-field
                   v-model="editedItem.name"
                   label="Tên chủ đề (tiếng Nhật)"
-                  :rules="[v => !!v || 'Tên chủ đề là bắt buộc']"
+                  :rules="[(v) => !!v || 'Tên chủ đề là bắt buộc']"
                   required
                 ></v-text-field>
               </v-col>
@@ -166,7 +171,7 @@
                 <v-text-field
                   v-model="editedItem.meaning"
                   label="Ý nghĩa (tiếng Việt)"
-                  :rules="[v => !!v || 'Ý nghĩa là bắt buộc']"
+                  :rules="[(v) => !!v || 'Ý nghĩa là bắt buộc']"
                   required
                 ></v-text-field>
               </v-col>
@@ -177,7 +182,7 @@
                   item-title="name"
                   item-value="categoryId"
                   label="Danh mục"
-                  :rules="[v => !!v || 'Danh mục là bắt buộc']"
+                  :rules="[(v) => !!v || 'Danh mục là bắt buộc']"
                   required
                 ></v-select>
               </v-col>
@@ -201,10 +206,13 @@
         </v-form>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="grey" variant="text" @click="closeDialog">
-            Hủy
-          </v-btn>
-          <v-btn color="primary" variant="elevated" @click="saveTopic" :disabled="!valid">
+          <v-btn color="grey" variant="text" @click="closeDialog"> Hủy </v-btn>
+          <v-btn
+            color="primary"
+            variant="elevated"
+            @click="saveTopic"
+            :disabled="!valid"
+          >
             Lưu
           </v-btn>
         </v-card-actions>
@@ -214,37 +222,53 @@
     <!-- Status toggle confirmation dialog -->
     <v-dialog v-model="statusDialog" max-width="500px" persistent>
       <v-card>
-        <v-card-title class="text-h5" :class="statusItem?.isActive ? 'bg-error text-white' : 'bg-success text-white'">
-          {{ statusItem?.isActive ? 'Vô hiệu hóa chủ đề' : 'Kích hoạt chủ đề' }}
+        <v-card-title
+          class="text-h5"
+          :class="
+            statusItem?.isActive
+              ? 'bg-error text-white'
+              : 'bg-success text-white'
+          "
+        >
+          {{ statusItem?.isActive ? "Vô hiệu hóa chủ đề" : "Kích hoạt chủ đề" }}
         </v-card-title>
         <v-card-text class="pt-4">
           <p class="text-body-1">
-            {{ statusItem?.isActive
-              ? `Bạn có chắc chắn muốn vô hiệu hóa chủ đề "${statusItem?.name}"?`
-              : `Bạn có chắc chắn muốn kích hoạt lại chủ đề "${statusItem?.name}"?`
+            {{
+              statusItem?.isActive
+                ? `Bạn có chắc chắn muốn vô hiệu hóa chủ đề "${statusItem?.name}"?`
+                : `Bạn có chắc chắn muốn kích hoạt lại chủ đề "${statusItem?.name}"?`
             }}
           </p>
           <div v-if="statusItem?.isActive" class="mt-2">
-            Chủ đề vô hiệu hóa sẽ không hiển thị cho người dùng nhưng vẫn được lưu trong hệ thống.
+            Chủ đề vô hiệu hóa sẽ không hiển thị cho người dùng nhưng vẫn được
+            lưu trong hệ thống.
           </div>
           <div v-else class="mt-2">
-            Kích hoạt lại chủ đề sẽ cho phép người dùng xem và sử dụng chủ đề này.
+            Kích hoạt lại chủ đề sẽ cho phép người dùng xem và sử dụng chủ đề
+            này.
           </div>
-          <div v-if="statusItem?.vocabularyCount && statusItem.vocabularyCount > 0" class="mt-2 font-weight-bold bg-warning-lighten-5 pa-2 rounded">
+          <div
+            v-if="statusItem?.vocabularyCount && statusItem.vocabularyCount > 0"
+            class="mt-2 font-weight-bold bg-warning-lighten-5 pa-2 rounded"
+          >
             <v-icon color="warning" class="mr-1">mdi-alert</v-icon>
-            Lưu ý: Chủ đề này chứa <strong>{{ statusItem.vocabularyCount }}</strong> từ vựng.
+            Lưu ý: Chủ đề này chứa
+            <strong>{{ statusItem.vocabularyCount }}</strong> từ vựng.
           </div>
         </v-card-text>
         <v-divider></v-divider>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="grey" variant="text" @click="statusDialog = false">Hủy</v-btn>
+          <v-btn color="grey" variant="text" @click="statusDialog = false"
+            >Hủy</v-btn
+          >
           <v-btn
             :color="statusItem?.isActive ? 'error' : 'success'"
             variant="elevated"
             @click="toggleTopicStatus"
           >
-            {{ statusItem?.isActive ? 'Vô hiệu hóa' : 'Kích hoạt' }}
+            {{ statusItem?.isActive ? "Vô hiệu hóa" : "Kích hoạt" }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -262,22 +286,25 @@
           </p>
           <div class="mt-2 font-weight-bold bg-error-lighten-5 pa-2 rounded">
             <v-icon color="error" class="mr-1">mdi-alert</v-icon>
-            Cảnh báo: Hành động này không thể hoàn tác và sẽ xóa tất cả dữ liệu liên quan!
+            Cảnh báo: Hành động này không thể hoàn tác và sẽ xóa tất cả dữ liệu
+            liên quan!
           </div>
-          <div v-if="deleteItem?.vocabularyCount && deleteItem.vocabularyCount > 0" class="mt-2 font-weight-bold bg-warning-lighten-5 pa-2 rounded">
+          <div
+            v-if="deleteItem?.vocabularyCount && deleteItem.vocabularyCount > 0"
+            class="mt-2 font-weight-bold bg-warning-lighten-5 pa-2 rounded"
+          >
             <v-icon color="warning" class="mr-1">mdi-alert</v-icon>
-            Lưu ý: Việc xóa chủ đề này sẽ xóa <strong>{{ deleteItem.vocabularyCount }}</strong> từ vựng.
+            Lưu ý: Việc xóa chủ đề này sẽ xóa
+            <strong>{{ deleteItem.vocabularyCount }}</strong> từ vựng.
           </div>
         </v-card-text>
         <v-divider></v-divider>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="grey" variant="text" @click="deleteDialog = false">Hủy</v-btn>
-          <v-btn
-            color="error"
-            variant="elevated"
-            @click="deleteTopic"
+          <v-btn color="grey" variant="text" @click="deleteDialog = false"
+            >Hủy</v-btn
           >
+          <v-btn color="error" variant="elevated" @click="deleteTopic">
             Xác nhận xóa
           </v-btn>
         </v-card-actions>
@@ -287,16 +314,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import topicService from '@/services/topicService';
-import categoryService from '@/services/categoryService';
-import type { Topic, CreateTopicRequest, UpdateTopicRequest } from '@/services/topicService';
-import type { Category } from '@/services/categoryService';
-import { useToast } from 'vue-toast-notification';
-import { format, parseISO } from 'date-fns';
-import { vi } from 'date-fns/locale';
+import { ref, computed, watch, onMounted } from "vue";
+import topicService from "@/services/topic.service";
+import categoryService from "@/services/category.service";
+import type {
+  Topic,
+  CreateTopicRequest,
+  UpdateTopicRequest,
+  Category,
+} from "@/types/learning.types";
+import { useAppToast } from "@/composables/useAppToast";
+import { useDebounce } from "@/composables/useDebounce";
+import { format, parseISO } from "date-fns";
+import { vi } from "date-fns/locale";
 
-const $toast = useToast();
+const $toast = useAppToast();
+
+const searchTerm = computed(() => searchQuery.value.term);
+const debouncedSearchTerm = useDebounce(searchTerm, 400);
+watch(debouncedSearchTerm, () => searchTopics());
 
 // Data
 const topics = ref<Topic[]>([]);
@@ -305,7 +341,7 @@ const selectedCategoryId = ref<string | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const searchQuery = ref({
-  term: ''
+  term: "",
 });
 const valid = ref(false);
 const form = ref(null);
@@ -316,46 +352,71 @@ const statusDialog = ref(false);
 const deleteDialog = ref(false);
 const editedIndex = ref(-1);
 const editedItem = ref<CreateTopicRequest | UpdateTopicRequest>({
-  name: '',
-  meaning: '',
+  name: "",
+  meaning: "",
   displayOrder: 0,
   isActive: true,
-  categoryId: ''
+  categoryId: "",
 });
 const defaultItem: CreateTopicRequest = {
-  name: '',
-  meaning: '',
+  name: "",
+  meaning: "",
   displayOrder: 0,
   isActive: true,
-  categoryId: ''
+  categoryId: "",
 };
 const statusItem = ref<Topic | null>(null);
 const deleteItem = ref<Topic | null>(null);
 
 // Table headers
 const headers = [
-  { title: 'Tên chủ đề', key: 'name', align: 'start' as const, sortable: true },
-  { title: 'Ý nghĩa', key: 'meaning', align: 'start' as const, sortable: true },
-  { title: 'Danh mục', key: 'categoryName', align: 'start' as const, sortable: true },
-  { title: 'Từ vựng', key: 'vocabularyCount', align: 'center' as const, sortable: true },
-  { title: 'Trạng thái', key: 'isActive', align: 'center' as const, sortable: true },
-  { title: 'Cập nhật', key: 'updatedAt', align: 'center' as const, sortable: true },
-  { title: 'Thao tác', key: 'actions', align: 'center' as const, sortable: false }
+  { title: "Tên chủ đề", key: "name", align: "start" as const, sortable: true },
+  { title: "Ý nghĩa", key: "meaning", align: "start" as const, sortable: true },
+  {
+    title: "Danh mục",
+    key: "categoryName",
+    align: "start" as const,
+    sortable: true,
+  },
+  {
+    title: "Từ vựng",
+    key: "vocabularyCount",
+    align: "center" as const,
+    sortable: true,
+  },
+  {
+    title: "Trạng thái",
+    key: "isActive",
+    align: "center" as const,
+    sortable: true,
+  },
+  {
+    title: "Cập nhật",
+    key: "updatedAt",
+    align: "center" as const,
+    sortable: true,
+  },
+  {
+    title: "Thao tác",
+    key: "actions",
+    align: "center" as const,
+    sortable: false,
+  },
 ];
 
 // Format dates with Vietnamese locale
 const formatDate = (dateString: string | undefined) => {
-  if (!dateString) return 'N/A';
+  if (!dateString) return "N/A";
   try {
-    return format(parseISO(dateString), 'dd/MM/yyyy', { locale: vi });
-  } catch (e) {
-    return 'Ngày không hợp lệ';
+    return format(parseISO(dateString), "dd/MM/yyyy", { locale: vi });
+  } catch {
+    return "Ngày không hợp lệ";
   }
 };
 
 // Computed properties
 const formTitle = computed(() => {
-  return editedIndex.value === -1 ? 'Thêm chủ đề mới' : 'Chỉnh sửa chủ đề';
+  return editedIndex.value === -1 ? "Thêm chủ đề mới" : "Chỉnh sửa chủ đề";
 });
 
 // Methods
@@ -364,11 +425,12 @@ async function fetchTopics() {
     loading.value = true;
     error.value = null;
 
-    const response = await topicService.adminGetAllTopics();
-    topics.value = response.data;
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Không thể tải danh sách chủ đề';
-    $toast.error(error.value || 'Không thể tải danh sách chủ đề');
+    topics.value = await topicService.adminGetAllTopics();
+  } catch (err: unknown) {
+    error.value =
+      (err as { response?: { data?: { message?: string } } }).response?.data
+        ?.message || "Không thể tải danh sách chủ đề";
+    $toast.error(error.value || "Không thể tải danh sách chủ đề");
     topics.value = [];
   } finally {
     loading.value = false;
@@ -377,10 +439,9 @@ async function fetchTopics() {
 
 async function fetchCategories() {
   try {
-    const response = await categoryService.adminGetAllCategories();
-    categories.value = response.data;
-  } catch (err: any) {
-    $toast.error('Không thể tải danh sách danh mục');
+    categories.value = await categoryService.adminGetAllCategories();
+  } catch {
+    $toast.error("Không thể tải danh sách danh mục");
     categories.value = [];
   }
 }
@@ -391,15 +452,18 @@ async function fetchTopicsByCategory() {
     error.value = null;
 
     if (selectedCategoryId.value) {
-      const response = await topicService.adminGetTopicsByCategoryId(selectedCategoryId.value);
-      topics.value = response.data;
+      topics.value = await topicService.adminGetTopicsByCategoryId(
+        selectedCategoryId.value,
+      );
     } else {
       // If no category is selected, fetch all topics
       await fetchTopics();
     }
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Không thể tải danh sách chủ đề';
-    $toast.error(error.value || 'Không thể tải danh sách chủ đề');
+  } catch (err: unknown) {
+    error.value =
+      (err as { response?: { data?: { message?: string } } }).response?.data
+        ?.message || "Không thể tải danh sách chủ đề";
+    $toast.error(error.value || "Không thể tải danh sách chủ đề");
   } finally {
     loading.value = false;
   }
@@ -420,36 +484,28 @@ async function searchTopics() {
     }
 
     if (selectedCategoryId.value) {
-      const response = await topicService.adminSearchTopics(selectedCategoryId.value, searchQuery.value.term);
-      topics.value = response.data;
+      topics.value = await topicService.adminSearchTopics(
+        selectedCategoryId.value,
+        searchQuery.value.term,
+      );
     } else {
-      // If searching without a category, we'll just filter the client-side
-      // Ideally, the API should support searching across all categories
-      const response = await topicService.adminGetAllTopics();
-      const allTopics = response.data;
+      // If searching without a category, filter client-side
+      const allTopics = await topicService.adminGetAllTopics();
       const term = searchQuery.value.term.toLowerCase();
-      topics.value = allTopics.filter(topic =>
-        topic.name.toLowerCase().includes(term) ||
-        topic.meaning.toLowerCase().includes(term)
+      topics.value = allTopics.filter(
+        (topic) =>
+          topic.name.toLowerCase().includes(term) ||
+          (topic.meaning ?? "").toLowerCase().includes(term),
       );
     }
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Không thể tìm kiếm chủ đề';
-    $toast.error(error.value || 'Không thể tìm kiếm chủ đề');
+  } catch (err: unknown) {
+    error.value =
+      (err as { response?: { data?: { message?: string } } }).response?.data
+        ?.message || "Không thể tìm kiếm chủ đề";
+    $toast.error(error.value || "Không thể tìm kiếm chủ đề");
   } finally {
     loading.value = false;
   }
-}
-
-// Debounce function for search
-let debounceTimeout: number | null = null;
-function debouncedSearch() {
-  if (debounceTimeout) {
-    clearTimeout(debounceTimeout);
-  }
-  debounceTimeout = setTimeout(() => {
-    searchTopics();
-  }, 500) as unknown as number;
 }
 
 function openAddDialog() {
@@ -465,7 +521,7 @@ function openEditDialog(item: Topic) {
     meaning: item.meaning,
     displayOrder: item.displayOrder,
     isActive: item.isActive,
-    categoryId: item.categoryId
+    categoryId: item.categoryId,
   };
   dialog.value = true;
 }
@@ -490,15 +546,17 @@ async function saveTopic() {
         meaning: editedItem.value.meaning,
         displayOrder: editedItem.value.displayOrder as number,
         isActive: editedItem.value.isActive as boolean,
-        categoryId: editedItem.value.categoryId
+        categoryId: editedItem.value.categoryId,
       };
 
       await topicService.adminUpdateTopic(topicId, updateData);
-      $toast.success('Cập nhật chủ đề thành công');
+      $toast.success("Cập nhật chủ đề thành công");
     } else {
       // Create new topic
-      await topicService.adminCreateTopic(editedItem.value as CreateTopicRequest);
-      $toast.success('Thêm chủ đề mới thành công');
+      await topicService.adminCreateTopic(
+        editedItem.value as CreateTopicRequest,
+      );
+      $toast.success("Thêm chủ đề mới thành công");
     }
 
     closeDialog();
@@ -507,9 +565,11 @@ async function saveTopic() {
     } else {
       fetchTopics();
     }
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Không thể lưu chủ đề';
-    $toast.error(error.value || 'Không thể lưu chủ đề');
+  } catch (err: unknown) {
+    error.value =
+      (err as { response?: { data?: { message?: string } } }).response?.data
+        ?.message || "Không thể lưu chủ đề";
+    $toast.error(error.value || "Không thể lưu chủ đề");
   }
 }
 
@@ -525,8 +585,8 @@ async function toggleTopicStatus() {
     await topicService.adminToggleTopicStatus(statusItem.value.topicId);
     $toast.success(
       statusItem.value.isActive
-        ? 'Đã vô hiệu hóa chủ đề thành công'
-        : 'Đã kích hoạt chủ đề thành công'
+        ? "Đã vô hiệu hóa chủ đề thành công"
+        : "Đã kích hoạt chủ đề thành công",
     );
     statusDialog.value = false;
     if (selectedCategoryId.value) {
@@ -534,12 +594,15 @@ async function toggleTopicStatus() {
     } else {
       fetchTopics();
     }
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Không thể thay đổi trạng thái chủ đề';
-    $toast.error(error.value || 'Không thể thay đổi trạng thái chủ đề');
+  } catch (err: unknown) {
+    error.value =
+      (err as { response?: { data?: { message?: string } } }).response?.data
+        ?.message || "Không thể thay đổi trạng thái chủ đề";
+    $toast.error(error.value || "Không thể thay đổi trạng thái chủ đề");
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function confirmDelete(item: Topic) {
   deleteItem.value = item;
   deleteDialog.value = true;
@@ -550,16 +613,18 @@ async function deleteTopic() {
 
   try {
     await topicService.adminDeleteTopic(deleteItem.value.topicId);
-    $toast.success('Đã xóa chủ đề thành công');
+    $toast.success("Đã xóa chủ đề thành công");
     deleteDialog.value = false;
     if (selectedCategoryId.value) {
       fetchTopicsByCategory();
     } else {
       fetchTopics();
     }
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Không thể xóa chủ đề';
-    $toast.error(error.value || 'Không thể xóa chủ đề');
+  } catch (err: unknown) {
+    error.value =
+      (err as { response?: { data?: { message?: string } } }).response?.data
+        ?.message || "Không thể xóa chủ đề";
+    $toast.error(error.value || "Không thể xóa chủ đề");
   }
 }
 

@@ -1,12 +1,12 @@
 ﻿package com.example.learningservice.service
 
+import com.example.common.exception.BusinessException
 import com.example.learningservice.dto.CategoryDTO
 import com.example.learningservice.dto.CreateCategoryRequest
 import com.example.learningservice.dto.TopicDTO
 import com.example.learningservice.dto.UpdateCategoryRequest
 import com.example.learningservice.dto.toDTO
 import com.example.learningservice.entity.CategoryEntity
-import com.example.common.exception.BusinessException
 import com.example.learningservice.repository.CategoryRepository
 import com.example.learningservice.repository.TopicRepository
 import com.example.learningservice.repository.UserRepository
@@ -21,11 +21,11 @@ class CategoryService(
     private val categoryRepository: CategoryRepository,
     private val topicRepository: TopicRepository,
     private val userRepository: UserRepository,
-    private val userAuthUtil: UserAuthUtil
-)  {
+    private val userAuthUtil: UserAuthUtil,
+) {
 
     @Transactional(readOnly = true)
-     fun getAllCategories(): List<CategoryDTO> {
+    fun getAllCategories(): List<CategoryDTO> {
         return categoryRepository.findAllByOrderByDisplayOrderAsc().map { it.toDTO() }
     }
 
@@ -54,7 +54,7 @@ class CategoryService(
             meaning = request.meaning,
             displayOrder = request.displayOrder,
             createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now()
+            updatedAt = LocalDateTime.now(),
         )
 
         val savedCategory = categoryRepository.save(category)
@@ -69,7 +69,8 @@ class CategoryService(
         // Check if another category with the new name already exists (if name is being updated)
         if (request.name != null &&
             request.name != category.name &&
-            categoryRepository.existsByName(request.name)) {
+            categoryRepository.existsByName(request.name)
+        ) {
             throw BusinessException("A category with the name '${request.name}' already exists")
         }
 
@@ -78,7 +79,7 @@ class CategoryService(
             meaning = request.meaning ?: category.meaning,
             displayOrder = request.displayOrder ?: category.displayOrder,
             isActive = request.isActive ?: category.isActive,
-            updatedAt = LocalDateTime.now()
+            updatedAt = LocalDateTime.now(),
         )
 
         val savedCategory = categoryRepository.save(updatedCategory)
@@ -92,7 +93,7 @@ class CategoryService(
 
         val updatedCategory = category.copy(
             isActive = !category.isActive,
-            updatedAt = LocalDateTime.now()
+            updatedAt = LocalDateTime.now(),
         )
 
         val savedCategory = categoryRepository.save(updatedCategory)
@@ -121,7 +122,8 @@ class CategoryService(
             // If both name and meaning are provided
             !nameQuery.isNullOrBlank() && !meaningQuery.isNullOrBlank() -> {
                 categoryRepository.findByNameContainingIgnoreCaseOrMeaningContainingIgnoreCase(
-                    nameQuery, meaningQuery
+                    nameQuery,
+                    meaningQuery,
                 ).map { it.toDTO() }
             }
             // If only name is provided
@@ -143,7 +145,7 @@ class CategoryService(
     fun getTopicsForCategory(categoryId: UUID): List<TopicDTO> {
         val category = categoryRepository.findById(categoryId)
             .orElseThrow { BusinessException("Category not found with ID: $categoryId") }
-        
+
         val topics = topicRepository.findByCategoryOrderByDisplayOrderAsc(category)
         return topics.map { it.toDTO() }
     }

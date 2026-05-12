@@ -30,5 +30,5 @@ data class VocabularyFilterRequestDto(
     val size: Int = 10,
 
     @JsonProperty("sort")
-    val sort: String? = null
+    val sort: String? = null,
 )

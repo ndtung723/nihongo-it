@@ -20,7 +20,9 @@
 
     <!-- Category Title -->
     <div v-if="category" class="px-4 mb-3">
-      <div class="text-h4 font-weight-bold text-center japanese-text">{{ category.name }}</div>
+      <div class="text-h4 font-weight-bold text-center japanese-text">
+        {{ category.name }}
+      </div>
       <div class="text-subtitle-1 text-center">{{ category.meaning }}</div>
     </div>
 
@@ -42,7 +44,9 @@
           <v-card-title class="d-flex align-center">
             <span class="japanese-text">{{ topic.name }}</span>
             <v-spacer></v-spacer>
-            <v-chip size="small" color="success">{{ getVocabularyCount(topic) }} words</v-chip>
+            <v-chip size="small" color="success"
+              >{{ getVocabularyCount(topic) }} words</v-chip
+            >
           </v-card-title>
           <v-card-text>
             <div class="text-body-1">{{ topic.meaning }}</div>
@@ -90,191 +94,196 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import vocabularyService from '@/services/vocabulary.service'
-import { useToast } from 'vue-toast-notification'
+import { ref, computed, onMounted, watch } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import vocabularyService from "@/services/vocabulary.service";
+import { useAppToast } from "@/composables/useAppToast";
 
 // Define interfaces for the data structures
 interface Topic {
-  id: string
-  name: string
-  meaning: string
-  categoryId?: string
+  id: string;
+  name: string;
+  meaning: string;
+  categoryId?: string;
   category?: {
-    id: string
-    name: string
-  }
-  displayOrder: number
-  vocabularyCount?: number
+    id: string;
+    name: string;
+  };
+  displayOrder: number;
+  vocabularyCount?: number;
 }
 
 interface Category {
-  id: string
-  name: string
-  meaning: string
-  displayOrder: number
+  id: string;
+  name: string;
+  meaning: string;
+  displayOrder: number;
 }
 
-const router = useRouter()
-const route = useRoute()
-const toast = useToast()
+const router = useRouter();
+const route = useRoute();
+const toast = useAppToast();
 
 // State variables
-const loading = ref(true)
-const category = ref<Category | null>(null)
-const topics = ref<Topic[]>([])
-const jlptLevels = ref<string[]>([])
-const selectedJlptLevel = ref<string | null>(null)
-const showFilterDialog = ref(false)
+const loading = ref(true);
+const category = ref<Category | null>(null);
+const topics = ref<Topic[]>([]);
+const jlptLevels = ref<string[]>([]);
+const selectedJlptLevel = ref<string | null>(null);
+const showFilterDialog = ref(false);
 
 // Computed properties
 const topicsList = computed(() => {
   // Sort topics by display order
-  return [...topics.value].sort((a, b) => a.displayOrder - b.displayOrder)
-})
+  return [...topics.value].sort((a, b) => a.displayOrder - b.displayOrder);
+});
 
 // Get the category slug from the route
-const categorySlug = computed(() => route.params.slug as string)
+const categorySlug = computed(() => route.params.slug as string);
 
 // Watchers
-watch(() => route.params.slug, (newSlug) => {
-  if (newSlug) {
-    fetchCategoryDetails(newSlug as string)
-  }
-})
+watch(
+  () => route.params.slug,
+  (newSlug) => {
+    if (newSlug) {
+      fetchCategoryDetails(newSlug as string);
+    }
+  },
+);
 
 // Lifecycle hooks
 onMounted(async () => {
   if (categorySlug.value) {
     await Promise.all([
       fetchCategoryDetails(categorySlug.value),
-      fetchJlptLevels()
-    ])
+      fetchJlptLevels(),
+    ]);
   }
-})
+});
 
 // Methods
 async function fetchCategoryDetails(slug: string) {
   try {
-    loading.value = true
+    loading.value = true;
 
     // Fetch all categories first
-    const categoriesResponse = await vocabularyService.getCategories()
+    const categoriesResponse = await vocabularyService.getCategories();
 
     if (Array.isArray(categoriesResponse)) {
       // Find the category by slug (assuming slug is either the id or the name)
       const foundCategory = categoriesResponse.find(
-        cat => cat.id === slug || cat.name === slug || encodeURIComponent(cat.name) === slug
-      )
+        (cat) =>
+          cat.id === slug ||
+          cat.name === slug ||
+          encodeURIComponent(cat.name) === slug,
+      );
 
       if (foundCategory) {
         category.value = {
           id: foundCategory.id || foundCategory.categoryId,
           name: foundCategory.name,
           meaning: foundCategory.meaning,
-          displayOrder: foundCategory.displayOrder || 0
-        }
+          displayOrder: foundCategory.displayOrder || 0,
+        };
 
         // Fetch topics for this category
-        await fetchTopicsByCategory(category.value.id)
+        await fetchTopicsByCategory(category.value.id);
       } else {
-        category.value = null
-        topics.value = []
-        toast.error('Category not found', {
-          position: 'top',
-          duration: 3000
-        })
+        category.value = null;
+        topics.value = [];
+        toast.error("Category not found", {
+          position: "top",
+          duration: 3000,
+        });
       }
     }
-  } catch (error) {
-    toast.error('Failed to load category details', {
-      position: 'top',
-      duration: 3000
-    })
-    category.value = null
-    topics.value = []
+  } catch {
+    toast.error("Failed to load category details", {
+      position: "top",
+      duration: 3000,
+    });
+    category.value = null;
+    topics.value = [];
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 async function fetchTopicsByCategory(categoryId: string) {
   try {
-    const response = await vocabularyService.getTopicsByCategory(categoryId)
+    const response = await vocabularyService.getTopicsByCategory(categoryId);
 
     if (Array.isArray(response)) {
-      topics.value = response.map(topic => {
+      topics.value = response.map((topic) => {
         return {
           id: topic.id || topic.topicId,
           name: topic.name,
           meaning: topic.meaning,
           categoryId: categoryId,
           displayOrder: topic.displayOrder || 0,
-          vocabularyCount: topic.vocabularyCount || 0
-        }
-      })
+          vocabularyCount: topic.vocabularyCount || 0,
+        };
+      });
     } else {
-      topics.value = []
+      topics.value = [];
     }
-  } catch (error) {
-    toast.error('Failed to load topics for this category', {
-      position: 'top',
-      duration: 3000
-    })
-    topics.value = []
+  } catch {
+    toast.error("Failed to load topics for this category", {
+      position: "top",
+      duration: 3000,
+    });
+    topics.value = [];
   }
 }
 
 async function fetchJlptLevels() {
   try {
-    const response = await vocabularyService.getJlptLevels()
-    jlptLevels.value = response
-  } catch (error) {
+    const response = await vocabularyService.getJlptLevels();
+    jlptLevels.value = response as string[];
+  } catch {
     // Use default values if API call fails
-    jlptLevels.value = ['N1', 'N2', 'N3', 'N4', 'N5']
+    jlptLevels.value = ["N1", "N2", "N3", "N4", "N5"];
   }
 }
 
 function handleTopicSelect(topic: Topic) {
-
   // Navigate to topic detail view with encoded topic name
   router.push({
-    name: 'topicDetail',
-    params: { name: encodeURIComponent(topic.name) }
+    name: "topicDetail",
+    params: { name: encodeURIComponent(topic.name) },
   });
 }
 
 function getVocabularyCount(topic: Topic): number | string {
-  return topic.vocabularyCount || '?'
+  return topic.vocabularyCount || "?";
 }
 
 function goBack() {
-  router.back()
+  router.back();
 }
 
 function goToCategories() {
-  router.push({ name: 'vocabularyLearning' })
+  router.push({ name: "vocabularyLearning" });
 }
 
 function openFilterDialog() {
-  showFilterDialog.value = true
+  showFilterDialog.value = true;
 }
 
 function applyFilters() {
   // Navigate to vocabulary list with filters
   router.push({
-    name: 'vocabularyLearning',
+    name: "vocabularyLearning",
     query: {
       jlptLevel: selectedJlptLevel.value,
-      categoryId: category.value?.id
-    }
-  })
-  showFilterDialog.value = false
+      categoryId: category.value?.id,
+    },
+  });
+  showFilterDialog.value = false;
 }
 
 function clearAllFilters() {
-  selectedJlptLevel.value = null
+  selectedJlptLevel.value = null;
 }
 </script>
 
@@ -286,7 +295,7 @@ function clearAllFilters() {
 }
 
 .japanese-text {
-  font-family: 'Noto Sans JP', sans-serif;
+  font-family: "Noto Sans JP", sans-serif;
 }
 
 .topic-card {

@@ -1,14 +1,15 @@
 package com.example.learningservice.entity
 
 import jakarta.persistence.*
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.*
 
 @Entity
-@Table(name = "vocabulary", 
+@Table(
+    name = "vocabulary",
     uniqueConstraints = [
-        UniqueConstraint(columnNames = ["term"], name = "uk_vocabulary_term")
-    ]
+        UniqueConstraint(columnNames = ["term"], name = "uk_vocabulary_term"),
+    ],
 )
 data class VocabularyEntity(
     @Id
@@ -42,8 +43,8 @@ data class VocabularyEntity(
     @JoinColumn(name = "topic_id")
     val topic: TopicEntity,
 
-    @Column(name = "created_at")
-    val createdAt: LocalDateTime?,
+    @Column(name = "created_at", columnDefinition = "TIMESTAMP")
+    val createdAt: Instant? = null,
 
     @OneToMany(mappedBy = "vocabulary", cascade = [CascadeType.ALL])
     val flashcards: MutableList<FlashcardEntity> = mutableListOf(),

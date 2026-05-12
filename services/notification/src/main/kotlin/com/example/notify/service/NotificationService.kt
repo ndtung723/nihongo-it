@@ -7,15 +7,18 @@ import com.example.notify.entity.UserEntity
 import com.example.notify.repository.NotificationRepository
 import jakarta.annotation.PostConstruct
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.mail.SimpleMailMessage
 import org.springframework.mail.javamail.JavaMailSender
+import org.springframework.mail.javamail.MimeMessageHelper
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
-import org.springframework.mail.javamail.MimeMessageHelper
+import java.util.UUID
 
 /**
  * Service for managing notifications for the Japanese IT vocabulary learning application
@@ -24,7 +27,7 @@ import org.springframework.mail.javamail.MimeMessageHelper
 @Service
 class NotificationService(
     private val notificationRepository: NotificationRepository,
-    private val javaMailSender: JavaMailSender
+    private val javaMailSender: JavaMailSender,
 ) {
     private val logger = LoggerFactory.getLogger(NotificationService::class.java)
 
@@ -42,10 +45,12 @@ class NotificationService(
     fun init() {
         disableNotificationActionUrl = "$frontendUrl/account/notifications"
     }
+
     /**
      * Send a notification to a user through their preferred channels
      */
     @Transactional
+    @Suppress("LongParameterList")
     fun sendNotification(
         user: UserEntity,
         title: String,
@@ -54,7 +59,7 @@ class NotificationService(
         actionUrl: String? = null,
         reviewCount: Int? = null,
         reviewCategory: String? = null,
-        priorityLevel: Int = 0
+        priorityLevel: Int = 0,
     ): NotificationEntity {
         logger.debug("Sending notification to user ${user.userId} - Type: $type, Title: $title")
 
@@ -69,7 +74,7 @@ class NotificationService(
             reviewCount = reviewCount,
             reviewCategory = reviewCategory,
             priorityLevel = priorityLevel,
-            notificationChannel = NotificationChannel.APP
+            notificationChannel = NotificationChannel.APP,
         )
 
         // Save to database first (in-app notification)
@@ -88,7 +93,7 @@ class NotificationService(
 
     /**
      * Sends an HTML email notification to the specified email address
-     * 
+     *
      * @param to The recipient email address
      * @param subject The email subject
      * @param content The email content
@@ -102,7 +107,7 @@ class NotificationService(
 
             val message = javaMailSender.createMimeMessage()
             val helper = MimeMessageHelper(message, true, "UTF-8")
-            
+
             helper.setFrom(senderEmail)
             helper.setTo(to)
             helper.setSubject(subject)
@@ -126,7 +131,7 @@ class NotificationService(
     private fun buildHtmlEmailContent(content: String, actionUrl: String?, actionText: String): String {
         val paragraphs = content.split("\n\n").filter { it.isNotEmpty() }
         val paragraphHtml = paragraphs.joinToString("") { "<p style=\"margin: 0 0 16px 0; line-height: 1.5;\">$it</p>" }
-        
+
         val buttonHtml = if (actionUrl != null) {
             """
             <div style="text-align: center; margin: 24px 0;">
@@ -173,25 +178,26 @@ class NotificationService(
 
     /**
      * Sends a password change email to the user (simplified version)
-     * 
+     *
      * @param email The user's email address
      * @param resetToken The password reset token
      */
     @Async
     fun sendPasswordResetEmail(email: String, resetToken: String) {
         val resetUrl = "$frontendUrl/account/reset-password?token=$resetToken"
-        
+
         sendPasswordResetEmail(email, resetToken, resetUrl)
     }
 
     /**
      * Sends a password change email to the user
-     * 
+     *
      * @param email The user's email address
      * @param resetToken The password reset token
      * @param resetUrl The password change URL with token
      */
     @Async
+    @Suppress("UnusedParameter")
     fun sendPasswordResetEmail(email: String, resetToken: String, resetUrl: String) {
         val subject = "Password Change Request - Nihongo IT"
         val content = """
@@ -209,7 +215,7 @@ class NotificationService(
             Best regards,
             The Nihongo IT Team
         """.trimIndent()
-        
+
         try {
             logger.debug("Sending password change email to $email")
 
@@ -218,9 +224,9 @@ class NotificationService(
             message.setTo(email)
             message.setSubject(subject)
             message.setText(content)
-            
+
             javaMailSender.send(message)
-            
+
             logger.debug("Password change email sent successfully to $email")
         } catch (e: Exception) {
             logger.error("Failed to send password change email to $email: ${e.message}")
@@ -230,7 +236,7 @@ class NotificationService(
 
     /**
      * Get the latest notification of a specific type for a user
-     * 
+     *
      * @param user The user entity
      * @param type The notification type to search for
      * @return The latest notification of the specified type, or null if none found
@@ -239,13 +245,45 @@ class NotificationService(
         return notificationRepository.findFirstByUserAndTypeOrderBySentAtDesc(user, type)
     }
 
+    companion object {
+        private const val MAX_PAGE_SIZE = 50
+    }
+
+    fun listForUser(userId: UUID, page: Int, size: Int): Page<NotificationEntity> {
+        val pageable = PageRequest.of(
+            maxOf(0, page),
+            size.coerceIn(1, MAX_PAGE_SIZE),
+            Sort.by(Sort.Direction.DESC, "sentAt"),
+        )
+        return notificationRepository.findByUser_UserIdOrderBySentAtDesc(userId, pageable)
+    }
+
+    fun countUnreadForUser(userId: UUID): Long =
+        notificationRepository.countByUser_UserIdAndIsReadFalse(userId)
+
+    @Transactional
+    fun markAsReadForUser(userId: UUID, notificationId: UUID): Boolean {
+        val notification = notificationRepository.findByNotificationIdAndUser_UserId(notificationId, userId)
+            ?: return false
+        notificationRepository.save(notification.copy(isRead = true, readAt = LocalDateTime.now()))
+        return true
+    }
+
+    @Transactional
+    fun markAllAsReadForUser(userId: UUID): Int =
+        notificationRepository.markAllReadByUserId(userId)
+
+    @Transactional
+    fun deleteForUser(userId: UUID, notificationId: UUID): Boolean =
+        notificationRepository.deleteByIdAndUserId(notificationId, userId) > 0
+
     /**
      * Sends a flashcard review reminder email with special styling and card count information
      */
     @Async
     fun sendFlashcardReminderEmail(to: String, cardCount: Int, actionUrl: String) {
         val subject = "Nhắc nhở: $cardCount thẻ ghi nhớ cần ôn tập"
-        
+
         // Build more targeted content for flashcard reminders
         val content = """
             Xin chào,
@@ -257,10 +295,10 @@ class NotificationService(
             Chúc bạn học tập hiệu quả,
             Đội ngũ Nihongo IT
         """.trimIndent()
-        
+
         // More specific action text for flashcards
         val actionText = "Ôn tập $cardCount thẻ ngay"
-        
+
         // Send the HTML email
         sendEmailNotification(to, subject, content, actionUrl, actionText)
     }

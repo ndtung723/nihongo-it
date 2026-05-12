@@ -13,11 +13,11 @@ interface ConversationRepository : JpaRepository<ConversationEntity, UUID> {
      * Find conversations by title or description containing the query (case insensitive)
      */
     fun findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(
-        title: String, 
-        description: String, 
-        pageable: Pageable
+        title: String,
+        description: String,
+        pageable: Pageable,
     ): Page<ConversationEntity>
-    
+
     /**
      * Find conversations by JLPT level
      */

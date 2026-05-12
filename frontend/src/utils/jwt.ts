@@ -1,5 +1,6 @@
-import { jwtDecode } from 'jwt-decode';
-import { ROLES } from '@/types/roles';
+import { jwtDecode } from "jwt-decode";
+import { ROLES } from "@/types/roles";
+import { getAccessToken } from "@/utils/tokenStore";
 
 export interface JwtPayload {
   sub: string;
@@ -30,7 +31,7 @@ export function isTokenExpired(token: string): boolean {
 }
 
 export function getStoredPayload(): JwtPayload | null {
-  const token = localStorage.getItem('auth_token');
+  const token = getAccessToken();
   if (!token) return null;
   return decodeToken(token);
 }

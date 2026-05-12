@@ -12,6 +12,7 @@ import org.springframework.context.annotation.ComponentScan
 @ComponentScan(basePackages = ["com.example.aiservice"])
 class AIServiceApplication
 
+@Suppress("SpreadOperator")
 fun main(args: Array<String>) {
     runApplication<AIServiceApplication>(*args)
-} 
+}

@@ -1,4 +1,4 @@
-package com.example.learningservice.repository
+﻿package com.example.learningservice.repository
 
 import com.example.learningservice.entity.ConversationLineEntity
 import org.springframework.data.jpa.repository.JpaRepository
@@ -15,4 +15,4 @@ interface ConversationLineRepository : JpaRepository<ConversationLineEntity, UUI
     @Modifying
     @Query("DELETE FROM ConversationLineEntity c WHERE c.conversation.convId = :conversationId")
     fun deleteByConversationId(conversationId: UUID)
-} 
+}

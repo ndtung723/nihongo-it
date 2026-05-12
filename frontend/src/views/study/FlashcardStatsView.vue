@@ -18,8 +18,16 @@
 
       <!-- Loading State -->
       <v-row v-if="loading">
-        <v-col cols="12" class="d-flex justify-center align-center" style="min-height: 300px;">
-          <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+        <v-col
+          cols="12"
+          class="d-flex justify-center align-center"
+          style="min-height: 300px"
+        >
+          <v-progress-circular
+            indeterminate
+            color="primary"
+            size="64"
+          ></v-progress-circular>
         </v-col>
       </v-row>
 
@@ -28,7 +36,13 @@
         <v-col cols="12">
           <v-alert type="error" variant="tonal">
             Không thể tải dữ liệu thống kê. Vui lòng thử lại sau.
-            <v-btn color="error" variant="text" class="mt-2" @click="fetchStatistics">Thử lại</v-btn>
+            <v-btn
+              color="error"
+              variant="text"
+              class="mt-2"
+              @click="fetchStatistics"
+              >Thử lại</v-btn
+            >
           </v-alert>
         </v-col>
       </v-row>
@@ -43,9 +57,15 @@
                 <div class="d-flex justify-space-between align-center">
                   <div>
                     <div class="text-overline">Tổng thẻ</div>
-                    <div class="text-h4">{{ stats.summary?.totalCards || 0 }}</div>
+                    <div class="text-h4">
+                      {{ stats.summary?.totalCards || 0 }}
+                    </div>
                   </div>
-                  <v-icon icon="mdi-cards-outline" size="36" color="primary"></v-icon>
+                  <v-icon
+                    icon="mdi-cards-outline"
+                    size="36"
+                    color="primary"
+                  ></v-icon>
                 </div>
               </v-card-text>
             </v-card>
@@ -57,9 +77,15 @@
                 <div class="d-flex justify-space-between align-center">
                   <div>
                     <div class="text-overline">Thẻ đến hạn</div>
-                    <div class="text-h4">{{ stats.summary?.dueCardsNow || 0 }}</div>
+                    <div class="text-h4">
+                      {{ stats.summary?.dueCardsNow || 0 }}
+                    </div>
                   </div>
-                  <v-icon icon="mdi-calendar-clock" size="36" color="warning"></v-icon>
+                  <v-icon
+                    icon="mdi-calendar-clock"
+                    size="36"
+                    color="warning"
+                  ></v-icon>
                 </div>
               </v-card-text>
             </v-card>
@@ -71,7 +97,9 @@
                 <div class="d-flex justify-space-between align-center">
                   <div>
                     <div class="text-overline">Chuỗi ngày học</div>
-                    <div class="text-h4">{{ stats.summary?.currentStreak || 0 }}</div>
+                    <div class="text-h4">
+                      {{ stats.summary?.currentStreak || 0 }}
+                    </div>
                   </div>
                   <v-icon icon="mdi-fire" size="36" color="error"></v-icon>
                 </div>
@@ -85,7 +113,9 @@
                 <div class="d-flex justify-space-between align-center">
                   <div>
                     <div class="text-overline">Tỷ lệ ghi nhớ</div>
-                    <div class="text-h4">{{ formatPercent(stats.summary?.overallRetentionRate) }}</div>
+                    <div class="text-h4">
+                      {{ formatPercent(stats.summary?.overallRetentionRate) }}
+                    </div>
                   </div>
                   <v-icon icon="mdi-brain" size="36" color="success"></v-icon>
                 </div>
@@ -161,7 +191,10 @@
               </v-card-title>
               <v-card-text>
                 <div class="d-flex flex-wrap justify-center gap-4">
-                  <template v-for="(count, level) in stats.cardsByJlptLevel" :key="level">
+                  <template
+                    v-for="(count, level) in stats.cardsByJlptLevel"
+                    :key="level"
+                  >
                     <div
                       v-if="String(level) !== 'unknown' && Number(count) > 0"
                       class="jlpt-level-card"
@@ -169,7 +202,11 @@
                     >
                       <div class="text-h5 font-weight-bold">{{ level }}</div>
                       <div class="text-body-1">{{ count }} thẻ</div>
-                      <div class="text-caption">{{ calculateJlptPercent(String(level), Number(count)) }}%</div>
+                      <div class="text-caption">
+                        {{
+                          calculateJlptPercent(String(level), Number(count))
+                        }}%
+                      </div>
                     </div>
                   </template>
                 </div>
@@ -194,9 +231,13 @@
                     class="state-card"
                     :class="`state-${state}`"
                   >
-                    <div class="text-h6 text-capitalize">{{ formatState(String(state)) }}</div>
+                    <div class="text-h6 text-capitalize">
+                      {{ formatState(String(state)) }}
+                    </div>
                     <div class="text-body-1">{{ count }} thẻ</div>
-                    <div class="text-caption">{{ calculateStatePercent(String(state), count) }}%</div>
+                    <div class="text-caption">
+                      {{ calculateStatePercent(String(state), count) }}%
+                    </div>
                   </div>
                 </div>
               </v-card-text>
@@ -220,10 +261,35 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
-import { useRouter } from 'vue-router';
-import flashcardService from '@/services/flashcard.service';
-import Chart from 'chart.js/auto';
+import { ref, onMounted, computed, watch } from "vue";
+import { useRouter } from "vue-router";
+import flashcardService from "@/services/flashcard.service";
+import type { Chart as ChartType } from "chart.js";
+
+interface FlashcardStatsSummary {
+  totalCards: number;
+  dueCardsNow: number;
+  currentStreak: number;
+  overallRetentionRate: number;
+  reviewsLast30Days: number;
+}
+
+interface MemoryStrengthDistribution {
+  weak: number;
+  medium: number;
+  strong: number;
+  new?: number;
+}
+
+interface FlashcardStats {
+  summary: FlashcardStatsSummary;
+  cardsByJlptLevel: Record<string, number>;
+  cardsByState: Record<string, number>;
+  dailyReviews: Record<string, number>;
+  retentionRateByDay: Record<string, number>;
+  cardsDueByDay: Record<string, number>;
+  memoryStrengthDistribution: MemoryStrengthDistribution;
+}
 
 // Router
 const router = useRouter();
@@ -231,8 +297,8 @@ const router = useRouter();
 // State
 const loading = ref(true);
 const error = ref(false);
-const stats = ref<any>(null);
-const charts = ref<{ [key: string]: Chart }>({});
+const stats = ref<FlashcardStats | null>(null);
+const charts = ref<{ [key: string]: ChartType }>({});
 
 // Chart references
 const reviewActivityChart = ref<HTMLCanvasElement | null>(null);
@@ -242,12 +308,14 @@ const memoryStrengthChart = ref<HTMLCanvasElement | null>(null);
 
 // Computed properties
 const hasJlptCards = computed(() => {
-  if (!stats.value?.cardsByJlptLevel) return false;
+  const s = stats.value;
+  if (!s?.cardsByJlptLevel) return false;
 
-  const jlptLevels = Object.keys(stats.value.cardsByJlptLevel)
-    .filter(level => level !== 'unknown');
+  const jlptLevels = Object.keys(s.cardsByJlptLevel).filter(
+    (level) => level !== "unknown",
+  );
 
-  return jlptLevels.some(level => stats.value.cardsByJlptLevel[level] > 0);
+  return jlptLevels.some((level) => s.cardsByJlptLevel[level] > 0);
 });
 
 // Fetch statistics
@@ -256,8 +324,9 @@ const fetchStatistics = async () => {
   error.value = false;
 
   try {
-    stats.value = await flashcardService.getStudyStatistics();
-  } catch (err) {
+    stats.value =
+      (await flashcardService.getStudyStatistics()) as FlashcardStats;
+  } catch {
     error.value = true;
   } finally {
     loading.value = false;
@@ -266,136 +335,156 @@ const fetchStatistics = async () => {
 
 // Navigation
 const goToFlashcardStudy = () => {
-  router.push({ name: 'flashcardStudy' })
+  router.push({ name: "flashcardStudy" });
 };
 
 // Format helpers
 const formatPercent = (value: number | undefined) => {
-  if (value === undefined) return '0%';
+  if (value === undefined) return "0%";
   return `${Math.round(value)}%`;
 };
 
 const formatState = (state: string) => {
   switch (state) {
-    case 'new': return 'Mới';
-    case 'learning': return 'Đang học';
-    case 'review': return 'Ôn tập';
-    case 'relearning': return 'Học lại';
-    default: return state;
+    case "new":
+      return "Mới";
+    case "learning":
+      return "Đang học";
+    case "review":
+      return "Ôn tập";
+    case "relearning":
+      return "Học lại";
+    default:
+      return state;
   }
 };
 
 const calculateJlptPercent = (level: string, count: number) => {
-  if (!stats.value?.summary?.totalCards || stats.value.summary.totalCards === 0) return 0;
+  if (!stats.value?.summary?.totalCards || stats.value.summary.totalCards === 0)
+    return 0;
   return Math.round((count / stats.value.summary.totalCards) * 100);
 };
 
 const calculateStatePercent = (state: string, count: number) => {
-  if (!stats.value?.summary?.totalCards || stats.value.summary.totalCards === 0) return 0;
+  if (!stats.value?.summary?.totalCards || stats.value.summary.totalCards === 0)
+    return 0;
   return Math.round((count / stats.value.summary.totalCards) * 100);
 };
 
 // Generate chart data objects
 const getReviewActivityChartData = () => {
-  if (!stats.value?.dailyReviews) return null;
+  const s = stats.value;
+  if (!s?.dailyReviews) return null;
 
   // Sort dates chronologically
-  const dates = Object.keys(stats.value.dailyReviews).sort();
-  const reviewCounts = dates.map(date => stats.value.dailyReviews[date] || 0);
+  const dates = Object.keys(s.dailyReviews).sort();
+  const reviewCounts = dates.map((date) => s.dailyReviews[date] || 0);
 
   return {
-    labels: dates.map(date => formatDate(date)),
-    datasets: [{
-      label: 'Số lượt ôn tập',
-      data: reviewCounts,
-      fill: true,
-      backgroundColor: 'rgba(75, 192, 192, 0.2)',
-      borderColor: 'rgba(75, 192, 192, 1)',
-      tension: 0.4,
-    }]
+    labels: dates.map((date) => formatDate(date)),
+    datasets: [
+      {
+        label: "Số lượt ôn tập",
+        data: reviewCounts,
+        fill: true,
+        backgroundColor: "rgba(75, 192, 192, 0.2)",
+        borderColor: "rgba(75, 192, 192, 1)",
+        tension: 0.4,
+      },
+    ],
   };
 };
 
 const getRetentionRateChartData = () => {
-  if (!stats.value?.retentionRateByDay) return null;
+  const s = stats.value;
+  if (!s?.retentionRateByDay) return null;
 
   // Sort dates chronologically
-  const dates = Object.keys(stats.value.retentionRateByDay).sort();
-  const retentionRates = dates.map(date => stats.value.retentionRateByDay[date] || 0);
+  const dates = Object.keys(s.retentionRateByDay).sort();
+  const retentionRates = dates.map((date) => s.retentionRateByDay[date] || 0);
 
   return {
-    labels: dates.map(date => formatDate(date)),
-    datasets: [{
-      label: 'Tỷ lệ ghi nhớ (%)',
-      data: retentionRates,
-      fill: false,
-      backgroundColor: 'rgba(153, 102, 255, 0.2)',
-      borderColor: 'rgba(153, 102, 255, 1)',
-      tension: 0.4,
-    }]
+    labels: dates.map((date) => formatDate(date)),
+    datasets: [
+      {
+        label: "Tỷ lệ ghi nhớ (%)",
+        data: retentionRates,
+        fill: false,
+        backgroundColor: "rgba(153, 102, 255, 0.2)",
+        borderColor: "rgba(153, 102, 255, 1)",
+        tension: 0.4,
+      },
+    ],
   };
 };
 
 const getCardsDueChartData = () => {
-  if (!stats.value?.cardsDueByDay) return null;
+  const s = stats.value;
+  if (!s?.cardsDueByDay) return null;
 
   // Sort dates chronologically
-  const dates = Object.keys(stats.value.cardsDueByDay).sort();
-  const dueCounts = dates.map(date => stats.value.cardsDueByDay[date] || 0);
+  const dates = Object.keys(s.cardsDueByDay).sort();
+  const dueCounts = dates.map((date) => s.cardsDueByDay[date] || 0);
 
   return {
-    labels: dates.map(date => formatDate(date)),
-    datasets: [{
-      label: 'Thẻ đến hạn',
-      data: dueCounts,
-      backgroundColor: 'rgba(255, 159, 64, 0.7)',
-      borderColor: 'rgba(255, 159, 64, 1)',
-      borderWidth: 1
-    }]
+    labels: dates.map((date) => formatDate(date)),
+    datasets: [
+      {
+        label: "Thẻ đến hạn",
+        data: dueCounts,
+        backgroundColor: "rgba(255, 159, 64, 0.7)",
+        borderColor: "rgba(255, 159, 64, 1)",
+        borderWidth: 1,
+      },
+    ],
   };
 };
 
 const getMemoryStrengthChartData = () => {
   if (!stats.value?.memoryStrengthDistribution) return null;
 
-  const labels = ['Yếu', 'Trung bình', 'Mạnh'];
+  const labels = ["Yếu", "Trung bình", "Mạnh"];
   const counts = [
     stats.value.memoryStrengthDistribution.weak || 0,
     stats.value.memoryStrengthDistribution.medium || 0,
-    stats.value.memoryStrengthDistribution.strong || 0
+    stats.value.memoryStrengthDistribution.strong || 0,
   ];
 
   return {
     labels,
-    datasets: [{
-      data: counts,
-      backgroundColor: [
-        'rgba(255, 99, 132, 0.7)',
-        'rgba(255, 206, 86, 0.7)',
-        'rgba(54, 162, 235, 0.7)'
-      ],
-      borderColor: [
-        'rgba(255, 99, 132, 1)',
-        'rgba(255, 206, 86, 1)',
-        'rgba(54, 162, 235, 1)'
-      ],
-      borderWidth: 1
-    }]
+    datasets: [
+      {
+        data: counts,
+        backgroundColor: [
+          "rgba(255, 99, 132, 0.7)",
+          "rgba(255, 206, 86, 0.7)",
+          "rgba(54, 162, 235, 0.7)",
+        ],
+        borderColor: [
+          "rgba(255, 99, 132, 1)",
+          "rgba(255, 206, 86, 1)",
+          "rgba(54, 162, 235, 1)",
+        ],
+        borderWidth: 1,
+      },
+    ],
   };
 };
 
 // Format date helper
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
-  return date.toLocaleDateString('vi-VN', { month: 'short', day: 'numeric' });
+  return date.toLocaleDateString("vi-VN", { month: "short", day: "numeric" });
 };
 
-// Initialize charts
-const initCharts = () => {
+// Initialize charts — Chart.js loaded on-demand to reduce initial bundle size
+const initCharts = async () => {
   if (!stats.value) return;
 
+  const { default: Chart } = await import("chart.js/auto");
+
   // Clean up existing charts
-  Object.values(charts.value).forEach(chart => chart.destroy());
+  Object.values(charts.value).forEach((chart) => chart.destroy());
   charts.value = {};
 
   // Initialize new charts
@@ -403,7 +492,7 @@ const initCharts = () => {
     const data = getReviewActivityChartData();
     if (data) {
       charts.value.reviewActivity = new Chart(reviewActivityChart.value, {
-        type: 'line',
+        type: "line",
         data,
         options: {
           responsive: true,
@@ -412,11 +501,11 @@ const initCharts = () => {
             y: {
               beginAtZero: true,
               ticks: {
-                precision: 0
-              }
-            }
-          }
-        }
+                precision: 0,
+              },
+            },
+          },
+        },
       });
     }
   }
@@ -425,7 +514,7 @@ const initCharts = () => {
     const data = getRetentionRateChartData();
     if (data) {
       charts.value.retentionRate = new Chart(retentionRateChart.value, {
-        type: 'line',
+        type: "line",
         data,
         options: {
           responsive: true,
@@ -435,11 +524,11 @@ const initCharts = () => {
               min: 0,
               max: 100,
               ticks: {
-                callback: (value) => `${value}%`
-              }
-            }
-          }
-        }
+                callback: (value) => `${value}%`,
+              },
+            },
+          },
+        },
       });
     }
   }
@@ -448,7 +537,7 @@ const initCharts = () => {
     const data = getCardsDueChartData();
     if (data) {
       charts.value.cardsDue = new Chart(cardsDueChart.value, {
-        type: 'bar',
+        type: "bar",
         data,
         options: {
           responsive: true,
@@ -457,11 +546,11 @@ const initCharts = () => {
             y: {
               beginAtZero: true,
               ticks: {
-                precision: 0
-              }
-            }
-          }
-        }
+                precision: 0,
+              },
+            },
+          },
+        },
       });
     }
   }
@@ -470,30 +559,34 @@ const initCharts = () => {
     const data = getMemoryStrengthChartData();
     if (data) {
       charts.value.memoryStrength = new Chart(memoryStrengthChart.value, {
-        type: 'doughnut',
+        type: "doughnut",
         data,
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
             legend: {
-              position: 'bottom'
-            }
-          }
-        }
+              position: "bottom",
+            },
+          },
+        },
       });
     }
   }
 };
 
 // Watch for changes to stats
-watch(stats, () => {
-  if (stats.value) {
-    setTimeout(() => {
-      initCharts();
-    }, 100);
-  }
-}, { deep: true });
+watch(
+  stats,
+  () => {
+    if (stats.value) {
+      setTimeout(() => {
+        initCharts();
+      }, 100);
+    }
+  },
+  { deep: true },
+);
 
 // Lifecycle hooks
 onMounted(() => {

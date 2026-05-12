@@ -1,4 +1,4 @@
-package com.example.learningservice.controller
+﻿package com.example.learningservice.controller
 
 import com.example.learningservice.dto.CreateTopicRequest
 import com.example.learningservice.dto.TopicDTO
@@ -22,21 +22,21 @@ import java.util.UUID
 @RequestMapping("/api/v1/learning/topics")
 @Tag(name = "Topics", description = "API endpoints for managing Japanese IT vocabulary topics")
 class TopicController(
-    private val topicService: TopicService
+    private val topicService: TopicService,
 ) {
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(
         summary = "Get all topics",
-        description = "Returns a list of all available topics"
+        description = "Returns a list of all available topics",
     )
     @ApiResponses(
         value = [
             ApiResponse(
                 responseCode = "200",
                 description = "Successfully retrieved topics list",
-                content = [Content(mediaType = "application/json")]
-            )
-        ]
+                content = [Content(mediaType = "application/json")],
+            ),
+        ],
     )
     fun getAllTopics(): ResponseEntity<List<TopicDTO>> {
         return ResponseEntity.ok(topicService.getAllTopics())
@@ -45,21 +45,21 @@ class TopicController(
     @GetMapping("/{topicId}", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(
         summary = "Get topic by ID",
-        description = "Returns a specific topic by its ID"
+        description = "Returns a specific topic by its ID",
     )
     @ApiResponses(
         value = [
             ApiResponse(
                 responseCode = "200",
                 description = "Successfully retrieved topic",
-                content = [Content(mediaType = "application/json")]
+                content = [Content(mediaType = "application/json")],
             ),
-            ApiResponse(responseCode = "404", description = "Topic not found")
-        ]
+            ApiResponse(responseCode = "404", description = "Topic not found"),
+        ],
     )
     fun getTopicById(
         @Parameter(description = "Topic ID", required = true)
-        @PathVariable topicId: UUID
+        @PathVariable topicId: UUID,
     ): ResponseEntity<TopicDTO> {
         return ResponseEntity.ok(topicService.getTopicById(topicId))
     }
@@ -69,21 +69,21 @@ class TopicController(
     @Operation(
         summary = "Create new topic",
         description = "Creates a new topic with the provided details",
-        security = [SecurityRequirement(name = "bearerAuth")]
+        security = [SecurityRequirement(name = "bearerAuth")],
     )
     @ApiResponses(
         value = [
             ApiResponse(
                 responseCode = "201",
                 description = "Topic created successfully",
-                content = [Content(mediaType = "application/json")]
+                content = [Content(mediaType = "application/json")],
             ),
             ApiResponse(responseCode = "400", description = "Invalid request data"),
-            ApiResponse(responseCode = "401", description = "Unauthorized - authentication required")
-        ]
+            ApiResponse(responseCode = "401", description = "Unauthorized - authentication required"),
+        ],
     )
     fun createTopic(
-        @RequestBody request: CreateTopicRequest
+        @RequestBody request: CreateTopicRequest,
     ): ResponseEntity<TopicDTO> {
         return ResponseEntity.status(HttpStatus.CREATED).body(topicService.createTopic(request))
     }
@@ -93,24 +93,24 @@ class TopicController(
     @Operation(
         summary = "Update topic",
         description = "Updates an existing topic with the provided details",
-        security = [SecurityRequirement(name = "bearerAuth")]
+        security = [SecurityRequirement(name = "bearerAuth")],
     )
     @ApiResponses(
         value = [
             ApiResponse(
                 responseCode = "200",
                 description = "Topic updated successfully",
-                content = [Content(mediaType = "application/json")]
+                content = [Content(mediaType = "application/json")],
             ),
             ApiResponse(responseCode = "400", description = "Invalid request data"),
             ApiResponse(responseCode = "401", description = "Unauthorized - authentication required"),
-            ApiResponse(responseCode = "404", description = "Topic not found")
-        ]
+            ApiResponse(responseCode = "404", description = "Topic not found"),
+        ],
     )
     fun updateTopic(
         @Parameter(description = "Topic ID", required = true)
         @PathVariable topicId: UUID,
-        @RequestBody request: UpdateTopicRequest
+        @RequestBody request: UpdateTopicRequest,
     ): ResponseEntity<TopicDTO> {
         return ResponseEntity.ok(topicService.updateTopic(topicId, request))
     }
@@ -120,22 +120,22 @@ class TopicController(
     @Operation(
         summary = "Delete topic",
         description = "Deletes a topic by its ID",
-        security = [SecurityRequirement(name = "bearerAuth")]
+        security = [SecurityRequirement(name = "bearerAuth")],
     )
     @ApiResponses(
         value = [
             ApiResponse(
                 responseCode = "204",
-                description = "Topic deleted successfully"
+                description = "Topic deleted successfully",
             ),
             ApiResponse(responseCode = "401", description = "Unauthorized - authentication required"),
-            ApiResponse(responseCode = "404", description = "Topic not found")
-        ]
+            ApiResponse(responseCode = "404", description = "Topic not found"),
+        ],
     )
     fun deleteTopic(
         @Parameter(description = "Topic ID", required = true)
-        @PathVariable topicId: UUID
-    ): ResponseEntity<Void> {
+        @PathVariable topicId: UUID,
+    ): ResponseEntity<Unit> {
         topicService.deleteTopic(topicId)
         return ResponseEntity.noContent().build()
     }
@@ -143,23 +143,23 @@ class TopicController(
     @GetMapping("/search", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(
         summary = "Search topics",
-        description = "Search topics within a category"
+        description = "Search topics within a category",
     )
     @ApiResponses(
         value = [
             ApiResponse(
                 responseCode = "200",
                 description = "Successfully retrieved topics list",
-                content = [Content(mediaType = "application/json")]
-            )
-        ]
+                content = [Content(mediaType = "application/json")],
+            ),
+        ],
     )
     fun searchTopics(
         @Parameter(description = "Category ID", required = true)
         @RequestParam categoryId: UUID,
         @Parameter(description = "Search query", required = true)
-        @RequestParam query: String
+        @RequestParam query: String,
     ): ResponseEntity<List<TopicDTO>> {
         return ResponseEntity.ok(topicService.searchTopicsInCategory(categoryId, query))
     }
-} 
+}

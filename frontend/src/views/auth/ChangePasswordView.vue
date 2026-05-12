@@ -90,81 +90,85 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useAuthStore } from '@/stores'
-import { useRouter } from 'vue-router'
+import { ref } from "vue";
+import { useAuthStore } from "@/stores";
+import { useRouter } from "vue-router";
 
-const authStore = useAuthStore()
-const router = useRouter()
-const currentPassword = ref('')
-const newPassword = ref('')
-const confirmPassword = ref('')
-const error = ref('')
-const success = ref('')
-const loading = ref(false)
-const form = ref<any>(null)
+const authStore = useAuthStore();
+const router = useRouter();
+const currentPassword = ref("");
+const newPassword = ref("");
+const confirmPassword = ref("");
+const error = ref("");
+const success = ref("");
+const loading = ref(false);
+const form = ref<{ validate: () => Promise<{ valid: boolean }> } | null>(null);
 
 const rules = {
-  required: (v: string) => !!v || 'Trường này là bắt buộc',
-  minLength: (v: string) => v.length >= 8 || 'Mật khẩu phải có ít nhất 8 ký tự',
-  passwordMatch: (v: string) => v === newPassword.value || 'Mật khẩu không khớp'
-}
+  required: (v: string) => !!v || "Trường này là bắt buộc",
+  minLength: (v: string) => v.length >= 8 || "Mật khẩu phải có ít nhất 8 ký tự",
+  passwordMatch: (v: string) =>
+    v === newPassword.value || "Mật khẩu không khớp",
+};
 
 const handleSubmit = async () => {
   // Check form validation
-  const { valid } = await form.value.validate()
+  if (!form.value) return;
+  const { valid } = await form.value.validate();
 
   if (!valid) {
-    return
+    return;
   }
 
   if (newPassword.value === currentPassword.value) {
-    error.value = 'Mật khẩu mới không được trùng với mật khẩu hiện tại'
-    return
+    error.value = "Mật khẩu mới không được trùng với mật khẩu hiện tại";
+    return;
   }
 
-  error.value = ''
-  success.value = ''
-  loading.value = true
+  error.value = "";
+  success.value = "";
+  loading.value = true;
 
   try {
     const result = await authStore.changePassword({
       currentPassword: currentPassword.value,
       newPassword: newPassword.value,
-      confirmPassword: confirmPassword.value
-    })
+      confirmPassword: confirmPassword.value,
+    });
 
     if (result) {
-      success.value = 'Mật khẩu của bạn đã được thay đổi thành công'
+      success.value = "Mật khẩu của bạn đã được thay đổi thành công";
       // Clear form
-      currentPassword.value = ''
-      newPassword.value = ''
-      confirmPassword.value = ''
+      currentPassword.value = "";
+      newPassword.value = "";
+      confirmPassword.value = "";
 
       // Redirect to profile after 3 seconds
       setTimeout(() => {
-        router.push({ name: 'profile' })
-      }, 3000)
+        router.push({ name: "profile" });
+      }, 3000);
     } else if (authStore.error) {
-      error.value = translateError(authStore.error)
+      error.value = translateError(authStore.error);
     }
-  } catch (err: any) {
-    error.value = err.message || 'Đã xảy ra lỗi. Vui lòng thử lại.'
+  } catch (err: unknown) {
+    error.value = (err as Error).message || "Đã xảy ra lỗi. Vui lòng thử lại.";
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 const translateError = (error: string): string => {
   const errorMap: Record<string, string> = {
-    'Current password is incorrect': 'Mật khẩu hiện tại không chính xác',
-    'User not found': 'Không tìm thấy người dùng',
-    'Authentication required. Please log in again.': 'Yêu cầu xác thực. Vui lòng đăng nhập lại.',
-    'An unexpected error occurred. Please try again.': 'Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.'
-  }
+    "Current password is incorrect": "Mật khẩu hiện tại không chính xác",
+    "User not found": "Không tìm thấy người dùng",
+    "Authentication required. Please log in again.":
+      "Yêu cầu xác thực. Vui lòng đăng nhập lại.",
+    "An unexpected error occurred. Please try again.":
+      "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.",
+  };
 
-  return errorMap[error] || error
-}
+  return errorMap[error] || error;
+};
 </script>
 
 <style scoped lang="scss">
@@ -183,7 +187,9 @@ const translateError = (error: string): string => {
     border-radius: 12px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
     padding: 2rem;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition:
+      transform 0.3s ease,
+      box-shadow 0.3s ease;
 
     &:hover {
       transform: translateY(-5px);

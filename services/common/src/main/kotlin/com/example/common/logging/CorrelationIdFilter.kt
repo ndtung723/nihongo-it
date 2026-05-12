@@ -19,7 +19,7 @@ class CorrelationIdFilter : OncePerRequestFilter() {
     override fun doFilterInternal(
         request: HttpServletRequest,
         response: HttpServletResponse,
-        chain: FilterChain
+        chain: FilterChain,
     ) {
         val correlationId = request.getHeader(CORRELATION_ID_HEADER)
             ?: UUID.randomUUID().toString()

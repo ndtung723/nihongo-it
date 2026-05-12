@@ -8,6 +8,7 @@ import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer
 @EnableEurekaServer
 class EurekaServerApplication
 
+@Suppress("SpreadOperator")
 fun main(args: Array<String>) {
     runApplication<EurekaServerApplication>(*args)
-} 
+}

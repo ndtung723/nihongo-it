@@ -39,36 +39,36 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, onMounted, computed } from "vue";
+import { useRouter, useRoute } from "vue-router";
 
-const router = useRouter()
-const route = useRoute()
-const currentTime = ref('21:21')
-const dataRate = ref('0.16 KB/s')
+const router = useRouter();
+const route = useRoute();
+const currentTime = ref("21:21");
+const dataRate = ref("0.16 KB/s");
 
 // Computed
-const lessonId = computed(() => route.params.lessonId as string)
+const lessonId = computed(() => route.params.lessonId as string);
 
 // Methods
 function updateTime() {
-  const date = new Date()
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  currentTime.value = `${hours}:${minutes}`
+  const date = new Date();
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  currentTime.value = `${hours}:${minutes}`;
 }
 
 function goBack() {
-  router.back()
+  router.back();
 }
 
 // Lifecycle hooks
 onMounted(() => {
-  updateTime()
+  updateTime();
 
   // Update time every minute
-  setInterval(updateTime, 60000)
-})
+  setInterval(updateTime, 60000);
+});
 </script>
 
 <style scoped lang="scss">

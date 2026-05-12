@@ -1,4 +1,4 @@
-package com.example.learningservice.entity
+﻿package com.example.learningservice.entity
 
 import jakarta.persistence.*
 import java.time.LocalDateTime
@@ -26,10 +26,10 @@ data class CategoryEntity(
 
     @Column(name = "created_at")
     val createdAt: LocalDateTime? = LocalDateTime.now(),
-    
+
     @Column(name = "updated_at")
     val updatedAt: LocalDateTime? = LocalDateTime.now(),
-    
+
     @OneToMany(mappedBy = "category", cascade = [CascadeType.ALL], orphanRemoval = true)
-    val topics: MutableList<TopicEntity> = mutableListOf()
-) 
+    val topics: MutableList<TopicEntity> = mutableListOf(),
+)

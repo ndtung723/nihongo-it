@@ -13,7 +13,12 @@
         </div>
       </div>
       <div class="d-flex align-center">
-        <v-btn icon variant="tonal" class="filter-button" @click="openFilterDialog">
+        <v-btn
+          icon
+          variant="tonal"
+          class="filter-button"
+          @click="openFilterDialog"
+        >
           <v-icon>mdi-filter-variant</v-icon>
         </v-btn>
       </div>
@@ -73,7 +78,13 @@
               <v-icon color="error" size="large">mdi-alert-circle</v-icon>
             </template>
             <div class="text-body-1 font-weight-medium">{{ errorMessage }}</div>
-            <v-btn class="mt-3" color="error" variant="tonal" @click="fetchConversations" prepend-icon="mdi-refresh">
+            <v-btn
+              class="mt-3"
+              color="error"
+              variant="tonal"
+              @click="fetchConversations"
+              prepend-icon="mdi-refresh"
+            >
               Thử lại
             </v-btn>
           </v-alert>
@@ -92,8 +103,16 @@
             <template v-slot:prepend>
               <v-icon color="info" size="large">mdi-information</v-icon>
             </template>
-            <div class="text-body-1 font-weight-medium">Không tìm thấy cuộc hội thoại nào. Vui lòng quay lại sau.</div>
-            <v-btn v-if="search" class="mt-3" color="primary" variant="tonal" @click="clearSearch">
+            <div class="text-body-1 font-weight-medium">
+              Không tìm thấy cuộc hội thoại nào. Vui lòng quay lại sau.
+            </div>
+            <v-btn
+              v-if="search"
+              class="mt-3"
+              color="primary"
+              variant="tonal"
+              @click="clearSearch"
+            >
               Xóa tìm kiếm
             </v-btn>
           </v-alert>
@@ -103,8 +122,12 @@
         <div v-else class="conversation-list py-0">
           <div class="active-filters mb-4" v-if="search || jlptFilter">
             <div class="d-flex align-center">
-              <v-icon size="small" color="primary" class="mr-2">mdi-filter-outline</v-icon>
-              <span class="text-body-2 text-medium-emphasis">Bộ lọc hiện tại:</span>
+              <v-icon size="small" color="primary" class="mr-2"
+                >mdi-filter-outline</v-icon
+              >
+              <span class="text-body-2 text-medium-emphasis"
+                >Bộ lọc hiện tại:</span
+              >
 
               <v-chip
                 v-if="search"
@@ -140,7 +163,11 @@
             </div>
           </div>
 
-          <transition-group name="conversation-list" tag="div" class="conversation-list-container">
+          <transition-group
+            name="conversation-list"
+            tag="div"
+            class="conversation-list-container"
+          >
             <v-card
               v-for="(conversation, index) in filteredConversations"
               :key="conversation.conversationId"
@@ -151,14 +178,24 @@
               :class="`jlpt-${conversation.jlptLevel?.toLowerCase()}-card`"
             >
               <div class="d-flex">
-                <div class="conversation-content flex-grow-1 d-flex flex-column">
+                <div
+                  class="conversation-content flex-grow-1 d-flex flex-column"
+                >
                   <v-card-item>
                     <template v-slot:prepend>
-                      <v-avatar color="transparent" variant="tonal" class="conversation-avatar mr-3">
-                        <v-img :src="getConversationImage(conversation.jlptLevel)" />
+                      <v-avatar
+                        color="transparent"
+                        variant="tonal"
+                        class="conversation-avatar mr-3"
+                      >
+                        <v-img
+                          :src="getConversationImage(conversation.jlptLevel)"
+                        />
                       </v-avatar>
                     </template>
-                    <v-card-title class="text-h6 font-weight-bold mb-1 d-flex align-center">
+                    <v-card-title
+                      class="text-h6 font-weight-bold mb-1 d-flex align-center"
+                    >
                       {{ conversation.title }}
                     </v-card-title>
                     <v-card-subtitle class="text-body-2">
@@ -171,20 +208,35 @@
                   <v-card-text class="pt-2">
                     <div class="d-flex flex-wrap conversation-meta">
                       <div class="meta-item mr-4">
-                        <v-icon size="small" color="primary" class="mr-1">mdi-message-text</v-icon>
-                        <span class="text-body-2 font-weight-medium">{{ getLineCount(conversation) }} câu hội thoại</span>
+                        <v-icon size="small" color="primary" class="mr-1"
+                          >mdi-message-text</v-icon
+                        >
+                        <span class="text-body-2 font-weight-medium"
+                          >{{ getLineCount(conversation) }} câu hội thoại</span
+                        >
                       </div>
 
                       <div class="meta-item mr-4">
-                        <v-icon size="small" color="primary" class="mr-1">mdi-book-open-variant</v-icon>
-                        <span class="text-body-2 font-weight-medium">Bài {{ conversation.unit || 'N/A' }}</span>
+                        <v-icon size="small" color="primary" class="mr-1"
+                          >mdi-book-open-variant</v-icon
+                        >
+                        <span class="text-body-2 font-weight-medium"
+                          >Bài {{ conversation.unit || "N/A" }}</span
+                        >
                       </div>
 
                       <div class="meta-item">
-                        <v-icon size="small" :color="getDifficultyColor(conversation.jlptLevel)" class="mr-1">
+                        <v-icon
+                          size="small"
+                          :color="getDifficultyColor(conversation.jlptLevel)"
+                          class="mr-1"
+                        >
                           {{ getDifficultyIcon(conversation.jlptLevel) }}
                         </v-icon>
-                        <span class="text-body-2 font-weight-medium" :class="`text-${getDifficultyColor(conversation.jlptLevel)}`">
+                        <span
+                          class="text-body-2 font-weight-medium"
+                          :class="`text-${getDifficultyColor(conversation.jlptLevel)}`"
+                        >
                           {{ getDifficultyText(conversation.jlptLevel) }}
                         </span>
                       </div>
@@ -244,7 +296,9 @@
                 {{ level }}
               </v-chip>
             </div>
-            <p class="text-body-2 mt-2">レベルをクリックして、フィルターを適用します。</p>
+            <p class="text-body-2 mt-2">
+              レベルをクリックして、フィルターを適用します。
+            </p>
           </v-card-text>
         </v-card>
 
@@ -255,13 +309,19 @@
             学習経路
           </v-card-title>
           <v-card-text>
-            <p class="text-body-2">様々なシチュエーションの会話を練習しましょう。</p>
+            <p class="text-body-2">
+              様々なシチュエーションの会話を練習しましょう。
+            </p>
             <div class="d-flex align-center mt-2">
-              <v-icon size="small" color="success" class="mr-2">mdi-check-circle</v-icon>
+              <v-icon size="small" color="success" class="mr-2"
+                >mdi-check-circle</v-icon
+              >
               <span class="text-body-2">基本的な会話からスタート</span>
             </div>
             <div class="d-flex align-center mt-2">
-              <v-icon size="small" color="success" class="mr-2">mdi-check-circle</v-icon>
+              <v-icon size="small" color="success" class="mr-2"
+                >mdi-check-circle</v-icon
+              >
               <span class="text-body-2">実践的な練習を通して上達</span>
             </div>
           </v-card-text>
@@ -356,115 +416,122 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import conversationService from '@/services/conversation.service'
-import type { Conversation, PagedResponse } from '@/services/conversation.service'
-import { useToast } from 'vue-toast-notification'
+import { ref, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import conversationService from "@/services/conversation.service";
+import type {
+  Conversation,
+  PagedResponse,
+} from "@/services/conversation.service";
+import { useAppToast } from "@/composables/useAppToast";
 
 // Router and toast
-const router = useRouter()
-const toast = useToast()
+const router = useRouter();
+const toast = useAppToast();
 
 // State variables
-const conversations = ref<Conversation[]>([])
-const loading = ref(true)
-const error = ref(false)
-const errorMessage = ref('Đã xảy ra lỗi khi tải dữ liệu hội thoại.')
-const currentPage = ref(1) // 1-based for v-pagination
-const totalPages = ref(0)
-const pageSize = ref(10)
-const search = ref('')
-const jlptFilter = ref('')
-const showFilterDialog = ref(false)
-const jlptLevels = ref(['N1', 'N2', 'N3', 'N4', 'N5'])
-const searchFieldFocused = ref(false)
+const conversations = ref<Conversation[]>([]);
+const loading = ref(true);
+const error = ref(false);
+const errorMessage = ref("Đã xảy ra lỗi khi tải dữ liệu hội thoại.");
+const currentPage = ref(1); // 1-based for v-pagination
+const totalPages = ref(0);
+const pageSize = ref(10);
+const search = ref("");
+const jlptFilter = ref("");
+const showFilterDialog = ref(false);
+const jlptLevels = ref(["N1", "N2", "N3", "N4", "N5"]);
+const searchFieldFocused = ref(false);
 
 // Computed properties
 const filteredConversations = computed(() => {
-  if (!search.value && !jlptFilter.value) return conversations.value
+  if (!search.value && !jlptFilter.value) return conversations.value;
 
-  return conversations.value.filter(conversation => {
-    const matchesSearch = !search.value ||
+  return conversations.value.filter((conversation) => {
+    const matchesSearch =
+      !search.value ||
       conversation.title?.toLowerCase().includes(search.value.toLowerCase()) ||
-      (conversation.description?.toLowerCase() || '').includes(search.value.toLowerCase())
+      (conversation.description?.toLowerCase() || "").includes(
+        search.value.toLowerCase(),
+      );
 
-    const matchesJlpt = !jlptFilter.value || conversation.jlptLevel === jlptFilter.value
+    const matchesJlpt =
+      !jlptFilter.value || conversation.jlptLevel === jlptFilter.value;
 
-    return matchesSearch && matchesJlpt
-  })
-})
+    return matchesSearch && matchesJlpt;
+  });
+});
 
 // Debounce function
-let searchTimeout: any = null
+let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 function debouncedSearch() {
-  clearTimeout(searchTimeout)
+  clearTimeout(searchTimeout ?? undefined);
   searchTimeout = setTimeout(() => {
     // Filter is handled by computed property
-  }, 300)
+  }, 300);
 }
 
 // Methods
 const getJlptColor = (level: string | undefined): string => {
-  if (!level) return 'grey'
+  if (!level) return "grey";
 
   const colors: Record<string, string> = {
-    'N1': 'red',
-    'N2': 'orange',
-    'N3': 'amber',
-    'N4': 'light-green',
-    'N5': 'green'
-  }
-  return colors[level] || 'grey'
-}
+    N1: "red",
+    N2: "orange",
+    N3: "amber",
+    N4: "light-green",
+    N5: "green",
+  };
+  return colors[level] || "grey";
+};
 
 const getDifficultyText = (jlptLevel: string | undefined): string => {
-  if (!jlptLevel) return 'Không xác định'
+  if (!jlptLevel) return "Không xác định";
 
   const difficulties: Record<string, string> = {
-    'N1': 'Khó',
-    'N2': 'Khó',
-    'N3': 'Trung bình',
-    'N4': 'Trung bình',
-    'N5': 'Dễ'
-  }
-  return difficulties[jlptLevel] || 'Không xác định'
-}
+    N1: "Khó",
+    N2: "Khó",
+    N3: "Trung bình",
+    N4: "Trung bình",
+    N5: "Dễ",
+  };
+  return difficulties[jlptLevel] || "Không xác định";
+};
 
 const getDifficultyColor = (jlptLevel: string | undefined): string => {
-  if (!jlptLevel) return 'grey'
-
-  const difficultyText = getDifficultyText(jlptLevel)
-  if (difficultyText === 'Dễ') return 'success'
-  if (difficultyText === 'Trung bình') return 'warning'
-  if (difficultyText === 'Khó') return 'error'
-  return 'grey'
-}
-
-const getDifficultyIcon = (jlptLevel: string | undefined): string => {
-  if (!jlptLevel) return 'mdi-help-circle-outline';
+  if (!jlptLevel) return "grey";
 
   const difficultyText = getDifficultyText(jlptLevel);
-  if (difficultyText === 'Dễ') return 'mdi-star-outline';
-  if (difficultyText === 'Trung bình') return 'mdi-star-half-full';
-  if (difficultyText === 'Khó') return 'mdi-star';
-  return 'mdi-help-circle-outline';
+  if (difficultyText === "Dễ") return "success";
+  if (difficultyText === "Trung bình") return "warning";
+  if (difficultyText === "Khó") return "error";
+  return "grey";
+};
+
+const getDifficultyIcon = (jlptLevel: string | undefined): string => {
+  if (!jlptLevel) return "mdi-help-circle-outline";
+
+  const difficultyText = getDifficultyText(jlptLevel);
+  if (difficultyText === "Dễ") return "mdi-star-outline";
+  if (difficultyText === "Trung bình") return "mdi-star-half-full";
+  if (difficultyText === "Khó") return "mdi-star";
+  return "mdi-help-circle-outline";
 };
 
 const getLineCount = (conversation: Conversation): number => {
-  return conversation.lines?.length || 0
-}
+  return conversation.lines?.length || 0;
+};
 
 const getDescription = (conversation: Conversation): string => {
-  return conversation.description || 'Không có mô tả'
-}
+  return conversation.description || "Không có mô tả";
+};
 
 const getActiveFiltersCount = (): number => {
-  let count = 0
-  if (search.value) count++
-  if (jlptFilter.value) count++
-  return count
-}
+  let count = 0;
+  if (search.value) count++;
+  if (jlptFilter.value) count++;
+  return count;
+};
 
 const getConversationImage = (jlptLevel: string | undefined): string => {
   // Nếu có ảnh thực, trả về path ảnh
@@ -482,7 +549,7 @@ const getConversationImage = (jlptLevel: string | undefined): string => {
       <g transform="translate(20, 30)">
         <path d="M10,0 L50,0 C55.5228,0 60,4.47715 60,10 L60,30 C60,35.5228 55.5228,40 50,40 L40,40 L30,50 L30,40 L10,40 C4.47715,40 0,35.5228 0,30 L0,10 C0,4.47715 4.47715,0 10,0 Z" fill="${color}" opacity="0.9" />
         <path d="M70,15 L80,15 C85.5228,15 90,19.4772 90,25 L90,45 C90,50.5229 85.5228,55 80,55 L75,55 L65,65 L65,55 L50,55 C44.4772,55 40,50.5229 40,45 L40,35" fill="${color}" opacity="0.7" />
-        <text x="22" y="26" font-family="Arial" font-size="16" font-weight="bold" fill="white">${jlptLevel || 'JP'}</text>
+        <text x="22" y="26" font-family="Arial" font-size="16" font-weight="bold" fill="white">${jlptLevel || "JP"}</text>
       </g>
     </svg>
   `;
@@ -493,121 +560,116 @@ const getConversationImage = (jlptLevel: string | undefined): string => {
 
 // Hàm lấy mã màu hex cho mỗi cấp độ JLPT
 const getJlptColorHex = (level: string | undefined): string => {
-  if (!level) return '#9E9E9E'; // Màu xám mặc định
+  if (!level) return "#9E9E9E"; // Màu xám mặc định
 
   const colors: Record<string, string> = {
-    'N1': '#F44336', // Đỏ
-    'N2': '#FF9800', // Cam
-    'N3': '#FFC107', // Vàng
-    'N4': '#8BC34A', // Xanh lá nhạt
-    'N5': '#4CAF50'  // Xanh lá
+    N1: "#F44336", // Đỏ
+    N2: "#FF9800", // Cam
+    N3: "#FFC107", // Vàng
+    N4: "#8BC34A", // Xanh lá nhạt
+    N5: "#4CAF50", // Xanh lá
   };
 
-  return colors[level] || '#9E9E9E';
+  return colors[level] || "#9E9E9E";
 };
 
 // Hàm lấy màu hex nhạt cho nền
 const getJlptColorHexLight = (level: string | undefined): string => {
-  if (!level) return '#F5F5F5'; // Màu xám nhạt mặc định
+  if (!level) return "#F5F5F5"; // Màu xám nhạt mặc định
 
   const colors: Record<string, string> = {
-    'N1': '#FFEBEE', // Đỏ nhạt
-    'N2': '#FFF3E0', // Cam nhạt
-    'N3': '#FFF8E1', // Vàng nhạt
-    'N4': '#F1F8E9', // Xanh lá nhạt
-    'N5': '#E8F5E9'  // Xanh lá nhạt
+    N1: "#FFEBEE", // Đỏ nhạt
+    N2: "#FFF3E0", // Cam nhạt
+    N3: "#FFF8E1", // Vàng nhạt
+    N4: "#F1F8E9", // Xanh lá nhạt
+    N5: "#E8F5E9", // Xanh lá nhạt
   };
 
-  return colors[level] || '#F5F5F5';
+  return colors[level] || "#F5F5F5";
 };
 
 const navigateToConversation = (id: string | undefined) => {
   if (!id) {
-    toast.error('ID cuộc hội thoại không hợp lệ', {
-      position: 'top',
-      duration: 3000
-    })
-    return
+    toast.error("ID cuộc hội thoại không hợp lệ");
+    return;
   }
 
   router.push({
-    name: 'conversationPractice',
-    params: { id }
-  })
-}
+    name: "conversationPractice",
+    params: { id },
+  });
+};
 
 const handlePageChange = (page: number) => {
-  currentPage.value = page
+  currentPage.value = page;
   // Scroll to top when changing page
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-  fetchConversations()
-}
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  fetchConversations();
+};
 
 const goBack = () => {
-  router.back()
-}
+  router.back();
+};
 
 const openFilterDialog = () => {
-  showFilterDialog.value = true
-}
+  showFilterDialog.value = true;
+};
 
 const clearSearch = () => {
-  search.value = ''
-}
+  search.value = "";
+};
 
 const clearAllFilters = () => {
-  search.value = ''
-  jlptFilter.value = ''
-  showFilterDialog.value = false
-}
+  search.value = "";
+  jlptFilter.value = "";
+  showFilterDialog.value = false;
+};
 
 // Fetch conversations from API
 const fetchConversations = async () => {
-  loading.value = true
-  error.value = false
+  loading.value = true;
+  error.value = false;
 
   try {
     // Chuyển đổi currentPage từ 1-based sang 0-based cho API
-    const apiPage = currentPage.value - 1
+    const apiPage = currentPage.value - 1;
 
     // Sử dụng API public thay vì API admin vì API public đã được triển khai
     const response = await conversationService.getConversations(
       apiPage,
       pageSize.value,
       search.value, // search
-      'unit', // sortBy - sắp xếp theo bài học
-      'asc' // sortDir - tăng dần
-    )
+      "unit", // sortBy - sắp xếp theo bài học
+      "asc", // sortDir - tăng dần
+    );
 
     // Lấy dữ liệu từ response
-    const data: PagedResponse<Conversation> = response.data
+    const data: PagedResponse<Conversation> = response.data;
 
-    conversations.value = data.content
-    totalPages.value = data.totalPages
+    conversations.value = data.content;
+    totalPages.value = data.totalPages;
 
     if (conversations.value.length === 0 && currentPage.value > 1) {
       // Nếu trang hiện tại không có dữ liệu và không phải trang đầu tiên, quay lại trang trước
-      currentPage.value--
-      await fetchConversations()
+      currentPage.value--;
+      await fetchConversations();
     }
-  } catch (err) {
-    error.value = true
-    errorMessage.value = 'Đã xảy ra lỗi khi tải dữ liệu hội thoại. Vui lòng thử lại sau.'
+  } catch {
+    error.value = true;
+    errorMessage.value =
+      "Đã xảy ra lỗi khi tải dữ liệu hội thoại. Vui lòng thử lại sau.";
 
     // Show error toast
-    toast.error('Không thể tải danh sách hội thoại', {
-      position: 'top',
-      duration: 3000
-    })
+    toast.error("Không thể tải danh sách hội thoại");
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 // Initial data fetch
 onMounted(() => {
-  fetchConversations()
-})
+  fetchConversations();
+});
 </script>
 
 <style scoped lang="scss">
@@ -640,7 +702,7 @@ onMounted(() => {
 }
 
 .japanese-text {
-  font-family: 'Noto Sans JP', sans-serif;
+  font-family: "Noto Sans JP", sans-serif;
 }
 
 .content-grid {
@@ -672,7 +734,7 @@ onMounted(() => {
   height: 48px;
   border-radius: 24px;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 
   &.search-focused {
     box-shadow: 0 3px 10px rgba(var(--v-theme-primary), 0.1);
@@ -732,33 +794,33 @@ onMounted(() => {
   }
 
   &.jlpt-n1-card {
-    border-left: 4px solid #F44336 !important;
+    border-left: 4px solid #f44336 !important;
     background-color: rgba(244, 67, 54, 0.03);
   }
 
   &.jlpt-n2-card {
-    border-left: 4px solid #FF9800 !important;
+    border-left: 4px solid #ff9800 !important;
     background-color: rgba(255, 152, 0, 0.03);
   }
 
   &.jlpt-n3-card {
-    border-left: 4px solid #FFC107 !important;
+    border-left: 4px solid #ffc107 !important;
     background-color: rgba(255, 193, 7, 0.03);
   }
 
   &.jlpt-n4-card {
-    border-left: 4px solid #8BC34A !important;
+    border-left: 4px solid #8bc34a !important;
     background-color: rgba(139, 195, 74, 0.03);
   }
 
   &.jlpt-n5-card {
-    border-left: 4px solid #4CAF50 !important;
+    border-left: 4px solid #4caf50 !important;
     background-color: rgba(76, 175, 80, 0.03);
   }
 
   &:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
     border-color: rgba(var(--v-theme-primary), 0.2);
 
     &.jlpt-n1-card {
@@ -798,7 +860,7 @@ onMounted(() => {
     transition: all 0.3s ease;
     border-radius: 50%;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
     &:hover {
       transform: scale(1.1);
@@ -835,12 +897,13 @@ onMounted(() => {
 }
 
 /* Banner card styles */
-.jlpt-card, .conversation-card:first-child {
+.jlpt-card,
+.conversation-card:first-child {
   margin-top: 0;
 }
 
 .jlpt-card {
-  border-left: 4px solid #9C27B0 !important;
+  border-left: 4px solid #9c27b0 !important;
   background-color: rgba(156, 39, 176, 0.05);
 
   .jlpt-chips {
@@ -862,21 +925,22 @@ onMounted(() => {
 }
 
 .learning-path-card {
-  border-left: 4px solid #42A5F5 !important;
+  border-left: 4px solid #42a5f5 !important;
   background-color: rgba(66, 165, 245, 0.05);
 }
 
 .study-tips-card {
-  border-left: 4px solid #66BB6A !important;
+  border-left: 4px solid #66bb6a !important;
   background-color: rgba(102, 187, 106, 0.05);
 }
 
 .resources-card {
-  border-left: 4px solid #FFA726 !important;
+  border-left: 4px solid #ffa726 !important;
   background-color: rgba(255, 167, 38, 0.05);
 }
 
-.error-alert, .empty-alert {
+.error-alert,
+.empty-alert {
   border-radius: 12px;
   overflow: hidden;
 }
@@ -887,7 +951,8 @@ onMounted(() => {
   overflow: hidden;
 }
 
-.back-button, .filter-button {
+.back-button,
+.filter-button {
   transition: all 0.2s ease;
 
   &:hover {
@@ -935,7 +1000,8 @@ onMounted(() => {
     grid-template-columns: 1fr;
   }
 
-  .banner-column, .empty-column {
+  .banner-column,
+  .empty-column {
     display: none;
   }
 

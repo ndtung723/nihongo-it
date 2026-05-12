@@ -17,7 +17,11 @@ import reactor.core.publisher.Mono
 @Component
 class GatewayJwtFilter(
     @Value("\${jwt.secret}") private val secret: String,
+    @Value("\${jwt.secret-previous:}") private val previousSecret: String,
 ) : GlobalFilter, Ordered {
+    companion object {
+        private const val FILTER_ORDER = -100
+    }
 
     private val logger = LoggerFactory.getLogger(GatewayJwtFilter::class.java)
 
@@ -38,10 +42,11 @@ class GatewayJwtFilter(
         "/swagger-ui",
         "/api-docs",
         "/actuator",
-        "/api/v1/ai/tts/",
         "/api/v1/ai/speech/",
+        // /api/v1/ai/tts/ intentionally removed — TTS costs money, requires auth
     )
 
+    @Suppress("ForbiddenVoid", "ReturnCount")
     override fun filter(exchange: ServerWebExchange, chain: GatewayFilterChain): Mono<Void> {
         val request = exchange.request
         val path = request.path.value()
@@ -70,7 +75,7 @@ class GatewayJwtFilter(
                 else -> 2
             }
             val roleName = if (roleId == 1) "ADMIN" else "USER"
-            val email = claims.subject ?: ""
+            val email = claims.subject.orEmpty()
 
             val mutatedRequest = request.mutate()
                 .header("X-User-Id", userId)
@@ -88,13 +93,16 @@ class GatewayJwtFilter(
 
     private fun extractClaims(token: String): Claims {
         val key = Keys.hmacShaKeyFor(secret.toByteArray())
-        return Jwts.parserBuilder()
-            .setSigningKey(key)
-            .build()
-            .parseClaimsJws(token)
-            .body
+        return try {
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).body
+        } catch (e: Exception) {
+            if (previousSecret.isBlank()) throw e
+            val prevKey = Keys.hmacShaKeyFor(previousSecret.toByteArray())
+            Jwts.parserBuilder().setSigningKey(prevKey).build().parseClaimsJws(token).body
+        }
     }
 
+    @Suppress("ForbiddenVoid")
     private fun unauthorized(exchange: ServerWebExchange): Mono<Void> {
         val response = exchange.response
         response.statusCode = HttpStatus.UNAUTHORIZED
@@ -104,5 +112,5 @@ class GatewayJwtFilter(
         return response.writeWith(Mono.just(buffer))
     }
 
-    override fun getOrder(): Int = -100
+    override fun getOrder(): Int = FILTER_ORDER
 }

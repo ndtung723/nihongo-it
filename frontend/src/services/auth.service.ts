@@ -1,200 +1,156 @@
-import api from '../utils/api';
+import api from "../utils/api";
+import {
+  getAccessToken,
+  setAccessToken,
+  clearAccessToken,
+} from "../utils/tokenStore";
+import type {
+  UserInfo,
+  LoginRequest,
+  LoginResponse,
+  SignupRequest,
+  SignupResponse,
+  GetCurrentUserResponse,
+  ChangePasswordRequest,
+  UpdateProfileRequest,
+  UpdateProfileResponse,
+} from "@/types/user.types";
 
-export interface LoginRequest {
-	email: string;
-	password: string;
-}
-
-export interface SignupRequest {
-	email: string;
-	password: string;
-	fullName: string;
-	profilePicture?: string;
-	currentLevel?: string;
-	jlptGoal?: string;
-}
-
-export interface LoginResponse {
-	token?: string;
-	refreshToken?: string;
-	message?: string;
-}
-
-export interface SignupResponse {
-	message?: string;
-}
-
-export interface UserInfo {
-	userId: string;
-	email: string;
-	fullName: string;
-	roleId: number;
-	profilePicture?: string;
-	currentLevel?: string;
-	jlptGoal?: string;
-	lastLogin?: string;
-}
-
-export interface GetCurrentUserResponse {
-	status: 'OK' | 'NG';
-	userInfo?: UserInfo;
-}
+// Re-export for backward compatibility
+export type {
+  UserInfo,
+  LoginRequest,
+  LoginResponse,
+  SignupRequest,
+  SignupResponse,
+  GetCurrentUserResponse,
+  ChangePasswordRequest,
+  UpdateProfileRequest,
+  UpdateProfileResponse,
+};
 
 export interface GoogleLoginRequest {
-	tokenId: string;
+  tokenId: string;
 }
-
 export interface PasswordResetRequest {
-	email: string;
+  email: string;
 }
-
 export interface PasswordResetResponse {
-	message?: string;
+  message?: string;
 }
-
 export interface ResetPasswordRequest {
-	token: string;
-	password: string;
+  token: string;
+  password: string;
 }
-
-export interface ChangePasswordRequest {
-	currentPassword: string;
-	newPassword: string;
-	confirmPassword: string;
-}
-
 export interface ChangePasswordResponse {
-	message?: string;
-}
-
-export interface UpdateProfileRequest {
-	fullName: string;
-	currentLevel: string;
-	jlptGoal: string;
-}
-
-export interface UpdateProfileResponse {
-	status: 'OK' | 'NG';
-	message?: string;
+  message?: string;
 }
 
 class AuthService {
-	async login(credentials: LoginRequest): Promise<LoginResponse> {
-		const response = await api.post('/api/v1/user/auth/login', credentials);
-		const result: LoginResponse = response.data;
-		if (result.token) {
-			this.saveToken(result.token);
-			if (result.refreshToken) this.saveRefreshToken(result.refreshToken);
-		}
-		return result;
-	}
+  async login(credentials: LoginRequest): Promise<LoginResponse> {
+    const response = await api.post("/api/v1/user/auth/login", credentials);
+    const result: LoginResponse = response.data;
+    if (result.token) {
+      this.saveToken(result.token);
+      // refresh_token is stored in httpOnly cookie by the server — not exposed in response body
+    }
+    return result;
+  }
 
-	async signup(userData: SignupRequest): Promise<SignupResponse> {
-		try {
-			const response = await api.post('/api/v1/user/auth/signup', userData);
-			return response.data;
-		} catch (error) {
-			throw error;
-		}
-	}
+  async signup(userData: SignupRequest): Promise<SignupResponse> {
+    const response = await api.post("/api/v1/user/auth/signup", userData);
+    return response.data;
+  }
 
-	async getCurrentUser(): Promise<GetCurrentUserResponse> {
-		const response = await api.get('/api/v1/user/auth/current');
-		return response.data;
-	}
+  async getCurrentUser(): Promise<GetCurrentUserResponse> {
+    const response = await api.get("/api/v1/user/auth/current");
+    return response.data;
+  }
 
-	getToken(): string | null {
-		return localStorage.getItem('auth_token');
-	}
+  getToken(): string | null {
+    return getAccessToken();
+  }
 
-	saveToken(token: string): void {
-		localStorage.setItem('auth_token', token);
-	}
+  saveToken(token: string): void {
+    setAccessToken(token);
+  }
 
-	removeToken(): void {
-		localStorage.removeItem('auth_token');
-	}
+  removeToken(): void {
+    clearAccessToken();
+  }
 
-	getRefreshToken(): string | null {
-		return localStorage.getItem('refresh_token');
-	}
+  isLoggedIn(): boolean {
+    return !!this.getToken();
+  }
 
-	saveRefreshToken(token: string): void {
-		localStorage.setItem('refresh_token', token);
-	}
+  async logout(): Promise<void> {
+    try {
+      // Cookie is sent automatically; server clears it via Set-Cookie: refresh_token=; Max-Age=0
+      await api.post("/api/v1/user/auth/logout", {});
+    } catch {
+      // Ignore errors — still clear local state
+    }
+    this.removeToken();
+  }
 
-	removeRefreshToken(): void {
-		localStorage.removeItem('refresh_token');
-	}
+  async logoutAll(): Promise<void> {
+    try {
+      await api.post("/api/v1/user/auth/logout-all");
+    } catch {
+      // Ignore errors — still clear local state
+    }
+    this.removeToken();
+  }
 
-	isLoggedIn(): boolean {
-		return !!this.getToken();
-	}
+  async loginWithGoogle(tokenId: string): Promise<LoginResponse> {
+    const response = await api.post("/api/v1/user/auth/google-login", {
+      tokenId,
+    });
+    const result: LoginResponse = response.data;
+    if (result.token) {
+      this.saveToken(result.token);
+    }
+    return result;
+  }
 
-	async logout(): Promise<void> {
-		const refreshToken = this.getRefreshToken();
-		if (refreshToken) {
-			try {
-				await api.post('/api/v1/user/auth/logout', { refreshToken });
-			} catch {
-				// Ignore errors — still clear local tokens
-			}
-		}
-		this.removeToken();
-		this.removeRefreshToken();
-	}
+  async requestPasswordReset(email: string): Promise<PasswordResetResponse> {
+    const response = await api.post("/api/v1/user/auth/forgot-password", {
+      email,
+    } as PasswordResetRequest);
+    return response.data;
+  }
 
-	async loginWithGoogle(tokenId: string): Promise<LoginResponse> {
-		const response = await api.post('/api/v1/user/auth/google-login', { tokenId });
-		const result: LoginResponse = response.data;
-		if (result.token) {
-			this.saveToken(result.token);
-			if (result.refreshToken) this.saveRefreshToken(result.refreshToken);
-		}
-		return result;
-	}
+  async resetPassword(
+    token: string,
+    password: string,
+  ): Promise<PasswordResetResponse> {
+    const response = await api.post("/api/v1/user/auth/set-new-password", {
+      token,
+      password,
+      confirmPassword: password,
+    });
+    return response.data;
+  }
 
-	async requestPasswordReset(email: string): Promise<PasswordResetResponse> {
-		try {
-			const response = await api.post('/api/v1/user/auth/forgot-password', {
-				email,
-			} as PasswordResetRequest);
-			return response.data;
-		} catch (error) {
-			throw error;
-		}
-	}
+  async changePassword(
+    request: ChangePasswordRequest,
+  ): Promise<ChangePasswordResponse> {
+    const response = await api.post(
+      "/api/v1/user/auth/change-password",
+      request,
+    );
+    return response.data;
+  }
 
-	async resetPassword(token: string, password: string): Promise<PasswordResetResponse> {
-		try {
-			const response = await api.post('/api/v1/user/auth/set-new-password', {
-				token,
-				password,
-				confirmPassword: password,
-			});
-			return response.data;
-		} catch (error) {
-			throw error;
-		}
-	}
-
-	async changePassword(request: ChangePasswordRequest): Promise<ChangePasswordResponse> {
-		try {
-			const response = await api.post('/api/v1/user/auth/change-password', request);
-			return response.data;
-		} catch (error) {
-			throw error;
-		}
-	}
-
-	async updateProfile(request: UpdateProfileRequest): Promise<UpdateProfileResponse> {
-		try {
-			const response = await api.post('/api/v1/user/auth/update-profile', request);
-			return response.data;
-		} catch (error) {
-			throw error;
-		}
-	}
+  async updateProfile(
+    request: UpdateProfileRequest,
+  ): Promise<UpdateProfileResponse> {
+    const response = await api.post(
+      "/api/v1/user/auth/update-profile",
+      request,
+    );
+    return response.data;
+  }
 }
 
 export default new AuthService();

@@ -34,13 +34,13 @@ class JwtTokenUtil {
 
     fun generateToken(user: UserEntity): String {
         val claims: Map<String, Any> = mapOf(
-            "userId" to (user.userId?.toString() ?: ""),
-            "role" to (user.role?.roleId ?: 2), // Default to ROLE_USER
+            "userId" to user.userId?.toString().orEmpty(),
+            "role" to user.role.roleId,
             "email" to user.email,
-            "fullName" to (user.fullName ?: ""),
-            "profilePicture" to (user.profilePicture ?: ""),
-            "currentLevel" to (user.currentLevel?.name ?: ""),
-            "jlptGoal" to (user.jlptGoal?.name ?: ""),
+            "fullName" to user.fullName,
+            "profilePicture" to user.profilePicture.orEmpty(),
+            "currentLevel" to user.currentLevel?.name.orEmpty(),
+            "jlptGoal" to user.jlptGoal?.name.orEmpty(),
             "lastLogin" to (user.lastLogin?.format(dateTimeFormatter) ?: LocalDateTime.now().format(dateTimeFormatter)),
         )
         return createToken(claims, user.email)

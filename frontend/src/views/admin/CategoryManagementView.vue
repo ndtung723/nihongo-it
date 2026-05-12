@@ -2,7 +2,13 @@
   <v-container fluid>
     <div class="header-container mb-4">
       <h1 class="text-h5 mobile-title">Quản lý danh mục</h1>
-      <v-btn color="primary" @click="openDialog(null)" prepend-icon="mdi-plus" class="add-btn" density="comfortable">
+      <v-btn
+        color="primary"
+        @click="openDialog(null)"
+        prepend-icon="mdi-plus"
+        class="add-btn"
+        density="comfortable"
+      >
         <span class="btn-text">Thêm danh mục</span>
       </v-btn>
     </div>
@@ -19,7 +25,6 @@
               hide-details
               density="compact"
               variant="outlined"
-              @update:model-value="debounceSearch"
               placeholder="Nhập từ khóa"
               class="search-field"
             ></v-text-field>
@@ -42,7 +47,11 @@
 
     <!-- Loading indicator -->
     <div v-if="loading" class="d-flex justify-center my-5">
-      <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+      <v-progress-circular
+        indeterminate
+        color="primary"
+        size="64"
+      ></v-progress-circular>
     </div>
 
     <!-- Error message -->
@@ -51,7 +60,11 @@
     </v-alert>
 
     <!-- Categories table -->
-    <v-card v-if="!loading && categories.length > 0" elevation="2" class="category-table-card">
+    <v-card
+      v-if="!loading && categories.length > 0"
+      elevation="2"
+      class="category-table-card"
+    >
       <div class="table-responsive">
         <v-table class="category-table">
           <thead>
@@ -66,12 +79,21 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in categories" :key="item.categoryId" class="category-row">
+            <tr
+              v-for="item in categories"
+              :key="item.categoryId"
+              class="category-row"
+            >
               <td class="text-left">{{ item.name }}</td>
               <td class="text-left">{{ item.meaning }}</td>
               <td class="text-center">{{ item.displayOrder }}</td>
               <td class="text-center">
-                <v-chip size="small" color="info" variant="outlined" class="topic-chip">
+                <v-chip
+                  size="small"
+                  color="info"
+                  variant="outlined"
+                  class="topic-chip"
+                >
                   {{ item.topicCount || 0 }}
                 </v-chip>
               </td>
@@ -100,7 +122,10 @@
                       </v-btn>
                     </template>
                   </v-tooltip>
-                  <v-tooltip :text="item.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'" location="top">
+                  <v-tooltip
+                    :text="item.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'"
+                    location="top"
+                  >
                     <template v-slot:activator="{ props }">
                       <v-btn
                         v-bind="props"
@@ -110,7 +135,11 @@
                         :color="item.isActive ? 'error' : 'success'"
                         @click="confirmToggleStatus(item)"
                       >
-                        <v-icon>{{ item.isActive ? 'mdi-close-circle' : 'mdi-check-circle' }}</v-icon>
+                        <v-icon>{{
+                          item.isActive
+                            ? "mdi-close-circle"
+                            : "mdi-check-circle"
+                        }}</v-icon>
                       </v-btn>
                     </template>
                   </v-tooltip>
@@ -122,17 +151,31 @@
       </div>
     </v-card>
 
-    <v-card v-if="!loading && categories.length === 0" class="pa-4 text-center" elevation="2">
+    <v-card
+      v-if="!loading && categories.length === 0"
+      class="pa-4 text-center"
+      elevation="2"
+    >
       <v-card-text>
         <div class="text-h6 mb-2">Không tìm thấy danh mục nào</div>
         <div v-if="searchQuery.term">Hãy thử điều chỉnh tiêu chí tìm kiếm</div>
         <div v-else>Bắt đầu bằng cách thêm danh mục mới</div>
       </v-card-text>
       <v-card-actions class="justify-center">
-        <v-btn v-if="searchQuery.term" color="primary" variant="text" @click="clearSearch">
+        <v-btn
+          v-if="searchQuery.term"
+          color="primary"
+          variant="text"
+          @click="clearSearch"
+        >
           Xóa tìm kiếm
         </v-btn>
-        <v-btn v-else color="primary" @click="openDialog(null)" prepend-icon="mdi-plus">
+        <v-btn
+          v-else
+          color="primary"
+          @click="openDialog(null)"
+          prepend-icon="mdi-plus"
+        >
           Thêm danh mục
         </v-btn>
       </v-card-actions>
@@ -154,7 +197,7 @@
                     v-model="editedItem.name"
                     label="Tên danh mục (日本語)"
                     prepend-icon="mdi-format-title"
-                    :rules="[v => !!v || 'Tên danh mục không được để trống']"
+                    :rules="[(v) => !!v || 'Tên danh mục không được để trống']"
                     required
                     autofocus
                     placeholder="Nhập tên bằng tiếng Nhật"
@@ -165,7 +208,7 @@
                     v-model="editedItem.meaning"
                     label="Ý nghĩa (Tiếng Việt)"
                     prepend-icon="mdi-translate"
-                    :rules="[v => !!v || 'Ý nghĩa không được để trống']"
+                    :rules="[(v) => !!v || 'Ý nghĩa không được để trống']"
                     required
                     placeholder="Nhập ý nghĩa bằng tiếng Việt"
                   ></v-text-field>
@@ -190,10 +233,13 @@
 
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="grey" variant="text" @click="closeDialog">
-            Hủy
-          </v-btn>
-          <v-btn color="primary" variant="elevated" @click="saveCategory" :disabled="!valid">
+          <v-btn color="grey" variant="text" @click="closeDialog"> Hủy </v-btn>
+          <v-btn
+            color="primary"
+            variant="elevated"
+            @click="saveCategory"
+            :disabled="!valid"
+          >
             Lưu
           </v-btn>
         </v-card-actions>
@@ -203,37 +249,55 @@
     <!-- Status toggle confirmation dialog -->
     <v-dialog v-model="statusDialog" max-width="500px" persistent>
       <v-card>
-        <v-card-title class="text-h5" :class="statusItem?.isActive ? 'bg-error text-white' : 'bg-success text-white'">
-          {{ statusItem?.isActive ? 'Vô hiệu hóa danh mục' : 'Kích hoạt danh mục' }}
+        <v-card-title
+          class="text-h5"
+          :class="
+            statusItem?.isActive
+              ? 'bg-error text-white'
+              : 'bg-success text-white'
+          "
+        >
+          {{
+            statusItem?.isActive ? "Vô hiệu hóa danh mục" : "Kích hoạt danh mục"
+          }}
         </v-card-title>
         <v-card-text class="pt-4">
           <p class="text-body-1">
-            {{ statusItem?.isActive
-              ? `Bạn có chắc chắn muốn vô hiệu hóa danh mục "${statusItem?.name}"?`
-              : `Bạn có chắc chắn muốn kích hoạt lại danh mục "${statusItem?.name}"?`
+            {{
+              statusItem?.isActive
+                ? `Bạn có chắc chắn muốn vô hiệu hóa danh mục "${statusItem?.name}"?`
+                : `Bạn có chắc chắn muốn kích hoạt lại danh mục "${statusItem?.name}"?`
             }}
           </p>
           <div v-if="statusItem?.isActive" class="mt-2">
-            Danh mục vô hiệu hóa sẽ không hiển thị cho người dùng nhưng vẫn được lưu trong hệ thống.
+            Danh mục vô hiệu hóa sẽ không hiển thị cho người dùng nhưng vẫn được
+            lưu trong hệ thống.
           </div>
           <div v-else class="mt-2">
-            Kích hoạt lại danh mục sẽ cho phép người dùng xem và sử dụng danh mục này.
+            Kích hoạt lại danh mục sẽ cho phép người dùng xem và sử dụng danh
+            mục này.
           </div>
-          <div v-if="statusItem?.topicCount && statusItem.topicCount > 0" class="mt-2 font-weight-bold bg-warning-lighten-5 pa-2 rounded">
+          <div
+            v-if="statusItem?.topicCount && statusItem.topicCount > 0"
+            class="mt-2 font-weight-bold bg-warning-lighten-5 pa-2 rounded"
+          >
             <v-icon color="warning" class="mr-1">mdi-alert</v-icon>
-            Lưu ý: Danh mục này chứa <strong>{{ statusItem.topicCount }}</strong> chủ đề.
+            Lưu ý: Danh mục này chứa
+            <strong>{{ statusItem.topicCount }}</strong> chủ đề.
           </div>
         </v-card-text>
         <v-divider></v-divider>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="grey" variant="text" @click="statusDialog = false">Hủy</v-btn>
+          <v-btn color="grey" variant="text" @click="statusDialog = false"
+            >Hủy</v-btn
+          >
           <v-btn
             :color="statusItem?.isActive ? 'error' : 'success'"
             variant="elevated"
             @click="toggleCategoryStatus"
           >
-            {{ statusItem?.isActive ? 'Vô hiệu hóa' : 'Kích hoạt' }}
+            {{ statusItem?.isActive ? "Vô hiệu hóa" : "Kích hoạt" }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -242,21 +306,30 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import categoryService from '@/services/categoryService';
-import type { Category, CreateCategoryRequest, UpdateCategoryRequest } from '@/services/categoryService';
-import { useToast } from 'vue-toast-notification';
-import { format, parseISO } from 'date-fns';
-import { vi } from 'date-fns/locale';
+import { ref, computed, watch, onMounted } from "vue";
+import categoryService from "@/services/category.service";
+import type {
+  Category,
+  CreateCategoryRequest,
+  UpdateCategoryRequest,
+} from "@/types/learning.types";
+import { useAppToast } from "@/composables/useAppToast";
+import { useDebounce } from "@/composables/useDebounce";
+import { format, parseISO } from "date-fns";
+import { vi } from "date-fns/locale";
 
-const $toast = useToast();
+const $toast = useAppToast();
+
+const searchTerm = computed(() => searchQuery.value.term);
+const debouncedSearchTerm = useDebounce(searchTerm, 400);
+watch(debouncedSearchTerm, () => searchCategories());
 
 // Data
 const categories = ref<Category[]>([]);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const searchQuery = ref({
-  term: ''
+  term: "",
 });
 const valid = ref(false);
 const form = ref(null);
@@ -266,30 +339,30 @@ const dialog = ref(false);
 const statusDialog = ref(false);
 const editedIndex = ref(-1);
 const editedItem = ref<CreateCategoryRequest>({
-  name: '',
-  meaning: '',
-  displayOrder: 0
+  name: "",
+  meaning: "",
+  displayOrder: 0,
 });
 const defaultItem: CreateCategoryRequest = {
-  name: '',
-  meaning: '',
-  displayOrder: 0
+  name: "",
+  meaning: "",
+  displayOrder: 0,
 };
 const statusItem = ref<Category | null>(null);
 
 // Format dates with Vietnamese locale
 const formatDate = (dateString: string | undefined) => {
-  if (!dateString) return 'N/A';
+  if (!dateString) return "N/A";
   try {
-    return format(parseISO(dateString), 'dd/MM/yyyy', { locale: vi });
-  } catch (e) {
-    return 'Ngày không hợp lệ';
+    return format(parseISO(dateString), "dd/MM/yyyy", { locale: vi });
+  } catch {
+    return "Ngày không hợp lệ";
   }
 };
 
 // Computed properties
 const formTitle = computed(() => {
-  return editedIndex.value === -1 ? 'Thêm danh mục mới' : 'Chỉnh sửa danh mục';
+  return editedIndex.value === -1 ? "Thêm danh mục mới" : "Chỉnh sửa danh mục";
 });
 
 // Methods
@@ -298,10 +371,11 @@ async function loadCategories() {
   error.value = null;
 
   try {
-    const response = await categoryService.adminGetAllCategories();
-    categories.value = response.data;
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Không thể tải danh sách danh mục';
+    categories.value = await categoryService.adminGetAllCategories();
+  } catch (err: unknown) {
+    error.value =
+      (err as { response?: { data?: { message?: string } } }).response?.data
+        ?.message || "Không thể tải danh sách danh mục";
   } finally {
     loading.value = false;
   }
@@ -309,11 +383,13 @@ async function loadCategories() {
 
 function openDialog(item: Category | null) {
   if (item) {
-    editedIndex.value = categories.value.findIndex(c => c.categoryId === item.categoryId);
+    editedIndex.value = categories.value.findIndex(
+      (c) => c.categoryId === item.categoryId,
+    );
     editedItem.value = {
       name: item.name,
-      meaning: item.meaning,
-      displayOrder: item.displayOrder
+      meaning: item.meaning ?? "",
+      displayOrder: item.displayOrder,
     };
   } else {
     editedIndex.value = -1;
@@ -333,7 +409,7 @@ function closeDialog() {
 
 function clearSearch() {
   searchQuery.value = {
-    term: ''
+    term: "",
   };
   loadCategories();
 }
@@ -348,22 +424,24 @@ async function saveCategory() {
       const updateData: UpdateCategoryRequest = {
         name: editedItem.value.name,
         meaning: editedItem.value.meaning,
-        displayOrder: editedItem.value.displayOrder
+        displayOrder: editedItem.value.displayOrder,
       };
 
       await categoryService.adminUpdateCategory(categoryId, updateData);
-      $toast.success('Cập nhật danh mục thành công');
+      $toast.success("Cập nhật danh mục thành công");
     } else {
       // Create new category
       await categoryService.adminCreateCategory(editedItem.value);
-      $toast.success('Thêm danh mục mới thành công');
+      $toast.success("Thêm danh mục mới thành công");
     }
 
     closeDialog();
     loadCategories();
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Không thể lưu danh mục';
-    $toast.error(error.value || 'Không thể lưu danh mục');
+  } catch (err: unknown) {
+    error.value =
+      (err as { response?: { data?: { message?: string } } }).response?.data
+        ?.message || "Không thể lưu danh mục";
+    $toast.error(error.value || "Không thể lưu danh mục");
   }
 }
 
@@ -376,27 +454,22 @@ async function toggleCategoryStatus() {
   if (!statusItem.value) return;
 
   try {
-    await categoryService.adminToggleCategoryStatus(statusItem.value.categoryId);
+    await categoryService.adminToggleCategoryStatus(
+      statusItem.value.categoryId,
+    );
     $toast.success(
       statusItem.value.isActive
-        ? 'Đã vô hiệu hóa danh mục thành công'
-        : 'Đã kích hoạt danh mục thành công'
+        ? "Đã vô hiệu hóa danh mục thành công"
+        : "Đã kích hoạt danh mục thành công",
     );
     statusDialog.value = false;
     loadCategories();
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Không thể thay đổi trạng thái danh mục';
-    $toast.error(error.value || 'Không thể thay đổi trạng thái danh mục');
+  } catch (err: unknown) {
+    error.value =
+      (err as { response?: { data?: { message?: string } } }).response?.data
+        ?.message || "Không thể thay đổi trạng thái danh mục";
+    $toast.error(error.value || "Không thể thay đổi trạng thái danh mục");
   }
-}
-
-// Search with debounce
-let debounceTimeout: number | null = null;
-function debounceSearch() {
-  if (debounceTimeout) clearTimeout(debounceTimeout);
-  debounceTimeout = setTimeout(() => {
-    searchCategories();
-  }, 500) as unknown as number;
 }
 
 async function searchCategories() {
@@ -413,11 +486,14 @@ async function searchCategories() {
     }
 
     // Use the same term for both name and meaning search
-    const response = await categoryService.adminSearchCategories(searchTerm, searchTerm);
-    categories.value = response.data;
-
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Không thể tìm kiếm danh mục';
+    categories.value = await categoryService.adminSearchCategories(
+      searchTerm,
+      searchTerm,
+    );
+  } catch (err: unknown) {
+    error.value =
+      (err as { response?: { data?: { message?: string } } }).response?.data
+        ?.message || "Không thể tìm kiếm danh mục";
   } finally {
     loading.value = false;
   }

@@ -98,38 +98,42 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useAuthStore } from '@/stores/modules/auth';
+import { ref, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { useAuthStore } from "@/stores/modules/auth";
 
 const authStore = useAuthStore();
 const route = useRoute();
-const router = useRouter();
 
-const token = ref('');
-const password = ref('');
-const confirmPassword = ref('');
-const passwordError = ref('');
-const confirmPasswordError = ref('');
+const token = ref("");
+const password = ref("");
+const confirmPassword = ref("");
+const passwordError = ref("");
+const confirmPasswordError = ref("");
 const isSuccess = ref(false);
 
 onMounted(() => {
   // Get token from URL query parameters
-  token.value = route.query.token?.toString() || '';
+  token.value = route.query.token?.toString() || "";
 
   if (!token.value) {
-    authStore.error = 'Invalid or missing reset token. Please request a new password reset.';
+    authStore.error =
+      "Invalid or missing reset token. Please request a new password reset.";
   }
 });
 
 const translateError = (error: string): string => {
   const errorMap: Record<string, string> = {
-    'Invalid or missing reset token. Please request a new password reset.': 'Mã token đặt lại không hợp lệ hoặc thiếu. Vui lòng yêu cầu đặt lại mật khẩu mới.',
-    'Failed to reset password. Please try again.': 'Không thể đặt lại mật khẩu. Vui lòng thử lại.',
-    'Reset token has expired. Please request a new password reset.': 'Mã token đặt lại đã hết hạn. Vui lòng yêu cầu đặt lại mật khẩu mới.',
-    'Passwords do not match': 'Mật khẩu không khớp',
-    'Password is required': 'Mật khẩu là bắt buộc',
-    'Password must be at least 8 characters': 'Mật khẩu phải có ít nhất 8 ký tự'
+    "Invalid or missing reset token. Please request a new password reset.":
+      "Mã token đặt lại không hợp lệ hoặc thiếu. Vui lòng yêu cầu đặt lại mật khẩu mới.",
+    "Failed to reset password. Please try again.":
+      "Không thể đặt lại mật khẩu. Vui lòng thử lại.",
+    "Reset token has expired. Please request a new password reset.":
+      "Mã token đặt lại đã hết hạn. Vui lòng yêu cầu đặt lại mật khẩu mới.",
+    "Passwords do not match": "Mật khẩu không khớp",
+    "Password is required": "Mật khẩu là bắt buộc",
+    "Password must be at least 8 characters":
+      "Mật khẩu phải có ít nhất 8 ký tự",
   };
 
   return errorMap[error] || error;
@@ -137,22 +141,22 @@ const translateError = (error: string): string => {
 
 const validateForm = (): boolean => {
   let isValid = true;
-  passwordError.value = '';
-  confirmPasswordError.value = '';
+  passwordError.value = "";
+  confirmPasswordError.value = "";
 
   if (!password.value) {
-    passwordError.value = 'Mật khẩu là bắt buộc';
+    passwordError.value = "Mật khẩu là bắt buộc";
     isValid = false;
   } else if (password.value.length < 8) {
-    passwordError.value = 'Mật khẩu phải có ít nhất 8 ký tự';
+    passwordError.value = "Mật khẩu phải có ít nhất 8 ký tự";
     isValid = false;
   }
 
   if (!confirmPassword.value) {
-    confirmPasswordError.value = 'Vui lòng xác nhận mật khẩu của bạn';
+    confirmPasswordError.value = "Vui lòng xác nhận mật khẩu của bạn";
     isValid = false;
   } else if (password.value !== confirmPassword.value) {
-    confirmPasswordError.value = 'Mật khẩu không khớp';
+    confirmPasswordError.value = "Mật khẩu không khớp";
     isValid = false;
   }
 
@@ -162,7 +166,8 @@ const validateForm = (): boolean => {
 const handleSubmit = async () => {
   if (!validateForm()) return;
   if (!token.value) {
-    authStore.error = 'Invalid or missing reset token. Please request a new password reset.';
+    authStore.error =
+      "Invalid or missing reset token. Please request a new password reset.";
     return;
   }
 
@@ -171,8 +176,7 @@ const handleSubmit = async () => {
     if (success) {
       isSuccess.value = true;
     }
-  } catch (err: any) {
-  }
+  } catch {}
 };
 </script>
 
@@ -185,7 +189,9 @@ const handleSubmit = async () => {
 .auth-card {
   border-radius: 16px;
   overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
   max-width: 500px;
 
   &:hover {
@@ -201,7 +207,11 @@ const handleSubmit = async () => {
   align-items: center;
   justify-content: center;
   margin: 0 auto;
-  background: linear-gradient(45deg, rgb(var(--v-theme-primary)) 0%, rgba(var(--v-theme-primary), 0.8) 100%);
+  background: linear-gradient(
+    45deg,
+    rgb(var(--v-theme-primary)) 0%,
+    rgba(var(--v-theme-primary), 0.8) 100%
+  );
 
   .lock-icon {
     font-size: 36px;

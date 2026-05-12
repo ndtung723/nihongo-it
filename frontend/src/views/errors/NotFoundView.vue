@@ -7,12 +7,7 @@
         <p class="text-body-1 mb-8">
           Xin lỗi, trang bạn đang tìm kiếm không tồn tại hoặc đã bị di chuyển.
         </p>
-        <v-btn
-          color="primary"
-          size="large"
-          :to="{ name: 'home' }"
-          class="px-8"
-        >
+        <v-btn color="primary" size="large" :to="{ name: 'home' }" class="px-8">
           Quay về Trang chủ
         </v-btn>
       </div>
@@ -20,20 +15,12 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Component, Vue } from 'vue-facing-decorator'
+<script setup lang="ts">
+import { onMounted } from "vue";
 
-@Component({
-  name: 'NotFoundView'
-})
-export default class NotFoundView extends Vue {
-  // Mounted hook để đảm bảo lỗi parentNode không xảy ra
-  mounted() {
-    // Bất kỳ component nào của Vuetify sử dụng refs đến DOM cần đảm bảo
-    // không được tham chiếu đến các phần tử đã unmounted
-    document.title = '404 - Không tìm thấy trang | Nihongo IT'
-  }
-}
+onMounted(() => {
+  document.title = "404 - Không tìm thấy trang | Nihongo IT";
+});
 </script>
 
 <style lang="scss" scoped>

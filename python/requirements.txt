@@ -12,3 +12,8 @@ pykakasi==2.3.0
 mojimoji==0.0.13
 SudachiPy==0.6.10
 SudachiDict-core==20250515
+
+# Dev/test dependencies
+pytest==8.3.4
+pytest-asyncio==0.24.0
+httpx==0.27.0

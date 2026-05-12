@@ -9,5 +9,5 @@ enum class JlptLevel {
     N4, // Basic understanding, ~300 kanji, ~1,500 vocabulary
     N3, // Intermediate level, ~650 kanji, ~3,700 vocabulary
     N2, // Pre-advanced, ~1,000 kanji, ~6,000 vocabulary
-    N1  // Advanced, ~2,000 kanji, ~10,000 vocabulary
-} 
+    N1, // Advanced, ~2,000 kanji, ~10,000 vocabulary
+}

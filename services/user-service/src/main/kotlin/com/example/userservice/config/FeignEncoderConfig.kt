@@ -12,17 +12,17 @@ import org.springframework.web.client.RestTemplate
 
 @Configuration
 class FeignEncoderConfig {
-    
+
     @Bean
     @Primary
     fun feignEncoder(converters: ObjectFactory<HttpMessageConverters>): Encoder {
         return SpringFormEncoder(SpringEncoder(converters))
     }
-    
+
     @Bean
     fun httpMessageConverters(): ObjectFactory<HttpMessageConverters> {
         return ObjectFactory {
             HttpMessageConverters(RestTemplate().messageConverters)
         }
     }
-} 
+}

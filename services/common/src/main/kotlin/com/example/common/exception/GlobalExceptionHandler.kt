@@ -1,8 +1,8 @@
 package com.example.common.exception
 
-import com.example.common.dto.ResponseDto
-import com.example.common.dto.ResponseType
-import com.fasterxml.jackson.module.kotlin.MissingKotlinParameterException
+import com.example.common.dto.ErrorResponseDto
+import com.example.common.dto.FieldErrorDto
+import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import io.jsonwebtoken.ExpiredJwtException
 import io.jsonwebtoken.MalformedJwtException
 import io.jsonwebtoken.UnsupportedJwtException
@@ -30,14 +30,15 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidationExceptions(ex: MethodArgumentNotValidException): ResponseEntity<*> {
-        val errors = mutableMapOf<String, String?>()
-        ex.bindingResult.allErrors.forEach { error ->
-            val fieldName = (error as FieldError).field
-            errors[fieldName] = error.defaultMessage
+        val errors = ex.bindingResult.allErrors.map { error ->
+            FieldErrorDto(
+                field = (error as FieldError).field,
+                message = error.defaultMessage.orEmpty(),
+            )
         }
         logger.warn("Validation failed: $errors")
         return ResponseEntity(
-            ResponseDto(status = ResponseType.NG, errors = errors),
+            ErrorResponseDto(errors = errors),
             HttpStatus.BAD_REQUEST,
         )
     }
@@ -47,27 +48,27 @@ class GlobalExceptionHandler {
         logger.warn("Malformed request body: ${ex.message}")
 
         val cause = ex.cause
-        if (cause is MissingKotlinParameterException) {
-            val fieldName = cause.parameter.name ?: "unknown"
-            val errors = mapOf(fieldName to "$fieldName is required")
+        if (cause is MismatchedInputException) {
+            val fieldName = cause.path?.firstOrNull()?.fieldName ?: "unknown"
+            val errors = listOf(FieldErrorDto(field = fieldName, message = "$fieldName is required"))
             return ResponseEntity(
-                ResponseDto(status = ResponseType.NG, errors = errors),
+                ErrorResponseDto(errors = errors),
                 HttpStatus.BAD_REQUEST,
             )
         }
 
         return ResponseEntity(
-            ResponseDto(status = ResponseType.NG, message = "Invalid request format."),
+            ErrorResponseDto(message = "Invalid request format."),
             HttpStatus.BAD_REQUEST,
         )
     }
 
     @ExceptionHandler(MissingServletRequestParameterException::class)
     fun handleMissingServletRequestParameter(ex: MissingServletRequestParameterException): ResponseEntity<*> {
-        val errors = mapOf(ex.parameterName to "${ex.parameterName} is required")
+        val errors = listOf(FieldErrorDto(field = ex.parameterName, message = "${ex.parameterName} is required"))
         logger.warn("Missing parameter: ${ex.message}")
         return ResponseEntity(
-            ResponseDto(status = ResponseType.NG, message = "Missing required parameter", errors = errors),
+            ErrorResponseDto(message = "Missing required parameter", errors = errors),
             HttpStatus.BAD_REQUEST,
         )
     }
@@ -76,7 +77,7 @@ class GlobalExceptionHandler {
     fun handleUnauthorizedException(ex: UnauthorizedException): ResponseEntity<*> {
         logger.warn("Unauthorized: ${ex.message}")
         return ResponseEntity(
-            ResponseDto(status = ResponseType.NG, message = ex.message ?: "Unauthorized"),
+            ErrorResponseDto(message = ex.message ?: "Unauthorized"),
             HttpStatus.UNAUTHORIZED,
         )
     }
@@ -85,7 +86,7 @@ class GlobalExceptionHandler {
     fun handleBusinessException(ex: BusinessException): ResponseEntity<*> {
         logger.warn("Business exception: ${ex.message}")
         return ResponseEntity(
-            ResponseDto(status = ResponseType.NG, message = ex.message ?: "An error occurred"),
+            ErrorResponseDto(message = ex.message ?: "An error occurred"),
             HttpStatus.BAD_REQUEST,
         )
     }
@@ -94,8 +95,8 @@ class GlobalExceptionHandler {
     fun handleExpiredJwtException(ex: ExpiredJwtException): ResponseEntity<*> {
         logger.warn("JWT token expired: ${ex.message}")
         return ResponseEntity(
-            ResponseDto(status = ResponseType.NG, message = "Authentication token has expired"),
-            HttpStatus.FORBIDDEN,
+            ErrorResponseDto(message = "Authentication token has expired"),
+            HttpStatus.UNAUTHORIZED,
         )
     }
 
@@ -103,8 +104,8 @@ class GlobalExceptionHandler {
     fun handleJwtSignatureException(ex: SignatureException): ResponseEntity<*> {
         logger.warn("Invalid JWT signature: ${ex.message}")
         return ResponseEntity(
-            ResponseDto(status = ResponseType.NG, message = "Invalid authentication token signature"),
-            HttpStatus.FORBIDDEN,
+            ErrorResponseDto(message = "Invalid authentication token signature"),
+            HttpStatus.UNAUTHORIZED,
         )
     }
 
@@ -112,8 +113,8 @@ class GlobalExceptionHandler {
     fun handleMalformedJwtException(ex: MalformedJwtException): ResponseEntity<*> {
         logger.warn("Malformed JWT token: ${ex.message}")
         return ResponseEntity(
-            ResponseDto(status = ResponseType.NG, message = "Malformed authentication token"),
-            HttpStatus.FORBIDDEN,
+            ErrorResponseDto(message = "Malformed authentication token"),
+            HttpStatus.UNAUTHORIZED,
         )
     }
 
@@ -121,8 +122,8 @@ class GlobalExceptionHandler {
     fun handleUnsupportedJwtException(ex: UnsupportedJwtException): ResponseEntity<*> {
         logger.warn("Unsupported JWT token: ${ex.message}")
         return ResponseEntity(
-            ResponseDto(status = ResponseType.NG, message = "Unsupported authentication token format"),
-            HttpStatus.FORBIDDEN,
+            ErrorResponseDto(message = "Unsupported authentication token format"),
+            HttpStatus.UNAUTHORIZED,
         )
     }
 
@@ -130,7 +131,7 @@ class GlobalExceptionHandler {
     fun handleAccessDeniedException(ex: AccessDeniedException): ResponseEntity<*> {
         logger.warn("Access denied: ${ex.message}")
         return ResponseEntity(
-            ResponseDto(status = ResponseType.NG, message = "Access denied!"),
+            ErrorResponseDto(message = "Access denied!"),
             HttpStatus.FORBIDDEN,
         )
     }
@@ -144,7 +145,7 @@ class GlobalExceptionHandler {
         }
         logger.warn("Authentication exception: ${ex.message}")
         return ResponseEntity(
-            ResponseDto(status = ResponseType.NG, message = message),
+            ErrorResponseDto(message = message),
             HttpStatus.UNAUTHORIZED,
         )
     }
@@ -155,7 +156,7 @@ class GlobalExceptionHandler {
         val message = "Resource not found: $resourcePath"
         logger.warn(message)
         return ResponseEntity(
-            ResponseDto(status = ResponseType.NG, message = message),
+            ErrorResponseDto(message = message),
             HttpStatus.NOT_FOUND,
         )
     }
@@ -166,7 +167,7 @@ class GlobalExceptionHandler {
         val message = "Request method '${ex.method}' is not supported. Supported methods: $supportedMethods"
         logger.warn(message)
         return ResponseEntity(
-            ResponseDto(status = ResponseType.NG, message = message),
+            ErrorResponseDto(message = message),
             HttpStatus.METHOD_NOT_ALLOWED,
         )
     }
@@ -175,7 +176,7 @@ class GlobalExceptionHandler {
     fun handleGenericException(ex: Exception): ResponseEntity<*> {
         logger.error("Unexpected error occurred: ${ex.message}", ex)
         return ResponseEntity(
-            ResponseDto(status = ResponseType.NG, message = "An unexpected error occurred"),
+            ErrorResponseDto(message = "An unexpected error occurred"),
             HttpStatus.INTERNAL_SERVER_ERROR,
         )
     }

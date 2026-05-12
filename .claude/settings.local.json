@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew --version)",
+      "Bash(./gradlew :learning-service:bootJar -x test --no-daemon)",
+      "Bash(./gradlew build *)",
+      "Bash(./gradlew :api-gateway:build -x test --no-daemon)",
+      "Bash(docker compose *)"
+    ]
+  }
+}

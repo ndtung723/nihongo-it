@@ -1,4 +1,4 @@
-package com.example.learningservice.dto
+﻿package com.example.learningservice.dto
 
 import com.example.learningservice.entity.JlptLevel
 import com.example.learningservice.entity.TopicEntity
@@ -34,7 +34,7 @@ data class TopicDTO(
     @JsonDeserialize(using = LocalDateTimeDeserializer::class)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
     @JsonSerialize(using = LocalDateTimeSerializer::class)
-    val updatedAt: LocalDateTime? = null
+    val updatedAt: LocalDateTime? = null,
 )
 
 // Extension function to convert entity to DTO
@@ -49,7 +49,7 @@ fun TopicEntity.toDTO(vocabularyCount: Int? = null): TopicDTO {
         vocabularyCount = vocabularyCount ?: this.vocabularyItems.size,
         isActive = this.isActive,
         createdAt = this.createdAt,
-        updatedAt = this.updatedAt
+        updatedAt = this.updatedAt,
     )
 }
 
@@ -60,7 +60,7 @@ data class CreateTopicRequest(
     val description: String? = null,
     val displayOrder: Int = 0,
     val isActive: Boolean = true,
-    val categoryId: UUID
+    val categoryId: UUID,
 )
 
 // Data class for updating an existing topic
@@ -70,5 +70,5 @@ data class UpdateTopicRequest(
     val description: String? = null,
     val displayOrder: Int? = null,
     val isActive: Boolean? = null,
-    val categoryId: UUID? = null
-) 
+    val categoryId: UUID? = null,
+)

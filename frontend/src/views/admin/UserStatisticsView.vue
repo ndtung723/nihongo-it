@@ -2,7 +2,11 @@
   <div class="user-statistics-view">
     <div class="d-flex justify-space-between align-center">
       <h1 class="text-h4">Thống kê học viên</h1>
-      <v-btn color="primary" prepend-icon="mdi-arrow-left" @click="goToOverview">
+      <v-btn
+        color="primary"
+        prepend-icon="mdi-arrow-left"
+        @click="goToOverview"
+      >
         Tổng quan
       </v-btn>
     </div>
@@ -34,7 +38,7 @@
                 :items="[
                   { title: 'Hoạt động gần đây', value: 'lastActive' },
                   { title: 'Tên', value: 'fullName' },
-                  { title: 'Chuỗi ngày', value: 'streakCount' }
+                  { title: 'Chuỗi ngày', value: 'streakCount' },
                 ]"
                 label="Sắp xếp theo"
                 density="compact"
@@ -98,8 +102,16 @@
 
     <!-- Loading State -->
     <v-row v-if="loading">
-      <v-col cols="12" class="d-flex justify-center align-center" style="min-height: 300px;">
-        <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+      <v-col
+        cols="12"
+        class="d-flex justify-center align-center"
+        style="min-height: 300px"
+      >
+        <v-progress-circular
+          indeterminate
+          color="primary"
+          size="64"
+        ></v-progress-circular>
       </v-col>
     </v-row>
 
@@ -108,7 +120,13 @@
       <v-col cols="12">
         <v-alert type="error" variant="tonal">
           Không thể tải dữ liệu thống kê. Vui lòng thử lại sau.
-          <v-btn color="error" variant="text" class="mt-2" @click="fetchUserStatistics">Thử lại</v-btn>
+          <v-btn
+            color="error"
+            variant="text"
+            class="mt-2"
+            @click="fetchUserStatistics"
+            >Thử lại</v-btn
+          >
         </v-alert>
       </v-col>
     </v-row>
@@ -132,7 +150,9 @@
           <template v-slot:item.userName="{ item }">
             <div class="d-flex align-center">
               <v-avatar color="primary" class="mr-3">
-                <span class="text-white">{{ item.userName?.charAt(0) || 'U' }}</span>
+                <span class="text-white">{{
+                  item.userName?.charAt(0) || "U"
+                }}</span>
               </v-avatar>
               <div>
                 <div>{{ item.userName }}</div>
@@ -145,11 +165,19 @@
           <template v-slot:item.summary="{ item }">
             <div>
               <div class="d-flex align-center text-subtitle-2">
-                <v-icon icon="mdi-cards-outline" size="small" class="mr-1"></v-icon>
+                <v-icon
+                  icon="mdi-cards-outline"
+                  size="small"
+                  class="mr-1"
+                ></v-icon>
                 {{ item.summary?.totalCards || 0 }} thẻ
               </div>
               <div class="d-flex align-center text-caption">
-                <v-icon icon="mdi-calendar-clock" size="small" class="mr-1"></v-icon>
+                <v-icon
+                  icon="mdi-calendar-clock"
+                  size="small"
+                  class="mr-1"
+                ></v-icon>
                 {{ item.summary?.dueCardsNow || 0 }} thẻ đến hạn
               </div>
             </div>
@@ -164,7 +192,9 @@
               striped
             >
               <template v-slot:default="{ value }">
-                <span class="text-caption font-weight-bold">{{ Math.round(value) }}%</span>
+                <span class="text-caption font-weight-bold"
+                  >{{ Math.round(value) }}%</span
+                >
               </template>
             </v-progress-linear>
           </template>
@@ -211,10 +241,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import statisticsService from '@/services/statistics.service';
-import type { UserStatistics } from '@/services/statistics.service';
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import statisticsService from "@/services/statistics.service";
+import type { UserStatistics } from "@/services/statistics.service";
 
 const router = useRouter();
 
@@ -227,55 +257,55 @@ const totalPages = ref(0);
 const page = ref(1);
 
 // Filters and sorting
-const searchQuery = ref('');
-const sortBy = ref('lastActive');
-const sortDirection = ref('desc');
+const searchQuery = ref("");
+const sortBy = ref("lastActive");
+const sortDirection = ref("desc");
 
 // Table headers
 const headers = [
-  { title: 'Học viên', key: 'userName', sortable: true },
-  { title: 'Thống kê', key: 'summary', sortable: false },
-  { title: 'Tiến độ', key: 'progress', sortable: true },
-  { title: 'Tỷ lệ ghi nhớ', key: 'retentionRate', sortable: true },
-  { title: 'Chuỗi ngày', key: 'streak', sortable: true },
-  { title: 'Hoạt động gần đây', key: 'lastActive', sortable: true },
-  { title: '', key: 'actions', sortable: false }
+  { title: "Học viên", key: "userName", sortable: true },
+  { title: "Thống kê", key: "summary", sortable: false },
+  { title: "Tiến độ", key: "progress", sortable: true },
+  { title: "Tỷ lệ ghi nhớ", key: "retentionRate", sortable: true },
+  { title: "Chuỗi ngày", key: "streak", sortable: true },
+  { title: "Hoạt động gần đây", key: "lastActive", sortable: true },
+  { title: "", key: "actions", sortable: false },
 ];
 
 // Format helpers
 const formatPercent = (value: number | undefined) => {
-  if (value === undefined) return '0%';
+  if (value === undefined) return "0%";
   return `${Math.round(value)}%`;
 };
 
 const formatDate = (dateString: string | undefined) => {
-  if (!dateString) return 'Không rõ';
+  if (!dateString) return "Không rõ";
   const date = new Date(dateString);
-  return date.toLocaleDateString('vi-VN', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+  return date.toLocaleDateString("vi-VN", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 };
 
 const getRetentionRateColor = (rate: number | undefined) => {
-  if (rate === undefined) return 'grey';
-  if (rate >= 80) return 'success';
-  if (rate >= 60) return 'info';
-  if (rate >= 40) return 'warning';
-  return 'error';
+  if (rate === undefined) return "grey";
+  if (rate >= 80) return "success";
+  if (rate >= 60) return "info";
+  if (rate >= 40) return "warning";
+  return "error";
 };
 
 // Navigation functions
 const goToOverview = () => {
-  router.push({ name: 'adminStatistics' });
+  router.push({ name: "adminStatistics" });
 };
 
 // Clear search and refresh the data
 const clearSearch = () => {
-  searchQuery.value = '';
+  searchQuery.value = "";
   fetchUserStatistics();
 };
 
@@ -283,7 +313,7 @@ const viewUserDetails = (userId: string) => {
   router.push(`/admin/statistics/users/${userId}`);
 };
 
-const handleRowClick = (event: any, { item }: { item: UserStatistics }) => {
+const handleRowClick = (event: unknown, { item }: { item: UserStatistics }) => {
   viewUserDetails(item.userId);
 };
 
@@ -312,15 +342,15 @@ const fetchUserStatistics = async () => {
       10, // Page size
       backendSortBy,
       sortDirection.value,
-      searchQuery.value
+      searchQuery.value,
     );
 
     // Handle the error response format from the backend
-    if (response.result && response.result.status === 'NG') {
+    if (response.result && response.result.status === "NG") {
       error.value = true;
       // Fallback to userId sorting if there's an error
-      if (sortBy.value !== 'lastActive') {
-        sortBy.value = 'lastActive';
+      if (sortBy.value !== "lastActive") {
+        sortBy.value = "lastActive";
         fetchUserStatistics();
         return;
       }
@@ -331,8 +361,7 @@ const fetchUserStatistics = async () => {
     userStats.value = data.users || [];
     totalItems.value = data.totalItems || 0;
     totalPages.value = data.totalPages || 0;
-
-  } catch (err) {
+  } catch {
     error.value = true;
   } finally {
     loading.value = false;

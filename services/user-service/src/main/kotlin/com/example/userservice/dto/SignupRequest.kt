@@ -8,10 +8,11 @@ import jakarta.validation.constraints.Size
 data class SignupRequest(
     @field:NotBlank(message = "Email is required")
     @field:Email(message = "Invalid email format")
+    @field:Size(max = 255, message = "Email must not exceed 255 characters")
     val email: String,
 
     @field:NotBlank(message = "Password is required")
-    @field:Size(min = 6, max = 100, message = "Password must be between 6 and 100 characters")
+    @field:Size(min = 8, max = 100, message = "Password must be between 8 and 100 characters")
     val password: String,
 
     @field:NotBlank(message = "Full name is required")
@@ -23,4 +24,4 @@ data class SignupRequest(
     val currentLevel: JlptLevel = JlptLevel.N5,
 
     val jlptGoal: JlptLevel = JlptLevel.N3,
-) 
+)

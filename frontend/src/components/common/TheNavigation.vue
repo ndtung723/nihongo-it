@@ -7,15 +7,27 @@
 
       <div class="nav-links">
         <router-link :to="{ name: 'home' }" class="nav-link">Home</router-link>
-        <router-link :to="{ name: 'vocabulary' }" class="nav-link">Vocabulary</router-link>
-        <router-link :to="{ name: 'vocabularyLearning' }" class="nav-link">Exercises</router-link>
-        <router-link :to="{ name: 'conversationLearning' }" class="nav-link">Conversation</router-link>
-        <router-link :to="{ name: 'flashcardStudy' }" class="nav-link">Flashcards</router-link>
+        <router-link :to="{ name: 'vocabulary' }" class="nav-link"
+          >Vocabulary</router-link
+        >
+        <router-link :to="{ name: 'vocabularyLearning' }" class="nav-link"
+          >Exercises</router-link
+        >
+        <router-link :to="{ name: 'conversationLearning' }" class="nav-link"
+          >Conversation</router-link
+        >
+        <router-link :to="{ name: 'flashcardStudy' }" class="nav-link"
+          >Flashcards</router-link
+        >
 
         <!-- Authenticated-only links -->
         <template v-if="authStore.isAuthenticated">
-          <router-link :to="{ name: 'statistics' }" class="nav-link">My Learning Path</router-link>
-          <router-link :to="{ name: 'statistics' }" class="nav-link">My Progress</router-link>
+          <router-link :to="{ name: 'statistics' }" class="nav-link"
+            >My Learning Path</router-link
+          >
+          <router-link :to="{ name: 'statistics' }" class="nav-link"
+            >My Progress</router-link
+          >
         </template>
       </div>
 
@@ -23,7 +35,11 @@
         <template v-if="authStore.isAuthenticated">
           <div class="user-menu" @click="toggleDropdown" ref="userMenu">
             <div class="user-avatar" v-if="authStore.user?.profilePicture">
-              <img :src="authStore.user.profilePicture" alt="Profile" />
+              <img
+                :src="authStore.user.profilePicture"
+                alt="Profile"
+                loading="lazy"
+              />
             </div>
             <div class="user-avatar default-avatar" v-else>
               {{ avatarInitials }}
@@ -31,14 +47,20 @@
             <span class="user-name">{{ authStore.user?.fullName }}</span>
 
             <div class="dropdown-menu" v-if="showDropdown">
-              <router-link :to="{ name: 'profile' }" class="dropdown-item">Profile</router-link>
+              <router-link :to="{ name: 'profile' }" class="dropdown-item"
+                >Profile</router-link
+              >
               <div class="dropdown-item" @click="logout">Logout</div>
             </div>
           </div>
         </template>
         <template v-else>
-          <router-link :to="{ name: 'login' }" class="btn-login">Login</router-link>
-          <router-link :to="{ name: 'register' }" class="btn-register">Register</router-link>
+          <router-link :to="{ name: 'login' }" class="btn-login"
+            >Login</router-link
+          >
+          <router-link :to="{ name: 'register' }" class="btn-register"
+            >Register</router-link
+          >
         </template>
       </div>
     </div>
@@ -46,25 +68,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { useAuthStore } from '@/stores';
-import { useToast } from 'vue-toast-notification';
+import { ref, computed, onMounted, onUnmounted } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores";
+import { useAppToast } from "@/composables/useAppToast";
 
 const router = useRouter();
 const authStore = useAuthStore();
-const $toast = useToast();
+const $toast = useAppToast();
 const showDropdown = ref(false);
 const userMenu = ref<HTMLElement | null>(null);
 
 // Get initials for avatar
 const avatarInitials = computed(() => {
-  if (!authStore.user?.fullName) return '';
+  if (!authStore.user?.fullName) return "";
 
   return authStore.user.fullName
-    .split(' ')
-    .map(name => name.charAt(0))
-    .join('')
+    .split(" ")
+    .map((name) => name.charAt(0))
+    .join("")
     .toUpperCase();
 });
 
@@ -81,16 +103,16 @@ const handleClickOutside = (event: MouseEvent) => {
 const logout = () => {
   authStore.logout();
   showDropdown.value = false;
-  $toast.success('You have been logged out successfully');
-  router.push({ name: 'login' });
+  $toast.success("You have been logged out successfully");
+  router.push({ name: "login" });
 };
 
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside);
+  document.addEventListener("click", handleClickOutside);
 });
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside);
+  document.removeEventListener("click", handleClickOutside);
 });
 </script>
 
@@ -116,7 +138,7 @@ onUnmounted(() => {
 .logo a {
   font-size: 1.25rem;
   font-weight: bold;
-  color: #4CAF50;
+  color: #4caf50;
   text-decoration: none;
 }
 
@@ -134,7 +156,7 @@ onUnmounted(() => {
 
 .nav-link:hover,
 .nav-link.router-link-active {
-  color: #4CAF50;
+  color: #4caf50;
 }
 
 .auth-buttons {
@@ -153,8 +175,8 @@ onUnmounted(() => {
 }
 
 .btn-login {
-  color: #4CAF50;
-  border: 1px solid #4CAF50;
+  color: #4caf50;
+  border: 1px solid #4caf50;
 }
 
 .btn-login:hover {
@@ -162,12 +184,12 @@ onUnmounted(() => {
 }
 
 .btn-register {
-  background-color: #4CAF50;
+  background-color: #4caf50;
   color: white;
 }
 
 .btn-register:hover {
-  background-color: #388E3C;
+  background-color: #388e3c;
 }
 
 .user-menu {
@@ -192,7 +214,7 @@ onUnmounted(() => {
 }
 
 .default-avatar {
-  background-color: #4CAF50;
+  background-color: #4caf50;
   color: white;
   display: flex;
   justify-content: center;

@@ -1,4 +1,5 @@
 <configuration>
+    <conversionRule conversionWord="maskedMsg" converterClass="com.example.common.logging.SensitiveMaskingConverter"/>
     <springProperty name="appName" source="spring.application.name" defaultValue="unknown"/>
 
     <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
@@ -10,7 +11,10 @@
                 </timestamp>
                 <logLevel><fieldName>level</fieldName></logLevel>
                 <loggerName><fieldName>logger</fieldName><shortenedLoggerNameLength>36</shortenedLoggerNameLength></loggerName>
-                <message/>
+                <message>
+                    <fieldName>message</fieldName>
+                    <pattern>%maskedMsg</pattern>
+                </message>
                 <mdc/>
                 <stackTrace>
                     <fieldName>stack_trace</fieldName>
@@ -30,7 +34,7 @@
     <springProfile name="local">
         <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
             <encoder>
-                <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) [%cyan(%X{correlationId:-no-id})] [%cyan(%logger{36})] %msg%n</pattern>
+                <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) [%cyan(%X{correlationId:-no-id})] [%cyan(%logger{36})] %maskedMsg%n</pattern>
             </encoder>
         </appender>
         <root level="INFO">

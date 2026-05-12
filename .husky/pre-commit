@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# 1. Frontend: ESLint + Prettier via lint-staged
+(cd frontend && npx lint-staged)
+
+# 2. Python: ruff lint + format via pre-commit (only if python files staged)
+python_staged=$(git diff --cached --name-only --diff-filter=ACM | grep "^python/.*\.py$" || true)
+if [ -n "$python_staged" ]; then
+  if command -v pre-commit >/dev/null 2>&1; then
+    pre-commit run --files $python_staged
+  else
+    echo "[warn] pre-commit not installed — skipping Python checks. Run: pip install pre-commit && pre-commit install"
+  fi
+fi

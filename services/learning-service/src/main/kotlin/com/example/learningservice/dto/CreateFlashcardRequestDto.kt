@@ -17,5 +17,5 @@ data class CreateFlashcardRequestDto(
     val backText: String,
 
     @JsonProperty("vocabularyId")
-    val vocabularyId: UUID? = null
+    val vocabularyId: UUID? = null,
 )

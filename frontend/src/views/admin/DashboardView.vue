@@ -5,7 +5,9 @@
         <v-card-text>
           <div class="d-flex flex-wrap align-center">
             <div class="d-flex align-center">
-              <v-icon color="primary" size="large" class="mr-3">mdi-view-dashboard</v-icon>
+              <v-icon color="primary" size="large" class="mr-3"
+                >mdi-view-dashboard</v-icon
+              >
               <h1 class="text-h5 font-weight-bold mb-0">Dashboard quản trị</h1>
             </div>
             <v-spacer></v-spacer>
@@ -43,16 +45,28 @@
               class="mb-4 dashboard-card"
               :class="{ 'on-hover': isHovering }"
             >
-              <v-card-title class="card-title primary-gradient text-white px-4 py-3">
-                <v-icon size="large" color="white" class="mr-2">mdi-account-group</v-icon>
+              <v-card-title
+                class="card-title primary-gradient text-white px-4 py-3"
+              >
+                <v-icon size="large" color="white" class="mr-2"
+                  >mdi-account-group</v-icon
+                >
                 Người dùng
               </v-card-title>
               <v-card-text class="pa-4 text-center">
-                <div class="text-h3 mb-1 counter-number">{{ stats.userCount }}</div>
+                <div class="text-h3 mb-1 counter-number">
+                  {{ stats.userCount }}
+                </div>
                 <div class="text-caption text-grey">Tổng số người dùng</div>
               </v-card-text>
               <v-card-actions class="px-4 pb-4">
-                <v-btn block variant="flat" color="primary" :to="{ name: 'adminUsers' }" class="action-btn">
+                <v-btn
+                  block
+                  variant="flat"
+                  color="primary"
+                  :to="{ name: 'adminUsers' }"
+                  class="action-btn"
+                >
                   <v-icon class="mr-1">mdi-account-cog</v-icon>
                   Quản lý người dùng
                 </v-btn>
@@ -69,16 +83,28 @@
               class="mb-4 dashboard-card"
               :class="{ 'on-hover': isHovering }"
             >
-              <v-card-title class="card-title success-gradient text-white px-4 py-3">
-                <v-icon size="large" color="white" class="mr-2">mdi-book-open-variant</v-icon>
+              <v-card-title
+                class="card-title success-gradient text-white px-4 py-3"
+              >
+                <v-icon size="large" color="white" class="mr-2"
+                  >mdi-book-open-variant</v-icon
+                >
                 Từ vựng
               </v-card-title>
               <v-card-text class="pa-4 text-center">
-                <div class="text-h3 mb-1 counter-number">{{ stats.vocabularyCount }}</div>
+                <div class="text-h3 mb-1 counter-number">
+                  {{ stats.vocabularyCount }}
+                </div>
                 <div class="text-caption text-grey">Tổng số từ vựng</div>
               </v-card-text>
               <v-card-actions class="px-4 pb-4">
-                <v-btn block variant="flat" color="success" :to="{ name: 'adminVocabulary' }" class="action-btn">
+                <v-btn
+                  block
+                  variant="flat"
+                  color="success"
+                  :to="{ name: 'adminVocabulary' }"
+                  class="action-btn"
+                >
                   <v-icon class="mr-1">mdi-dictionary</v-icon>
                   Quản lý từ vựng
                 </v-btn>
@@ -95,16 +121,28 @@
               class="mb-4 dashboard-card"
               :class="{ 'on-hover': isHovering }"
             >
-              <v-card-title class="card-title info-gradient text-white px-4 py-3">
-                <v-icon size="large" color="white" class="mr-2">mdi-folder-multiple</v-icon>
+              <v-card-title
+                class="card-title info-gradient text-white px-4 py-3"
+              >
+                <v-icon size="large" color="white" class="mr-2"
+                  >mdi-folder-multiple</v-icon
+                >
                 Danh mục
               </v-card-title>
               <v-card-text class="pa-4 text-center">
-                <div class="text-h3 mb-1 counter-number">{{ stats.categoryCount }}</div>
+                <div class="text-h3 mb-1 counter-number">
+                  {{ stats.categoryCount }}
+                </div>
                 <div class="text-caption text-grey">Tổng số danh mục</div>
               </v-card-text>
               <v-card-actions class="px-4 pb-4">
-                <v-btn block variant="flat" color="info" :to="{ name: 'adminCategories' }" class="action-btn">
+                <v-btn
+                  block
+                  variant="flat"
+                  color="info"
+                  :to="{ name: 'adminCategories' }"
+                  class="action-btn"
+                >
                   <v-icon class="mr-1">mdi-folder-cog</v-icon>
                   Quản lý danh mục
                 </v-btn>
@@ -121,16 +159,28 @@
               class="mb-4 dashboard-card"
               :class="{ 'on-hover': isHovering }"
             >
-              <v-card-title class="card-title warning-gradient text-white px-4 py-3">
-                <v-icon size="large" color="white" class="mr-2">mdi-tag-multiple</v-icon>
+              <v-card-title
+                class="card-title warning-gradient text-white px-4 py-3"
+              >
+                <v-icon size="large" color="white" class="mr-2"
+                  >mdi-tag-multiple</v-icon
+                >
                 Chủ đề
               </v-card-title>
               <v-card-text class="pa-4 text-center">
-                <div class="text-h3 mb-1 counter-number">{{ stats.topicCount }}</div>
+                <div class="text-h3 mb-1 counter-number">
+                  {{ stats.topicCount }}
+                </div>
                 <div class="text-caption text-grey">Tổng số chủ đề</div>
               </v-card-text>
               <v-card-actions class="px-4 pb-4">
-                <v-btn block variant="flat" color="warning" :to="{ name: 'adminTopics' }" class="action-btn">
+                <v-btn
+                  block
+                  variant="flat"
+                  color="warning"
+                  :to="{ name: 'adminTopics' }"
+                  class="action-btn"
+                >
                   <v-icon class="mr-1">mdi-tag-edit</v-icon>
                   Quản lý chủ đề
                 </v-btn>
@@ -150,7 +200,9 @@
               :elevation="isHovering ? 4 : 2"
               :class="{ 'on-hover': isHovering }"
             >
-              <v-card-title class="stats-title px-4 py-3 success-gradient-light">
+              <v-card-title
+                class="stats-title px-4 py-3 success-gradient-light"
+              >
                 <v-icon class="mr-2">mdi-chart-bar</v-icon>
                 Thống kê học viên
               </v-card-title>
@@ -159,8 +211,9 @@
                   <div class="mb-4 mb-md-0 me-md-4 flex-grow-1">
                     <h3 class="text-h6 mb-2">Phân tích tiến độ học tập</h3>
                     <p class="text-body-1">
-                      Xem thống kê chi tiết về tiến độ học tập của học viên, bao gồm thẻ ghi nhớ, tỷ lệ ghi nhớ,
-                      phân bố theo cấp độ JLPT và nhiều thông tin khác.
+                      Xem thống kê chi tiết về tiến độ học tập của học viên, bao
+                      gồm thẻ ghi nhớ, tỷ lệ ghi nhớ, phân bố theo cấp độ JLPT
+                      và nhiều thông tin khác.
                     </p>
                   </div>
                   <div class="d-flex flex-wrap gap-2">
@@ -202,34 +255,57 @@
               :elevation="isHovering ? 4 : 2"
               :class="{ 'on-hover': isHovering }"
             >
-              <v-card-title class="stats-title px-4 py-3 primary-gradient-light">
+              <v-card-title
+                class="stats-title px-4 py-3 primary-gradient-light"
+              >
                 <v-icon class="mr-2">mdi-account-clock</v-icon>
                 Hoạt động gần đây
               </v-card-title>
               <v-card-text class="pa-0">
                 <v-list v-if="recentActivity.length" class="activity-list">
                   <v-slide-y-transition group>
-                    <template v-for="(activity, index) in recentActivity" :key="index">
+                    <template
+                      v-for="(activity, index) in recentActivity"
+                      :key="index"
+                    >
                       <v-list-item class="activity-item">
                         <template v-slot:prepend>
-                          <v-avatar size="40" color="primary" variant="tonal" class="mr-3">
+                          <v-avatar
+                            size="40"
+                            color="primary"
+                            variant="tonal"
+                            class="mr-3"
+                          >
                             <v-icon color="primary">mdi-account</v-icon>
                           </v-avatar>
                         </template>
-                        <v-list-item-title class="font-weight-medium">{{ activity.user }}</v-list-item-title>
-                        <v-list-item-subtitle class="text-grey">{{ activity.action }}</v-list-item-subtitle>
+                        <v-list-item-title class="font-weight-medium">{{
+                          activity.user
+                        }}</v-list-item-title>
+                        <v-list-item-subtitle class="text-grey">{{
+                          activity.action
+                        }}</v-list-item-subtitle>
                         <template v-slot:append>
-                          <v-chip size="small" variant="tonal" color="grey" class="time-chip">
+                          <v-chip
+                            size="small"
+                            variant="tonal"
+                            color="grey"
+                            class="time-chip"
+                          >
                             {{ formatDate(activity.timestamp) }}
                           </v-chip>
                         </template>
                       </v-list-item>
-                      <v-divider v-if="index < recentActivity.length - 1"></v-divider>
+                      <v-divider
+                        v-if="index < recentActivity.length - 1"
+                      ></v-divider>
                     </template>
                   </v-slide-y-transition>
                 </v-list>
                 <div v-else class="text-center pa-5">
-                  <v-icon size="large" color="grey" class="mb-2">mdi-clock-outline</v-icon>
+                  <v-icon size="large" color="grey" class="mb-2"
+                    >mdi-clock-outline</v-icon
+                  >
                   <p class="text-grey">Không có hoạt động nào gần đây</p>
                 </div>
               </v-card-text>
@@ -251,50 +327,74 @@
               </v-card-title>
               <v-card-text class="pa-4">
                 <v-scale-transition group>
-                  <div class="stat-item d-flex justify-space-between align-center mb-3 pb-2">
+                  <div
+                    class="stat-item d-flex justify-space-between align-center mb-3 pb-2"
+                  >
                     <div class="d-flex align-center">
                       <v-avatar color="blue-lighten-5" size="36" class="mr-3">
                         <v-icon color="blue">mdi-account-plus</v-icon>
                       </v-avatar>
                       <span>Người dùng mới (7 ngày qua):</span>
                     </div>
-                    <v-chip color="blue" variant="tonal" size="small">{{ stats.newUsers }}</v-chip>
+                    <v-chip color="blue" variant="tonal" size="small">{{
+                      stats.newUsers
+                    }}</v-chip>
                   </div>
-                  <div class="stat-item d-flex justify-space-between align-center mb-3 pb-2">
+                  <div
+                    class="stat-item d-flex justify-space-between align-center mb-3 pb-2"
+                  >
                     <div class="d-flex align-center">
                       <v-avatar color="green-lighten-5" size="36" class="mr-3">
                         <v-icon color="green">mdi-account-check</v-icon>
                       </v-avatar>
                       <span>Người dùng hoạt động (30 ngày):</span>
                     </div>
-                    <v-chip color="green" variant="tonal" size="small">{{ stats.activeUsers }}</v-chip>
+                    <v-chip color="green" variant="tonal" size="small">{{
+                      stats.activeUsers
+                    }}</v-chip>
                   </div>
-                  <div class="stat-item d-flex justify-space-between align-center mb-3 pb-2">
+                  <div
+                    class="stat-item d-flex justify-space-between align-center mb-3 pb-2"
+                  >
                     <div class="d-flex align-center">
                       <v-avatar color="amber-lighten-5" size="36" class="mr-3">
                         <v-icon color="amber">mdi-magnify</v-icon>
                       </v-avatar>
                       <span>Lượt tìm kiếm từ vựng (hôm nay):</span>
                     </div>
-                    <v-chip color="amber" variant="tonal" size="small">{{ stats.searches }}</v-chip>
+                    <v-chip color="amber" variant="tonal" size="small">{{
+                      stats.searches
+                    }}</v-chip>
                   </div>
-                  <div class="stat-item d-flex justify-space-between align-center mb-3 pb-2">
+                  <div
+                    class="stat-item d-flex justify-space-between align-center mb-3 pb-2"
+                  >
                     <div class="d-flex align-center">
-                      <v-avatar color="deep-purple-lighten-5" size="36" class="mr-3">
+                      <v-avatar
+                        color="deep-purple-lighten-5"
+                        size="36"
+                        class="mr-3"
+                      >
                         <v-icon color="deep-purple">mdi-cards</v-icon>
                       </v-avatar>
                       <span>Flashcards đã tạo (hôm nay):</span>
                     </div>
-                    <v-chip color="deep-purple" variant="tonal" size="small">{{ stats.flashcardsCreated }}</v-chip>
+                    <v-chip color="deep-purple" variant="tonal" size="small">{{
+                      stats.flashcardsCreated
+                    }}</v-chip>
                   </div>
-                  <div class="stat-item d-flex justify-space-between align-center">
+                  <div
+                    class="stat-item d-flex justify-space-between align-center"
+                  >
                     <div class="d-flex align-center">
                       <v-avatar color="indigo-lighten-5" size="36" class="mr-3">
                         <v-icon color="indigo">mdi-clipboard-text-play</v-icon>
                       </v-avatar>
                       <span>Flashcards đã học (hôm nay):</span>
                     </div>
-                    <v-chip color="indigo" variant="tonal" size="small">{{ stats.flashcardsStudied }}</v-chip>
+                    <v-chip color="indigo" variant="tonal" size="small">{{
+                      stats.flashcardsStudied
+                    }}</v-chip>
                   </div>
                 </v-scale-transition>
               </v-card-text>
@@ -303,18 +403,10 @@
         </v-col>
       </v-row>
 
-      <v-snackbar
-        v-model="showError"
-        color="error"
-        timeout="3000"
-      >
+      <v-snackbar v-model="showError" color="error" timeout="3000">
         {{ errorMessage }}
         <template v-slot:actions>
-          <v-btn
-            color="white"
-            variant="text"
-            @click="showError = false"
-          >
+          <v-btn color="white" variant="text" @click="showError = false">
             Đóng
           </v-btn>
         </template>
@@ -324,16 +416,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { format } from 'date-fns';
-import { useToast } from 'vue-toast-notification';
-import adminService from '@/services/admin.service';
-import type { DashboardStats } from '@/services/admin.service';
+import { ref, onMounted } from "vue";
+import { format } from "date-fns";
+import { useAppToast } from "@/composables/useAppToast";
+import adminService from "@/services/admin.service";
 
-const $toast = useToast();
+const $toast = useAppToast();
 const loading = ref(false);
 const showError = ref(false);
-const errorMessage = ref('');
+const errorMessage = ref("");
 
 // Khởi tạo dữ liệu thống kê mặc định
 const stats = ref({
@@ -345,7 +436,7 @@ const stats = ref({
   activeUsers: 0,
   searches: 0,
   flashcardsCreated: 0,
-  flashcardsStudied: 0
+  flashcardsStudied: 0,
 });
 
 // Khởi tạo dữ liệu hoạt động mặc định
@@ -358,7 +449,7 @@ interface ActivityItem {
 const recentActivity = ref<ActivityItem[]>([]);
 
 const formatDate = (date: Date) => {
-  return format(new Date(date), 'HH:mm dd/MM');
+  return format(new Date(date), "HH:mm dd/MM");
 };
 
 async function fetchDashboardData() {
@@ -376,7 +467,7 @@ async function fetchDashboardData() {
       activeUsers: data.activeUsers || 0,
       searches: data.searchesToday || 0,
       flashcardsCreated: data.flashcardsCreatedToday || 0,
-      flashcardsStudied: data.flashcardsStudiedToday || 0
+      flashcardsStudied: data.flashcardsStudiedToday || 0,
     };
 
     // Cập nhật hoạt động gần đây
@@ -384,18 +475,19 @@ async function fetchDashboardData() {
       recentActivity.value = data.recentActivities.map((activity) => ({
         user: activity.user,
         action: activity.action,
-        timestamp: new Date(activity.timestamp)
+        timestamp: new Date(activity.timestamp),
       }));
     }
 
-    $toast.success('Dữ liệu dashboard đã được cập nhật');
-  } catch (error) {
-    errorMessage.value = 'Không thể tải dữ liệu dashboard. Vui lòng thử lại sau.';
+    $toast.success("Dữ liệu dashboard đã được cập nhật");
+  } catch {
+    errorMessage.value =
+      "Không thể tải dữ liệu dashboard. Vui lòng thử lại sau.";
     showError.value = true;
 
     // Nếu API chưa được triển khai, tải dữ liệu mẫu
     loadSampleData();
-    $toast.warning('Đang sử dụng dữ liệu mẫu do API chưa sẵn sàng');
+    $toast.warning("Đang sử dụng dữ liệu mẫu do API chưa sẵn sàng");
   } finally {
     loading.value = false;
   }
@@ -412,39 +504,39 @@ function loadSampleData() {
     activeUsers: 98,
     searches: 254,
     flashcardsCreated: 76,
-    flashcardsStudied: 189
+    flashcardsStudied: 189,
   };
 
   recentActivity.value = [
     {
-      user: 'john.doe@example.com',
-      action: 'Đã đăng nhập',
-      timestamp: new Date(Date.now() - 5 * 60000)
+      user: "john.doe@example.com",
+      action: "Đã đăng nhập",
+      timestamp: new Date(Date.now() - 5 * 60000),
     },
     {
-      user: 'alice.smith@example.com',
-      action: 'Đã tạo 5 flashcard mới',
-      timestamp: new Date(Date.now() - 25 * 60000)
+      user: "alice.smith@example.com",
+      action: "Đã tạo 5 flashcard mới",
+      timestamp: new Date(Date.now() - 25 * 60000),
     },
     {
-      user: 'bob.johnson@example.com',
-      action: 'Đã hoàn thành bài học từ vựng N4',
-      timestamp: new Date(Date.now() - 2 * 3600000)
+      user: "bob.johnson@example.com",
+      action: "Đã hoàn thành bài học từ vựng N4",
+      timestamp: new Date(Date.now() - 2 * 3600000),
     },
     {
-      user: 'sarah.williams@example.com',
-      action: 'Đã tạo tài khoản mới',
-      timestamp: new Date(Date.now() - 5 * 3600000)
-    }
+      user: "sarah.williams@example.com",
+      action: "Đã tạo tài khoản mới",
+      timestamp: new Date(Date.now() - 5 * 3600000),
+    },
   ];
 }
 
 onMounted(async () => {
   try {
     await fetchDashboardData();
-  } catch (error) {
+  } catch {
     loadSampleData();
-    $toast.warning('Đang sử dụng dữ liệu mẫu');
+    $toast.warning("Đang sử dụng dữ liệu mẫu");
   }
 });
 </script>
@@ -490,7 +582,11 @@ onMounted(async () => {
 }
 
 .primary-gradient-light {
-  background: linear-gradient(135deg, rgba(25, 118, 210, 0.9), rgba(66, 165, 245, 0.9));
+  background: linear-gradient(
+    135deg,
+    rgba(25, 118, 210, 0.9),
+    rgba(66, 165, 245, 0.9)
+  );
 }
 
 .success-gradient {
@@ -498,7 +594,11 @@ onMounted(async () => {
 }
 
 .success-gradient-light {
-  background: linear-gradient(135deg, rgba(46, 125, 50, 0.9), rgba(102, 187, 106, 0.9));
+  background: linear-gradient(
+    135deg,
+    rgba(46, 125, 50, 0.9),
+    rgba(102, 187, 106, 0.9)
+  );
 }
 
 .info-gradient {
@@ -506,7 +606,11 @@ onMounted(async () => {
 }
 
 .info-gradient-light {
-  background: linear-gradient(135deg, rgba(2, 136, 209, 0.9), rgba(41, 182, 246, 0.9));
+  background: linear-gradient(
+    135deg,
+    rgba(2, 136, 209, 0.9),
+    rgba(41, 182, 246, 0.9)
+  );
 }
 
 .warning-gradient {

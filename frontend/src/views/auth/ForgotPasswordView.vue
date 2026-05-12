@@ -23,8 +23,8 @@
               variant="tonal"
               class="mb-6"
             >
-              Nếu tồn tại tài khoản với email đó, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu.
-              Vui lòng kiểm tra email của bạn.
+              Nếu tồn tại tài khoản với email đó, chúng tôi đã gửi hướng dẫn đặt
+              lại mật khẩu. Vui lòng kiểm tra email của bạn.
             </v-alert>
 
             <v-form v-else @submit.prevent="handleSubmit">
@@ -71,27 +71,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useAuthStore } from '@/stores/modules/auth';
+import { ref } from "vue";
+import { useAuthStore } from "@/stores/modules/auth";
 
 const authStore = useAuthStore();
 
-const email = ref('');
-const emailError = ref('');
+const email = ref("");
+const emailError = ref("");
 const isLoading = ref(false);
 const isSubmitted = ref(false);
 
 const validateEmail = (): boolean => {
-  emailError.value = '';
+  emailError.value = "";
 
   if (!email.value) {
-    emailError.value = 'Email là bắt buộc';
+    emailError.value = "Email là bắt buộc";
     return false;
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email.value)) {
-    emailError.value = 'Vui lòng nhập địa chỉ email hợp lệ';
+    emailError.value = "Vui lòng nhập địa chỉ email hợp lệ";
     return false;
   }
 
@@ -108,7 +108,7 @@ const handleSubmit = async () => {
     if (success) {
       isSubmitted.value = true;
     }
-  } catch (error) {
+  } catch {
   } finally {
     isLoading.value = false;
   }
@@ -124,7 +124,9 @@ const handleSubmit = async () => {
 .auth-card {
   border-radius: 16px;
   overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
   max-width: 500px;
 
   &:hover {
@@ -140,7 +142,11 @@ const handleSubmit = async () => {
   align-items: center;
   justify-content: center;
   margin: 0 auto;
-  background: linear-gradient(45deg, rgb(var(--v-theme-primary)) 0%, rgba(var(--v-theme-primary), 0.8) 100%);
+  background: linear-gradient(
+    45deg,
+    rgb(var(--v-theme-primary)) 0%,
+    rgba(var(--v-theme-primary), 0.8) 100%
+  );
 
   .mail-icon {
     font-size: 36px;

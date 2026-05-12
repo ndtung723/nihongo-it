@@ -28,7 +28,10 @@
               ></v-text-field>
 
               <div class="text-right mb-4">
-                <router-link :to="{ name: 'forgotPassword' }" class="text-decoration-none forgot-password">
+                <router-link
+                  :to="{ name: 'forgotPassword' }"
+                  class="text-decoration-none forgot-password"
+                >
                   Forgot Password?
                 </router-link>
               </div>
@@ -53,7 +56,10 @@
               </div>
 
               <div class="text-center mt-4">
-                <router-link :to="{ name: 'register' }" class="text-decoration-none">
+                <router-link
+                  :to="{ name: 'register' }"
+                  class="text-decoration-none"
+                >
                   Don't have an account? Register
                 </router-link>
               </div>
@@ -65,112 +71,76 @@
   </v-container>
 </template>
 
-<script lang="ts">
-import { Component, Vue, Ref } from 'vue-facing-decorator'
-import { useAuthStore } from '@/stores'
-import { useToast } from 'vue-toast-notification'
-import 'vue-toast-notification/dist/theme-sugar.css'
-import { GoogleLogin } from 'vue3-google-login'
+<script setup lang="ts">
+import { ref, computed, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import { useAuthStore } from "@/stores";
+import { useAppToast } from "@/composables/useAppToast";
+import { GoogleLogin } from "vue3-google-login";
 
-@Component({
-  name: 'LoginView',
-  components: {
-    GoogleLogin
-  }
-})
-export default class LoginView extends Vue {
-  private authStore = useAuthStore()
-  private getToast() {
-    return useToast()
-  }
+const authStore = useAuthStore();
+const router = useRouter();
+const route = useRoute();
+const toast = useAppToast();
 
-  @Ref('form') readonly form!: any
+const form = ref<unknown>(null);
+const email = ref("");
+const password = ref("");
+const showPassword = ref(false);
 
-  email = ''
-  password = ''
-  showPassword = false
+const loading = computed(() => authStore.loading);
 
-  get loading(): boolean {
-    return this.authStore.loading
-  }
-
-  mounted(): void {
-    if (this.authStore.isAuthenticated) {
-      this.$router.push({ name: 'home' })
-    } else {
-      // Check for error message in query params
-      const errorMsg = this.$route.query.error
-      if (errorMsg) {
-        const toast = this.getToast()
-        toast.error(String(errorMsg), {
-          position: 'top',
-          duration: 5000
-        })
-
-        // Remove the error parameter from URL to prevent showing the message again on refresh
-        if (window.history && window.history.pushState) {
-          const newUrl = new URL(window.location.href)
-          newUrl.searchParams.delete('error')
-          window.history.pushState({ path: newUrl.toString() }, '', newUrl.toString())
-        }
+onMounted(() => {
+  if (authStore.isAuthenticated) {
+    router.push({ name: "home" });
+  } else {
+    const errorMsg = route.query.error;
+    if (errorMsg) {
+      toast.error(String(errorMsg));
+      if (window.history?.pushState) {
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete("error");
+        window.history.pushState(
+          { path: newUrl.toString() },
+          "",
+          newUrl.toString(),
+        );
       }
     }
   }
+});
 
-  async handleLogin(): Promise<void> {
-    const toast = this.getToast()
-
-    if (!this.email || !this.password) {
-      toast.error('Please enter email and password', {
-        position: 'top',
-        duration: 3000
-      })
-      return
-    }
-
-    const success = await this.authStore.login({
-      email: this.email,
-      password: this.password
-    })
-
-    this.handleAuthResult(success)
+async function handleLogin() {
+  if (!email.value || !password.value) {
+    toast.error("Please enter email and password");
+    return;
   }
+  const success = await authStore.login({
+    email: email.value,
+    password: password.value,
+  });
+  handleAuthResult(success);
+}
 
-  async handleGoogleLogin(response: any): Promise<void> {
-    if (!response || !response.credential) {
-      const toast = this.getToast()
-      toast.error('Google login failed. Please try again.', {
-        position: 'top',
-        duration: 3000
-      })
-      return
-    }
-
-    const success = await this.authStore.loginWithGoogle(response.credential)
-
-    this.handleAuthResult(success)
+async function handleGoogleLogin(response: unknown) {
+  const googleResponse = response as { credential?: string } | null;
+  if (!googleResponse?.credential) {
+    toast.error("Google login failed. Please try again.");
+    return;
   }
+  const success = await authStore.loginWithGoogle(googleResponse.credential);
+  handleAuthResult(success);
+}
 
-  handleAuthResult(success: boolean): void {
-    const toast = this.getToast()
-
-    if (success) {
-      toast.success('Login successful!', {
-        position: 'top',
-        duration: 3000
-      })
-
-      // Redirect to the requested page or dashboard
-      const redirectPath = this.$route.query.redirect
-        ? String(this.$route.query.redirect)
-        : '/'
-      this.$router.push(redirectPath)
-    } else {
-      toast.error(this.authStore.error || 'Login failed', {
-        position: 'top',
-        duration: 3000
-      })
-    }
+function handleAuthResult(success: boolean) {
+  if (success) {
+    toast.success("Login successful!");
+    const redirectPath = route.query.redirect
+      ? String(route.query.redirect)
+      : "/";
+    router.push(redirectPath);
+  } else {
+    toast.error(authStore.error || "Login failed");
   }
 }
 </script>

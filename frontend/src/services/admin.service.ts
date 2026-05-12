@@ -1,79 +1,22 @@
-import api from '../utils/api';
+import api from "../utils/api";
+import type {
+  UserInfo,
+  UserDetailInfo,
+  UserListResponse,
+  UserCreateRequest,
+  UserUpdateRequest,
+  DashboardStats,
+} from "@/types/user.types";
 
-export interface UserCreateRequest {
-  email: string;
-  password: string;
-  fullName: string;
-  profilePicture?: string;
-  currentLevel?: string;
-  jlptGoal?: string;
-  roleId?: number;
-}
-
-export interface UserUpdateRequest {
-  email?: string;
-  password?: string;
-  fullName?: string;
-  profilePicture?: string;
-  currentLevel?: string;
-  jlptGoal?: string;
-  isActive?: boolean;
-  isEmailVerified?: boolean;
-  roleId?: number;
-  reminderEnabled?: boolean;
-  reminderTime?: string;
-  notificationPreferences?: string;
-  minCardThreshold?: number;
-}
-
-export interface UserInfo {
-  userId: string;
-  email: string;
-  fullName: string;
-  roleId: number;
-  profilePicture?: string;
-  currentLevel?: string;
-  jlptGoal?: string;
-  lastLogin?: string;
-  isActive?: boolean;
-  isEmailVerified?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-  streakCount?: number;
-  points?: number;
-  reminderEnabled?: boolean;
-  reminderTime?: string;
-  notificationPreferences?: string;
-  minCardThreshold?: number;
-  flashcardCount?: number;
-  newCards?: number;
-  learningCards?: number;
-  masteredCards?: number;
-}
-
-export interface UserListResponse {
-  users: UserInfo[];
-  totalItems: number;
-  totalPages: number;
-  currentPage: number;
-}
-
-export interface DashboardStats {
-  userCount: number;
-  vocabularyCount: number;
-  categoryCount: number;
-  topicCount: number;
-  newUsers: number;
-  activeUsers: number;
-  searchesToday: number;
-  flashcardsCreatedToday: number;
-  flashcardsStudiedToday: number;
-  recentActivities: {
-    user: string;
-    action: string;
-    timestamp: string;
-  }[];
-}
+// Re-export for backward compatibility
+export type {
+  UserInfo,
+  UserDetailInfo,
+  UserListResponse,
+  UserCreateRequest,
+  UserUpdateRequest,
+  DashboardStats,
+};
 
 class AdminService {
   /**
@@ -81,7 +24,7 @@ class AdminService {
    */
   async getDashboardStats(): Promise<DashboardStats> {
     try {
-      const response = await api.get('/api/v1/learning/admin/dashboard/stats');
+      const response = await api.get("/api/v1/learning/admin/dashboard/stats");
       return response.data.data;
     } catch (error) {
       throw error;
@@ -91,13 +34,19 @@ class AdminService {
   /**
    * Get all users with pagination and optional search
    */
-  async getUsers(page = 0, size = 10, search?: string, sortBy = 'email', sortDir = 'asc'): Promise<UserListResponse> {
+  async getUsers(
+    page = 0,
+    size = 10,
+    search?: string,
+    sortBy = "email",
+    sortDir = "asc",
+  ): Promise<UserListResponse> {
     try {
       const params = { page, size, sortBy, sortDir };
       if (search) {
         Object.assign(params, { search });
       }
-      const response = await api.get('/api/v1/user/admin/users', { params });
+      const response = await api.get("/api/v1/user/admin/users", { params });
       return response.data;
     } catch (error) {
       throw error;
@@ -107,7 +56,7 @@ class AdminService {
   /**
    * Get user by ID
    */
-  async getUserById(userId: string): Promise<UserInfo> {
+  async getUserById(userId: string): Promise<UserDetailInfo> {
     try {
       const response = await api.get(`/api/v1/user/admin/users/${userId}`);
       return response.data;
@@ -121,7 +70,7 @@ class AdminService {
    */
   async createUser(userData: UserCreateRequest): Promise<UserInfo> {
     try {
-      const response = await api.post('/api/v1/user/admin/users', userData);
+      const response = await api.post("/api/v1/user/admin/users", userData);
       return response.data;
     } catch (error) {
       throw error;
@@ -131,9 +80,15 @@ class AdminService {
   /**
    * Update an existing user
    */
-  async updateUser(userId: string, userData: UserUpdateRequest): Promise<UserInfo> {
+  async updateUser(
+    userId: string,
+    userData: UserUpdateRequest,
+  ): Promise<UserInfo> {
     try {
-      const response = await api.put(`/api/v1/user/admin/users/${userId}`, userData);
+      const response = await api.put(
+        `/api/v1/user/admin/users/${userId}`,
+        userData,
+      );
       return response.data;
     } catch (error) {
       throw error;
@@ -143,7 +98,9 @@ class AdminService {
   /**
    * Deactivate a user (soft delete)
    */
-  async deactivateUser(userId: string): Promise<{ status: string; message: string }> {
+  async deactivateUser(
+    userId: string,
+  ): Promise<{ status: string; message: string }> {
     try {
       const response = await api.delete(`/api/v1/user/admin/users/${userId}`);
       return response.data;
@@ -155,9 +112,13 @@ class AdminService {
   /**
    * Activate a user
    */
-  async activateUser(userId: string): Promise<{ status: string; message: string }> {
+  async activateUser(
+    userId: string,
+  ): Promise<{ status: string; message: string }> {
     try {
-      const response = await api.put(`/api/v1/user/admin/users/${userId}/activate`);
+      const response = await api.put(
+        `/api/v1/user/admin/users/${userId}/activate`,
+      );
       return response.data;
     } catch (error) {
       throw error;
@@ -167,11 +128,18 @@ class AdminService {
   /**
    * Change a user's role
    */
-  async changeUserRole(userId: string, roleId: number): Promise<{ status: string; message: string }> {
+  async changeUserRole(
+    userId: string,
+    roleId: number,
+  ): Promise<{ status: string; message: string }> {
     try {
-      const response = await api.put(`/api/v1/user/admin/users/${userId}/change-role`, null, {
-        params: { roleId }
-      });
+      const response = await api.put(
+        `/api/v1/user/admin/users/${userId}/change-role`,
+        null,
+        {
+          params: { roleId },
+        },
+      );
       return response.data;
     } catch (error) {
       throw error;

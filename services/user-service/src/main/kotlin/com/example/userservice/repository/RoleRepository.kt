@@ -7,4 +7,4 @@ import org.springframework.stereotype.Repository
 @Repository
 interface RoleRepository : JpaRepository<RoleEntity, Int> {
     fun findByRoleId(roleId: Int): RoleEntity?
-} 
+}

@@ -1,4 +1,4 @@
-package com.example.learningservice.controller
+﻿package com.example.learningservice.controller
 
 import com.example.learningservice.dto.CategoryDTO
 import com.example.learningservice.dto.CreateCategoryRequest
@@ -16,7 +16,7 @@ import java.util.UUID
 @RequestMapping("/api/v1/learning/categories")
 class CategoryController(
     private val categoryService: CategoryService,
-    private val topicService: TopicService
+    private val topicService: TopicService,
 ) {
     @GetMapping
     fun getAllCategories(): ResponseEntity<List<CategoryDTO>> {
@@ -38,14 +38,14 @@ class CategoryController(
     @PreAuthorize("hasRole('ADMIN')")
     fun updateCategory(
         @PathVariable categoryId: UUID,
-        @RequestBody request: UpdateCategoryRequest
+        @RequestBody request: UpdateCategoryRequest,
     ): ResponseEntity<CategoryDTO> {
         return ResponseEntity.ok(categoryService.updateCategory(categoryId, request))
     }
 
     @DeleteMapping("/{categoryId}")
     @PreAuthorize("hasRole('ADMIN')")
-    fun deleteCategory(@PathVariable categoryId: UUID): ResponseEntity<Void> {
+    fun deleteCategory(@PathVariable categoryId: UUID): ResponseEntity<Unit> {
         categoryService.deleteCategory(categoryId)
         return ResponseEntity.noContent().build()
     }
@@ -59,4 +59,4 @@ class CategoryController(
     fun getTopicsByCategory(@PathVariable categoryId: UUID): ResponseEntity<List<TopicDTO>> {
         return ResponseEntity.ok(topicService.getTopicsByCategoryId(categoryId))
     }
-} 
+}

@@ -13,11 +13,11 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class OpenApiConfig {
-    
+
     @Bean
     fun customOpenAPI(): OpenAPI {
         val securitySchemeName = "bearerAuth"
-        
+
         return OpenAPI()
             .info(
                 Info()
@@ -27,17 +27,17 @@ class OpenApiConfig {
                     .contact(
                         Contact()
                             .name("Development Team")
-                            .email("admin@example.com")
+                            .email("admin@example.com"),
                     )
                     .license(
                         License()
-                            .name("MIT License")
-                    )
+                            .name("MIT License"),
+                    ),
             )
             .addServersItem(
                 Server()
                     .url("/")
-                    .description("Default Server URL")
+                    .description("Default Server URL"),
             )
             .addSecurityItem(SecurityRequirement().addList(securitySchemeName))
             .components(
@@ -49,8 +49,8 @@ class OpenApiConfig {
                             .type(SecurityScheme.Type.HTTP)
                             .scheme("bearer")
                             .bearerFormat("JWT")
-                            .description("Enter JWT Bearer token. Get it from the /api/v1/auth/login endpoint.")
-                    )
+                            .description("Enter JWT Bearer token. Get it from the /api/v1/auth/login endpoint."),
+                    ),
             )
     }
 }

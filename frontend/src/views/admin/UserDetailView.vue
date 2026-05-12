@@ -12,15 +12,16 @@
       <h1 class="text-h4">User Details</h1>
     </div>
 
-    <v-alert
-      v-if="error"
-      type="error"
-      class="mb-4"
-    >
+    <v-alert v-if="error" type="error" class="mb-4">
       {{ error }}
     </v-alert>
 
-    <v-card v-if="loading" elevation="2" class="pa-6 d-flex justify-center align-center" height="400">
+    <v-card
+      v-if="loading"
+      elevation="2"
+      class="pa-6 d-flex justify-center align-center"
+      height="400"
+    >
       <v-progress-circular
         indeterminate
         color="primary"
@@ -37,18 +38,22 @@
                 <v-img
                   :src="user.profilePicture || '/img/default-avatar.png'"
                   :alt="`${user.fullName}'s avatar`"
+                  lazy-src="/img/default-avatar.png"
+                  cover
                 ></v-img>
               </v-avatar>
 
               <h2 class="text-h5 mb-1">{{ user.fullName }}</h2>
-              <p class="text-subtitle-1 mb-2 text-grey-darken-1">{{ user.email }}</p>
+              <p class="text-subtitle-1 mb-2 text-grey-darken-1">
+                {{ user.email }}
+              </p>
 
               <v-chip
                 :color="user.roleId === ROLES.ADMIN ? 'error' : 'primary'"
                 size="small"
                 class="mb-4"
               >
-                {{ user.roleId === ROLES.ADMIN ? 'Admin' : 'User' }}
+                {{ user.roleId === ROLES.ADMIN ? "Admin" : "User" }}
               </v-chip>
 
               <v-chip
@@ -56,7 +61,7 @@
                 size="small"
                 class="mb-4"
               >
-                {{ user.isActive ? 'Active' : 'Inactive' }}
+                {{ user.isActive ? "Active" : "Inactive" }}
               </v-chip>
             </div>
 
@@ -76,7 +81,9 @@
                   <v-icon icon="mdi-clock"></v-icon>
                 </template>
                 <v-list-item-title>Last Login</v-list-item-title>
-                <v-list-item-subtitle>{{ formatDate(user.lastLogin) }}</v-list-item-subtitle>
+                <v-list-item-subtitle>{{
+                  formatDate(user.lastLogin)
+                }}</v-list-item-subtitle>
               </v-list-item>
 
               <v-list-item>
@@ -84,7 +91,9 @@
                   <v-icon icon="mdi-calendar"></v-icon>
                 </template>
                 <v-list-item-title>Account Created</v-list-item-title>
-                <v-list-item-subtitle>{{ formatDate(user.createdAt) }}</v-list-item-subtitle>
+                <v-list-item-subtitle>{{
+                  formatDate(user.createdAt)
+                }}</v-list-item-subtitle>
               </v-list-item>
             </v-list>
 
@@ -111,21 +120,27 @@
               <v-row>
                 <v-col cols="12" sm="6">
                   <div class="mb-3">
-                    <div class="text-caption text-grey-darken-1">Current JLPT Level</div>
-                    <div class="text-h6">{{ user.currentLevel || 'Not set' }}</div>
+                    <div class="text-caption text-grey-darken-1">
+                      Current JLPT Level
+                    </div>
+                    <div class="text-h6">
+                      {{ user.currentLevel || "Not set" }}
+                    </div>
                   </div>
                 </v-col>
 
                 <v-col cols="12" sm="6">
                   <div class="mb-3">
                     <div class="text-caption text-grey-darken-1">JLPT Goal</div>
-                    <div class="text-h6">{{ user.jlptGoal || 'Not set' }}</div>
+                    <div class="text-h6">{{ user.jlptGoal || "Not set" }}</div>
                   </div>
                 </v-col>
 
                 <v-col cols="12" sm="6">
                   <div class="mb-3">
-                    <div class="text-caption text-grey-darken-1">Streak Count</div>
+                    <div class="text-caption text-grey-darken-1">
+                      Streak Count
+                    </div>
                     <div class="text-h6">{{ user.streakCount || 0 }} days</div>
                   </div>
                 </v-col>
@@ -149,13 +164,15 @@
               <v-row>
                 <v-col cols="12" sm="6">
                   <div class="mb-3">
-                    <div class="text-caption text-grey-darken-1">Reminders Enabled</div>
+                    <div class="text-caption text-grey-darken-1">
+                      Reminders Enabled
+                    </div>
                     <div class="text-h6">
                       <v-chip
                         :color="user.reminderEnabled ? 'success' : 'error'"
                         size="small"
                       >
-                        {{ user.reminderEnabled ? 'Enabled' : 'Disabled' }}
+                        {{ user.reminderEnabled ? "Enabled" : "Disabled" }}
                       </v-chip>
                     </div>
                   </div>
@@ -163,25 +180,37 @@
 
                 <v-col cols="12" sm="6">
                   <div class="mb-3">
-                    <div class="text-caption text-grey-darken-1">Reminder Time</div>
-                    <div class="text-h6">{{ user.reminderTime || 'Not set' }}</div>
+                    <div class="text-caption text-grey-darken-1">
+                      Reminder Time
+                    </div>
+                    <div class="text-h6">
+                      {{ user.reminderTime || "Not set" }}
+                    </div>
                   </div>
                 </v-col>
 
                 <v-col cols="12" sm="6">
                   <div class="mb-3">
-                    <div class="text-caption text-grey-darken-1">Min Card Threshold</div>
-                    <div class="text-h6">{{ user.minCardThreshold || 'Not set' }}</div>
+                    <div class="text-caption text-grey-darken-1">
+                      Min Card Threshold
+                    </div>
+                    <div class="text-h6">
+                      {{ user.minCardThreshold || "Not set" }}
+                    </div>
                   </div>
                 </v-col>
 
                 <v-col cols="12" sm="6">
                   <div class="mb-3">
-                    <div class="text-caption text-grey-darken-1">Notification Preferences</div>
+                    <div class="text-caption text-grey-darken-1">
+                      Notification Preferences
+                    </div>
                     <div class="text-h6">
                       <template v-if="user.notificationPreferences">
                         <v-chip
-                          v-for="pref in user.notificationPreferences.split(',')"
+                          v-for="pref in user.notificationPreferences.split(
+                            ',',
+                          )"
                           :key="pref"
                           size="small"
                           class="mr-1"
@@ -203,7 +232,9 @@
               Flashcards
             </v-card-title>
             <v-card-text>
-              <div class="text-h6">{{ user.flashcardCount || 0 }} flashcards created</div>
+              <div class="text-h6">
+                {{ user.flashcardCount || 0 }} flashcards created
+              </div>
 
               <v-row class="mt-4">
                 <v-col cols="12" sm="6" md="4">
@@ -221,7 +252,9 @@
                   <v-card variant="outlined">
                     <v-card-text>
                       <div class="text-center">
-                        <div class="text-h4 mb-1">{{ user.learningCards || 0 }}</div>
+                        <div class="text-h4 mb-1">
+                          {{ user.learningCards || 0 }}
+                        </div>
                         <div>Learning</div>
                       </div>
                     </v-card-text>
@@ -232,7 +265,9 @@
                   <v-card variant="outlined">
                     <v-card-text>
                       <div class="text-center">
-                        <div class="text-h4 mb-1">{{ user.masteredCards || 0 }}</div>
+                        <div class="text-h4 mb-1">
+                          {{ user.masteredCards || 0 }}
+                        </div>
                         <div>Mastered</div>
                       </div>
                     </v-card-text>
@@ -246,10 +281,7 @@
     </template>
 
     <!-- User Edit Dialog -->
-    <v-dialog
-      v-model="editDialog.visible"
-      max-width="600px"
-    >
+    <v-dialog v-model="editDialog.visible" max-width="600px">
       <v-card>
         <v-card-title>
           <span class="text-h5">Edit User</span>
@@ -261,7 +293,10 @@
               v-model="editDialog.user.email"
               label="Email"
               prepend-inner-icon="mdi-email"
-              :rules="[v => !!v || 'Email is required', v => /.+@.+\..+/.test(v) || 'Email must be valid']"
+              :rules="[
+                (v) => !!v || 'Email is required',
+                (v) => /.+@.+\..+/.test(v) || 'Email must be valid',
+              ]"
               required
             ></v-text-field>
 
@@ -269,7 +304,7 @@
               v-model="editDialog.user.fullName"
               label="Full Name"
               prepend-inner-icon="mdi-account"
-              :rules="[v => !!v || 'Full name is required']"
+              :rules="[(v) => !!v || 'Full name is required']"
               required
             ></v-text-field>
 
@@ -279,7 +314,12 @@
               prepend-inner-icon="mdi-lock"
               :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
               :type="showPassword ? 'text' : 'password'"
-              :rules="[v => !v || v.length >= 6 || 'Password must be at least 6 characters']"
+              :rules="[
+                (v) =>
+                  !v ||
+                  v.length >= 6 ||
+                  'Password must be at least 6 characters',
+              ]"
               @click:append-inner="showPassword = !showPassword"
             ></v-text-field>
 
@@ -386,21 +426,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { format, parseISO } from 'date-fns';
-import adminService from '@/services/admin.service';
-import type { UserInfo, UserUpdateRequest } from '@/services/admin.service';
-import { ROLES } from '@/types/roles';
+import { ref, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { format, parseISO } from "date-fns";
+import adminService from "@/services/admin.service";
+import type {
+  UserDetailInfo as UserInfo,
+  UserUpdateRequest,
+} from "@/services/admin.service";
+import { ROLES } from "@/types/roles";
 
 const route = useRoute();
-const router = useRouter();
 const userId = route.params.id as string;
 
 // User data
-const user = ref<any>(null);
+const user = ref<UserInfo | null>(null);
 const loading = ref(true);
-const error = ref('');
+const error = ref("");
 
 // Form state
 const formValid = ref(false);
@@ -409,36 +451,36 @@ const showPassword = ref(false);
 
 const editDialog = ref({
   visible: false,
-  user: {} as any
+  user: {} as UserInfo & { password?: string },
 });
 
 const snackbar = ref({
   visible: false,
-  text: '',
-  color: 'success'
+  text: "",
+  color: "success",
 });
 
 // Form options
-const jlptLevels = ['N5', 'N4', 'N3', 'N2', 'N1'];
+const jlptLevels = ["N5", "N4", "N3", "N2", "N1"];
 const roles = [
-  { id: 1, name: 'Admin' },
-  { id: 2, name: 'User' }
+  { id: 1, name: "Admin" },
+  { id: 2, name: "User" },
 ];
 
 // Format dates
 const formatDate = (dateString: string | null | undefined) => {
-  if (!dateString) return 'Never';
+  if (!dateString) return "Never";
   try {
-    return format(parseISO(dateString), 'MMM dd, yyyy HH:mm');
-  } catch (e) {
-    return 'Invalid date';
+    return format(parseISO(dateString), "MMM dd, yyyy HH:mm");
+  } catch {
+    return "Invalid date";
   }
 };
 
 // Load user data
 const loadUser = async () => {
   loading.value = true;
-  error.value = '';
+  error.value = "";
   try {
     const response = await adminService.getUserById(userId);
     user.value = response;
@@ -446,17 +488,19 @@ const loadUser = async () => {
     // Add some mock data for demonstration
     user.value = {
       ...response,
-      createdAt: response.createdAt || '2023-01-01T00:00:00Z',
+      createdAt: response.createdAt || "2023-01-01T00:00:00Z",
       streakCount: 12,
       points: 500,
       flashcardCount: 65,
       newCards: 5,
       learningCards: 45,
       masteredCards: 15,
-      notificationPreferences: response.notificationPreferences || 'email,app'
+      notificationPreferences: response.notificationPreferences || "email,app",
     };
-  } catch (error: any) {
-    error.value = error.response?.data?.message || 'Failed to load user details';
+  } catch (err: unknown) {
+    error.value =
+      (err as { response?: { data?: { message?: string } } }).response?.data
+        ?.message || "Failed to load user details";
   } finally {
     loading.value = false;
   }
@@ -468,7 +512,7 @@ const openEditDialog = () => {
 
   editDialog.value = {
     visible: true,
-    user: { ...user.value }
+    user: { ...user.value },
   };
 };
 
@@ -486,7 +530,7 @@ const saveUser = async () => {
       reminderEnabled: editDialog.value.user.reminderEnabled,
       reminderTime: editDialog.value.user.reminderTime,
       minCardThreshold: editDialog.value.user.minCardThreshold,
-      notificationPreferences: editDialog.value.user.notificationPreferences
+      notificationPreferences: editDialog.value.user.notificationPreferences,
     };
 
     if (editDialog.value.user.password) {
@@ -494,20 +538,24 @@ const saveUser = async () => {
     }
 
     await adminService.updateUser(userId, userData);
-    showSnackbar('User updated successfully');
+    showSnackbar("User updated successfully");
     editDialog.value.visible = false;
     loadUser(); // Reload user data
-  } catch (error: any) {
-    showSnackbar(error.response?.data?.message || 'Failed to update user', 'error');
+  } catch (err: unknown) {
+    showSnackbar(
+      (err as { response?: { data?: { message?: string } } }).response?.data
+        ?.message || "Failed to update user",
+      "error",
+    );
   }
 };
 
 // Helper to show snackbar messages
-const showSnackbar = (text: string, color = 'success') => {
+const showSnackbar = (text: string, color = "success") => {
   snackbar.value = {
     visible: true,
     text,
-    color
+    color,
   };
 };
 
