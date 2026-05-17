@@ -128,3 +128,20 @@
     @apply font-sans;
   }
 }
+
+/* 3D transform utilities for flashcard flip. Square brackets aren't allowed
+   in @utility names, so we use plain identifiers and the components reference
+   `perspective-card` instead of `perspective-[1000px]`. */
+@utility perspective-card {
+  perspective: 1000px;
+}
+@utility transform-3d {
+  transform-style: preserve-3d;
+}
+@utility backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+@utility rotate-y-180 {
+  transform: rotateY(180deg);
+}
