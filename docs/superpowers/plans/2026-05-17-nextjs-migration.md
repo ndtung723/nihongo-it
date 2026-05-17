@@ -1507,9 +1507,36 @@ npm install chart.js react-chartjs-2
 
 ---
 
-# Phase 6: User App — Conversation Practice + Speech
+# Phase 6: User App — Conversation Practice + Speech ✅ COMPLETED 2026-05-17
 
 **Goal:** Conversation listing + practice with audio recording + speech analysis.
+
+**Outcome:**
+- `conversation.service.ts` (public methods only): getConversations, getConversationById, getConversationsByJlptLevel, save/unsave/check/saved-list
+- `ai.service.ts` extended with `analyzeSpeech(blob, refText, type)` and `getFeedbackSummary()`
+- `useAudioRecorder` hook — uses **native Web `MediaRecorder` API** (no `recorder-js` dep). Returns `{state, blob, error, elapsedMs, start, stop, reset}`. Handles cleanup on unmount.
+- `AudioRecorderButton` — round mic/stop button with state label + elapsed time + error display
+- `SpeechFeedback` — overall score badge + 3 sub-score bars + per-word chips (green/red) + AI feedback text
+- `/conversation` — paged list with debounced search + JLPT filter (search auto-disabled when filtering by JLPT because backend uses separate endpoint)
+- `/conversation/[id]/practice` — line-by-line walkthrough:
+  - Line card with speaker badge, Japanese text, AudioButton (TTS playback), Vietnamese translation, notes
+  - Record → analyze → SpeechFeedback. Retry button to record again on the same line
+  - Prev/Next navigation; per-line feedback memo keyed by line index
+  - Progress bar based on activeIndex
+- Build: 17 routes total (13 static + 4 dynamic)
+- Verification: type-check ✓ · lint ✓ · 11/11 tests ✓ · build ✓
+
+### Discoveries (Phase 6)
+
+| Discovery | Impact / Fix |
+|---|---|
+| **Skipped `recorder-js`** in favor of native `MediaRecorder` | The plan called for `recorder-js`, but the browser's MediaRecorder API ships natively, handles WebM/Opus encoding well, and removes one dependency + bundle weight. Backend's speech analyzer accepts WebM (matches what the existing Vue app sends through different paths anyway). The `recorder-js` install line in the plan is now obsolete. |
+| MediaRecorder `mimeType` fallback chain | Not every browser supports `audio/webm;codecs=opus`. Pattern: check `MediaRecorder.isTypeSupported('audio/webm;codecs=opus')` → fall back to `'audio/webm'` → leave undefined (browser default). |
+| Recorder cleanup on unmount | The hook's effect must stop in-flight recording AND release the MediaStream tracks (`stream.getTracks().forEach(t => t.stop())`) — otherwise the browser mic indicator stays lit after navigating away. |
+| Server endpoint split for JLPT filter | The conversation API has `/conversations` (general, with search) AND `/conversations/jlpt/{level}` (no search param). Cannot combine search + JLPT filter on the same request. UX fix: disable the search input when a JLPT level is selected with a small hint text. |
+| `analyzeSpeech` was missing from initial Phase 4 port | Phase 4 only ported AI methods needed for vocabulary detail. Phase 6 added `analyzeSpeech` + `getFeedbackSummary` (used in summary screen, deferred to a future revision). Lesson: services are ported incrementally per-phase by consuming features, not eagerly. |
+| Per-line feedback memo (`Record<number, SpeechAnalysisResult>`) | Storing results keyed by `activeIndex` lets users navigate freely between lines without re-recording. Retry button is `delete feedback[activeIndex]` which un-mounts the SpeechFeedback and re-renders the recorder. |
+| Don't auto-advance after analyzing | Tempting to auto-jump to next line after a "good" score, but the user needs time to read the per-word feedback. Explicit Next button is the right UX. |
 
 ### Task 6.1: Conversation service
 

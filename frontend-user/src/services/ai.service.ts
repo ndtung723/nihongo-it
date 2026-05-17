@@ -4,6 +4,8 @@ import type {
   AIExplanationResponse,
   ChatResponse,
   ContentType,
+  FeedbackSummary,
+  SpeechAnalysisResult,
   TTSCheckResponse,
   VocabularyExplanation,
   VocabularyExplanationRequest,
@@ -59,6 +61,45 @@ const aiService = {
       responseType: 'arraybuffer',
     })
     return new Blob([res.data], { type: 'audio/mpeg' })
+  },
+
+  /**
+   * Upload a recorded audio blob along with the reference text to the backend's
+   * speech analyzer. Returns per-word scoring + overall feedback.
+   */
+  async analyzeSpeech(
+    audioBlob: Blob,
+    referenceText: string,
+    type: string,
+  ): Promise<SpeechAnalysisResult> {
+    const formData = new FormData()
+    // Backend doesn't strictly require a specific filename, but a .webm extension
+    // matches what MediaRecorder produces by default.
+    formData.append('file', audioBlob, 'recording.webm')
+    formData.append('reference_text', referenceText)
+    formData.append('type', type)
+    const res = await api.post('/api/v1/ai/speech/analyze-audio-enhanced', formData)
+    return res.data
+  },
+
+  /** Summarize feedback across multiple attempts (used at end of practice). */
+  async getFeedbackSummary(
+    feedbackList: SpeechAnalysisResult[],
+    conversationText: string,
+  ): Promise<FeedbackSummary> {
+    try {
+      const res = await api.post('/api/v1/ai/speech/summarize-feedback', {
+        feedback_list: feedbackList,
+        conversation_text: conversationText,
+      })
+      return res.data
+    } catch {
+      return {
+        summary: 'Không thể tạo tóm tắt phản hồi.',
+        common_errors: [],
+        improvement_tips: [],
+      }
+    }
   },
 
   /** Play an audio blob or URL. Resolves when playback ends. */
