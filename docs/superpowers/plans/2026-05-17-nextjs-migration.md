@@ -1605,7 +1605,26 @@ npm install kuroshiro kuroshiro-analyzer-kuromoji wanakana
 
 ---
 
-# Phase 7: User App — Tools + Statistics
+# Phase 7: User App — Tools + Statistics ✅ COMPLETED 2026-05-18
+
+**Outcome (USER APP NOW FEATURE-COMPLETE — 21 routes total):**
+- `/furigana` (public) — Furigana converter via backend `/api/v1/learning/furigana` (no client-side kuroshiro needed)
+- `/translation` (public) — VN↔JP translation via `/api/v1/ai/chat/translate(/economy)`, model toggle (GPT-4o/3.5), swap direction, localStorage history (max 20, restore by click), confirm dialog to clear
+- `/speech` (authenticated) — standalone speech analyzer: enter text → record → analyze. Uses TTS playback + SpeechFeedback from Phase 6.
+- `/statistics` (authenticated) — `redirect('/flashcards/stats')` since both pages show the same data
+- Verification: type-check ✓ · lint ✓ · 11/11 tests ✓ · build ✓
+
+### Discoveries (Phase 7)
+
+| Discovery | Impact / Fix |
+|---|---|
+| **No client-side kuroshiro/wanakana needed** — backend already does it | The Vue app had `kuroshiroConfig.ts` lazy-loading a 12MB dict, but the Furigana page itself just calls `GET /api/v1/learning/furigana?text=...` and gets back `[{text, reading, isKanji}]` tokens. Phase 7 skipped the entire kuroshiro install. **Bundle savings: ~12MB.** Plan's Task 6.6 (kuroshiro init) is OBSOLETE — remove it from future revisions. |
+| `/statistics` duplicates `/flashcards/stats` | Both call `/api/v1/learning/flashcards/statistics` and render the same data. Consolidated: `/statistics` is a 5-line `redirect()` page. Avoids maintaining two near-identical views. |
+| `next/navigation` `redirect()` is a server-side throw | Works in async Server Components AND synchronous default exports. Throws a special error that Next.js catches and emits a 307 to the browser. NOT to be confused with `useRouter().push()` (client-side). |
+| Translation history needs JSON `try/catch` on read | `localStorage.getItem()` may return corrupt JSON from a previous version. Always wrap `JSON.parse` in try/catch. Also wrap `setItem` for QuotaExceededError. |
+| `react-hooks/set-state-in-effect` on localStorage rehydration | Reading from localStorage on mount is a side-effect of synchronizing client storage with React state. Suppress with eslint-disable on the `setHistory(...)` line, with a comment explaining it's intentional. |
+| Confirm dialog destructive variant | `useConfirm({ ..., variant: 'destructive' })` styles the action button red — used for "Xoá lịch sử". Implemented in Phase 2's `useConfirm.tsx`. |
+| Swap direction = swap content too | When user clicks the direction toggle, also swap source/result content (keeps the conversation flowing). Subtle but important UX win — saves them from copy/paste. |
 
 ### Task 7.1: Furigana converter page
 
