@@ -1070,9 +1070,30 @@ Expected: all pass. **Do NOT proceed to Phase 3 if any check fails.**
 
 ---
 
-# Phase 3: Auth Flow (frontend-user)
+# Phase 3: Auth Flow (frontend-user) ✅ COMPLETED 2026-05-17
 
 **Goal:** Working login, register, logout, password reset, Google OAuth in user app. Admin login (Phase 8) reuses these patterns.
+
+**Outcome:**
+- 6 zod schemas: login, signup, forgotPassword, resetPassword, changePassword, updateProfile
+- 4 auth pages under `(auth)/`: login, register, forgot-password, reset-password (centered card layout)
+- `AuthInitializer` mounted in `Providers` — silently restores session via refresh cookie on app mount
+- `GoogleOAuthProvider` wraps tree conditionally (only when `NEXT_PUBLIC_GOOGLE_CLIENT_ID` set)
+- `(app)/` route group with `Header` (logo + nav + user dropdown with logout) → applies to all authenticated routes
+- Profile page (`/profile`) + Change password page (`/account/change-password`)
+- Home page (`/`) — landing with Đăng nhập/Đăng ký buttons
+- All forms use react-hook-form + zod with consistent error display + `aria-invalid`
+- Verification: type-check ✓ · lint ✓ · 11/11 tests ✓ · build ✓ (8 routes prerendered)
+
+### Discoveries (Phase 3)
+
+| Discovery | Impact / Fix |
+|---|---|
+| `useSearchParams()` in pages causes build failure: `useSearchParams() should be wrapped in a suspense boundary` | Next.js 16 prerendering needs the hook inside `<Suspense>` boundary. **Pattern:** split the page — `page.tsx` is a server component that wraps `<Suspense fallback={<Loader />}>{<Form />}</Suspense>`, and `XxxForm.tsx` is the `'use client'` component using `useSearchParams`. Applied to login + reset-password. |
+| `auth.store.login(request: LoginRequest)` signature | Plan's draft code sample showed `login(email, password)`. Actual store takes a `LoginRequest` object. Pages updated to `await login(values)`. |
+| `GoogleOAuthProvider` requires `clientId` not empty | Wrap conditionally based on `process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID` to avoid console errors in dev without credentials. |
+| `Header` only mounted in `(app)/layout.tsx` | Auth pages and home use their own layouts (no header). When user not yet loaded (during AuthInitializer), Header shows login/register buttons as fallback. |
+| Profile form needs `useEffect(() => reset(user-derived defaults), [user, reset])` | User data arrives asynchronously after AuthInitializer completes. Reset form when it does so the inputs populate. |
 
 ### Task 3.1: Auth schemas (zod)
 
