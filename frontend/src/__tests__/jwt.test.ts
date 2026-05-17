@@ -6,6 +6,9 @@ import {
   isAdmin,
 } from "@/utils/jwt";
 
+vi.mock("@/utils/tokenStore", () => ({ getAccessToken: vi.fn() }));
+import { getAccessToken } from "@/utils/tokenStore";
+
 // Minimal JWT header.payload.signature structure for testing
 // payload: { sub, userId, role, email, fullName, exp, iat }
 function makeToken(payload: object): string {
@@ -62,18 +65,17 @@ describe("isTokenExpired()", () => {
 
 describe("getStoredPayload()", () => {
   beforeEach(() => {
-    localStorage.clear();
     vi.clearAllMocks();
   });
 
-  it("returns null when no token in localStorage", () => {
-    vi.mocked(localStorage.getItem).mockReturnValue(null);
+  it("returns null when no token in store", () => {
+    vi.mocked(getAccessToken).mockReturnValue(null);
     expect(getStoredPayload()).toBeNull();
   });
 
   it("decodes and returns payload when token exists", () => {
     const token = makeToken(validPayload);
-    vi.mocked(localStorage.getItem).mockReturnValue(token);
+    vi.mocked(getAccessToken).mockReturnValue(token);
     const result = getStoredPayload();
     expect(result?.userId).toBe("uuid-1234");
   });
@@ -85,19 +87,17 @@ describe("isAdmin()", () => {
   });
 
   it("returns true when role is 1 (ADMIN)", () => {
-    const token = makeToken(adminPayload);
-    vi.mocked(localStorage.getItem).mockReturnValue(token);
+    vi.mocked(getAccessToken).mockReturnValue(makeToken(adminPayload));
     expect(isAdmin()).toBe(true);
   });
 
   it("returns false when role is 2 (USER)", () => {
-    const token = makeToken(validPayload);
-    vi.mocked(localStorage.getItem).mockReturnValue(token);
+    vi.mocked(getAccessToken).mockReturnValue(makeToken(validPayload));
     expect(isAdmin()).toBe(false);
   });
 
   it("returns false when no token", () => {
-    vi.mocked(localStorage.getItem).mockReturnValue(null);
+    vi.mocked(getAccessToken).mockReturnValue(null);
     expect(isAdmin()).toBe(false);
   });
 });

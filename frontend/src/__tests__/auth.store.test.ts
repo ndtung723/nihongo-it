@@ -23,8 +23,15 @@ vi.mock("@/utils/jwt", () => ({
   isTokenExpired: vi.fn(),
 }));
 
+// Mock axios for initializeAuth (refresh-token endpoint)
+vi.mock("axios", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("axios")>();
+  return { ...actual, default: { ...actual.default, post: vi.fn() } };
+});
+
 import authService from "@/services/auth.service.ts";
 import { isTokenExpired } from "@/utils/jwt";
+import axios from "axios";
 
 describe("auth store", () => {
   beforeEach(() => {
@@ -59,12 +66,9 @@ describe("auth store", () => {
 
   describe("login()", () => {
     it("returns true and fetches user on success", async () => {
-      vi.mocked(authService.login).mockResolvedValue({
-        token: "jwt",
-        refreshToken: "rt",
-      });
+      vi.mocked(authService.login).mockResolvedValue({ token: "jwt" });
       vi.mocked(authService.getCurrentUser).mockResolvedValue({
-        status: { status: "OK" },
+        status: "OK",
         userInfo: { userId: "1", email: "a@b.com", fullName: "A", roleId: 2 },
       });
 
@@ -98,39 +102,37 @@ describe("auth store", () => {
   });
 
   describe("initializeAuth()", () => {
-    it("calls fetchCurrentUser when token is valid", () => {
-      vi.mocked(authService.getToken).mockReturnValue("valid_token");
+    it("calls fetchCurrentUser when refresh-token returns a valid token", async () => {
+      vi.mocked(axios.post).mockResolvedValue({ data: { token: "valid_token" } });
       vi.mocked(isTokenExpired).mockReturnValue(false);
       vi.mocked(authService.getCurrentUser).mockResolvedValue({
-        status: { status: "OK" },
-        userInfo: null,
+        status: "OK",
+        userInfo: undefined,
       });
 
       const store = useAuthStore();
-      store.initializeAuth();
+      await store.initializeAuth();
 
       expect(authService.getCurrentUser).toHaveBeenCalled();
     });
 
-    it("removes token when expired", () => {
-      vi.mocked(authService.getToken).mockReturnValue("expired_token");
+    it("does not call fetchCurrentUser when refresh-token returns expired token", async () => {
+      vi.mocked(axios.post).mockResolvedValue({ data: { token: "expired_token" } });
       vi.mocked(isTokenExpired).mockReturnValue(true);
 
       const store = useAuthStore();
-      store.initializeAuth();
+      await store.initializeAuth();
 
-      expect(authService.removeToken).toHaveBeenCalled();
       expect(authService.getCurrentUser).not.toHaveBeenCalled();
     });
 
-    it("does nothing when no token", () => {
-      vi.mocked(authService.getToken).mockReturnValue(null);
+    it("does nothing when refresh-token request fails", async () => {
+      vi.mocked(axios.post).mockRejectedValue(new Error("no cookie"));
 
       const store = useAuthStore();
-      store.initializeAuth();
+      await store.initializeAuth();
 
       expect(authService.getCurrentUser).not.toHaveBeenCalled();
-      expect(authService.removeToken).not.toHaveBeenCalled();
     });
   });
 
@@ -138,7 +140,7 @@ describe("auth store", () => {
     it("clears user state", async () => {
       vi.mocked(authService.logout).mockResolvedValue(undefined);
       vi.mocked(authService.getCurrentUser).mockResolvedValue({
-        status: { status: "OK" },
+        status: "OK",
         userInfo: { userId: "1", email: "a@b.com", fullName: "A", roleId: 2 },
       });
 

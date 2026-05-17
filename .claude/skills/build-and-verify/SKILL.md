@@ -45,10 +45,44 @@ cd services
 
 ### When to run tests
 
-ONLY when the user explicitly asks:
+ONLY when the user explicitly asks. Run multiple modules together to save time:
+
 ```bash
+# Run tests for the three modules that currently have test suites:
+cd services
+./gradlew :common:test :api-gateway:test :learning-service:test
+
+# Single module
 ./gradlew :learning-service:test
 ```
+
+**Auto-fix style before running tests** (test compile also goes through ktlint):
+```bash
+./gradlew :common:ktlintFormat :api-gateway:ktlintFormat :learning-service:ktlintFormat
+```
+
+**Read test results after running (PowerShell):**
+```powershell
+$modules = @('common','api-gateway','learning-service')
+foreach ($m in $modules) {
+    $dir = "D:/workspace/nihongo-it/services/$m/build/test-results/test"
+    if (Test-Path $dir) {
+        $xmlFiles = Get-ChildItem $dir -Filter '*.xml'
+        $total = 0; $fail = 0; $err = 0
+        foreach ($f in $xmlFiles) {
+            [xml]$x = Get-Content $f.FullName
+            $total += [int]$x.testsuite.tests
+            $fail  += [int]$x.testsuite.failures
+            $err   += [int]$x.testsuite.errors
+        }
+        Write-Host "${m}: $total tests, $fail failures, $err errors"
+    } else {
+        Write-Host "${m}: no test results found"
+    }
+}
+```
+
+Expected clean baseline: `common: 12 tests, 0 failures, 0 errors` / `api-gateway: 14 tests, 0 failures, 0 errors` / `learning-service: 43 tests, 0 failures, 0 errors`
 
 Do NOT run tests as part of the regular verify workflow — slow and unnecessary for a compile check.
 
@@ -119,9 +153,60 @@ Only run when the user explicitly wants to test in the browser. Do NOT start it 
 ### Tests (vitest)
 
 ```bash
+# One-shot run (non-interactive) — use this in CI or when verifying
 cd frontend
-npm run test:unit       # watch mode
-npm run test:coverage   # one-shot + coverage report
+npx vitest run
+
+# With verbose output showing each test name (useful for debugging failures)
+npx vitest run --reporter=verbose
+
+# Filter output to pass/fail summary only
+npx vitest run --reporter=verbose 2>&1 | grep -E "FAIL|PASS|Tests |Test Files|✓|×" | tail -20
+
+# Coverage report
+npm run test:coverage
+
+# Watch mode (interactive, for development)
+npm run test:unit
+```
+
+**DO NOT use `npm run test`** — that script does not exist; the correct scripts are `test:unit` and `test:coverage`.
+
+Expected clean baseline: **55 tests, 6 test files, 0 failures** across:
+- `src/__tests__/auth.store.test.ts` — auth store (isAuthenticated, login, initializeAuth, logout)
+- `src/__tests__/common.types.test.ts` — `extractApiError()` utility
+- `src/__tests__/guards.test.ts` — router guards (requireAuth, requireAdmin, redirectIfAuthenticated)
+- `src/__tests__/jwt.test.ts` — JWT utilities (decodeToken, isTokenExpired, getStoredPayload, isAdmin)
+- `src/__tests__/tokenStore.test.ts` — in-memory token store
+- `src/__tests__/useDebounce.test.ts` — `useDebounce` composable
+
+**Key mocking patterns for frontend tests:**
+
+```typescript
+// tokenStore (in-memory — NOT localStorage)
+vi.mock("@/utils/tokenStore", () => ({ getAccessToken: vi.fn(), clearAccessToken: vi.fn() }))
+import { getAccessToken } from "@/utils/tokenStore"
+vi.mocked(getAccessToken).mockReturnValue("token")
+
+// jwt utils
+vi.mock("@/utils/jwt", () => ({ isTokenExpired: vi.fn(), decodeToken: vi.fn() }))
+
+// axios (for initializeAuth refresh-token call)
+vi.mock("axios", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("axios")>()
+  return { ...actual, default: { ...actual.default, post: vi.fn() } }
+})
+import axios from "axios"
+vi.mocked(axios.post).mockResolvedValue({ data: { token: "valid_token" } })
+```
+
+**Use JUnit 5 assertions in Kotlin tests, NOT `kotlin.test`:**
+```kotlin
+// ✅ Always import from JUnit 5 — kotlin.test is not on classpath in these modules
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+// ❌ Never import kotlin.test.assertEquals — will cause "Unresolved reference" at compile time
 ```
 
 Only run when the user asks or when you edit a file with a corresponding test.
