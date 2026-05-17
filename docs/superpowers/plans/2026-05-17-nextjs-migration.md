@@ -1445,9 +1445,31 @@ Reuses `VocabularyCard` and `useAsyncData(() => vocabularyService.getSavedVocabu
 
 ---
 
-# Phase 5: User App — Flashcard Study + Stats
+# Phase 5: User App — Flashcard Study + Stats ✅ COMPLETED 2026-05-17
 
 **Goal:** Spaced-repetition study session + stats chart.
+
+**Outcome:**
+- `flashcard.service.ts` with `unwrap<T>()` helper for backend's `{ data: T }` envelope (fallback to raw for forward compat)
+- `flashcards.store.ts` (Zustand) — `dueCards`, `stats`, `removeFromDue` for optimistic advance
+- `FlashcardReview` component — two-sided card with CSS 3D flip (rotateY 180deg)
+- `RatingButtons` — 4 buttons (Quên/Khó/Tốt/Dễ) mapping to FSRS ratings 1-4
+- `/flashcards/study` — full session loop with optimistic advance, keyboard shortcuts (Space to flip, 1-4 to rate), completion state
+- `/flashcards/stats` — summary cards + line/bar/doughnut charts via react-chartjs-2
+- `lib/charts.ts` — centralized Chart.js registration (side-effect import in stats page)
+- Build: 15 routes total (12 static + 3 dynamic)
+- Verification: type-check ✓ · lint ✓ · 11/11 tests ✓ · build ✓
+
+### Discoveries (Phase 5)
+
+| Discovery | Impact / Fix |
+|---|---|
+| Tailwind 4 `@utility` names cannot contain `[` brackets | Brackets are reserved for arbitrary-value syntax. Cannot write `@utility perspective-[1000px] { ... }`. Use plain identifiers like `@utility perspective-card { ... }` and reference them as bare classes. Affects any custom 3D / animation utility we add. |
+| Need explicit 3D transform utilities for card flip | Added to `globals.css` via `@utility`: `perspective-card`, `transform-3d`, `backface-hidden`, `rotate-y-180`. Tailwind 4 doesn't ship these as defaults. |
+| Chart.js requires explicit component registration | Created `src/lib/charts.ts` that imports + registers ArcElement, BarElement, CategoryScale, Filler, Legend, LinearScale, LineElement, PointElement, Tooltip. Pages do `import '@/lib/charts'` for the side effect — once per app, before any chart renders. |
+| Optimistic flashcard advance pattern | Don't track `currentIndex` state. Always render `dueCards[0]`. `removeFromDue(id)` shifts the next card into position. Eliminates index sync bugs and matches the natural FSRS workflow where rated cards may re-enter the queue later in real systems. |
+| Backend stats shape mismatch with our `FlashcardStats` type | Backend returns nested `{ summary, dailyReviews, cardsByState, ... }` — much broader than the 6-field `FlashcardStats`. Service exposes both `getStudyStatistics(): unknown` (raw) and `getStudySummary(): FlashcardStats \| null` (narrowed). Stats page narrows the `unknown` with a local `StatsShape` interface. |
+| Card flip keyboard accessibility | `<button>` wrapper for whole card + global `keydown` listener for Space/Enter to flip, then `keydown` for 1-4 ratings when flipped. Required cleanup with effect deps `[flipped, handleRate]` to avoid stale closures. |
 
 ### Task 5.1: Flashcard service + store
 
