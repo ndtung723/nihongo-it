@@ -23,48 +23,56 @@ class CategoryService(
     private val userRepository: UserRepository,
     private val userAuthUtil: UserAuthUtil,
 ) {
-
     @Transactional(readOnly = true)
-    fun getAllCategories(): List<CategoryDTO> {
-        return categoryRepository.findAllByOrderByDisplayOrderAsc().map { it.toDTO() }
-    }
+    fun getAllCategories(): List<CategoryDTO> = categoryRepository.findAllByOrderByDisplayOrderAsc().map { it.toDTO() }
 
     @Transactional(readOnly = true)
     fun getCategoryById(categoryId: UUID): CategoryDTO {
-        val category = categoryRepository.findById(categoryId)
-            .orElseThrow { BusinessException("Category not found with ID: $categoryId") }
+        val category =
+            categoryRepository
+                .findById(categoryId)
+                .orElseThrow { BusinessException("Category not found with ID: $categoryId") }
 
         return category.toDTO()
     }
 
     @Transactional
     fun createCategory(request: CreateCategoryRequest): CategoryDTO {
-        val currentUserId = userAuthUtil.getCurrentUserId()
-            ?: throw BusinessException("User not authenticated")
+        val currentUserId =
+            userAuthUtil.getCurrentUserId()
+                ?: throw BusinessException("User not authenticated")
 
         if (categoryRepository.existsByName(request.name)) {
             throw BusinessException("A category with the name '${request.name}' already exists")
         }
 
-        val user = userRepository.findById(currentUserId)
-            .orElseThrow { BusinessException("User not found") }
+        val user =
+            userRepository
+                .findById(currentUserId)
+                .orElseThrow { BusinessException("User not found") }
 
-        val category = CategoryEntity(
-            name = request.name,
-            meaning = request.meaning,
-            displayOrder = request.displayOrder,
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now(),
-        )
+        val category =
+            CategoryEntity(
+                name = request.name,
+                meaning = request.meaning,
+                displayOrder = request.displayOrder,
+                createdAt = LocalDateTime.now(),
+                updatedAt = LocalDateTime.now(),
+            )
 
         val savedCategory = categoryRepository.save(category)
         return savedCategory.toDTO()
     }
 
     @Transactional
-    fun updateCategory(categoryId: UUID, request: UpdateCategoryRequest): CategoryDTO {
-        val category = categoryRepository.findById(categoryId)
-            .orElseThrow { BusinessException("Category not found with ID: $categoryId") }
+    fun updateCategory(
+        categoryId: UUID,
+        request: UpdateCategoryRequest,
+    ): CategoryDTO {
+        val category =
+            categoryRepository
+                .findById(categoryId)
+                .orElseThrow { BusinessException("Category not found with ID: $categoryId") }
 
         // Check if another category with the new name already exists (if name is being updated)
         if (request.name != null &&
@@ -74,13 +82,14 @@ class CategoryService(
             throw BusinessException("A category with the name '${request.name}' already exists")
         }
 
-        val updatedCategory = category.copy(
-            name = request.name ?: category.name,
-            meaning = request.meaning ?: category.meaning,
-            displayOrder = request.displayOrder ?: category.displayOrder,
-            isActive = request.isActive ?: category.isActive,
-            updatedAt = LocalDateTime.now(),
-        )
+        val updatedCategory =
+            category.copy(
+                name = request.name ?: category.name,
+                meaning = request.meaning ?: category.meaning,
+                displayOrder = request.displayOrder ?: category.displayOrder,
+                isActive = request.isActive ?: category.isActive,
+                updatedAt = LocalDateTime.now(),
+            )
 
         val savedCategory = categoryRepository.save(updatedCategory)
         return savedCategory.toDTO()
@@ -88,13 +97,16 @@ class CategoryService(
 
     @Transactional
     fun toggleCategoryStatus(categoryId: UUID): CategoryDTO {
-        val category = categoryRepository.findById(categoryId)
-            .orElseThrow { BusinessException("Category not found with ID: $categoryId") }
+        val category =
+            categoryRepository
+                .findById(categoryId)
+                .orElseThrow { BusinessException("Category not found with ID: $categoryId") }
 
-        val updatedCategory = category.copy(
-            isActive = !category.isActive,
-            updatedAt = LocalDateTime.now(),
-        )
+        val updatedCategory =
+            category.copy(
+                isActive = !category.isActive,
+                updatedAt = LocalDateTime.now(),
+            )
 
         val savedCategory = categoryRepository.save(updatedCategory)
         return savedCategory.toDTO()
@@ -112,19 +124,21 @@ class CategoryService(
     }
 
     @Transactional(readOnly = true)
-    fun searchCategories(query: String): List<CategoryDTO> {
-        return categoryRepository.findByNameContainingIgnoreCase(query).map { it.toDTO() }
-    }
+    fun searchCategories(query: String): List<CategoryDTO> = categoryRepository.findByNameContainingIgnoreCase(query).map { it.toDTO() }
 
     @Transactional(readOnly = true)
-    fun searchCategoriesWithMeaning(nameQuery: String?, meaningQuery: String?): List<CategoryDTO> {
-        return when {
+    fun searchCategoriesWithMeaning(
+        nameQuery: String?,
+        meaningQuery: String?,
+    ): List<CategoryDTO> =
+        when {
             // If both name and meaning are provided
             !nameQuery.isNullOrBlank() && !meaningQuery.isNullOrBlank() -> {
-                categoryRepository.findByNameContainingIgnoreCaseOrMeaningContainingIgnoreCase(
-                    nameQuery,
-                    meaningQuery,
-                ).map { it.toDTO() }
+                categoryRepository
+                    .findByNameContainingIgnoreCaseOrMeaningContainingIgnoreCase(
+                        nameQuery,
+                        meaningQuery,
+                    ).map { it.toDTO() }
             }
             // If only name is provided
             !nameQuery.isNullOrBlank() -> {
@@ -139,12 +153,13 @@ class CategoryService(
                 getAllCategories()
             }
         }
-    }
 
     @Transactional(readOnly = true)
     fun getTopicsForCategory(categoryId: UUID): List<TopicDTO> {
-        val category = categoryRepository.findById(categoryId)
-            .orElseThrow { BusinessException("Category not found with ID: $categoryId") }
+        val category =
+            categoryRepository
+                .findById(categoryId)
+                .orElseThrow { BusinessException("Category not found with ID: $categoryId") }
 
         val topics = topicRepository.findByCategoryOrderByDisplayOrderAsc(category)
         return topics.map { it.toDTO() }
@@ -160,7 +175,5 @@ class CategoryService(
     /**
      * Get total count of categories
      */
-    fun getCategoryCount(): Int {
-        return categoryRepository.count().toInt()
-    }
+    fun getCategoryCount(): Int = categoryRepository.count().toInt()
 }

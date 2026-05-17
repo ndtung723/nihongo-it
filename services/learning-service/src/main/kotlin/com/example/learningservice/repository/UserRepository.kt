@@ -13,7 +13,9 @@ interface UserRepository : JpaRepository<UserEntity, UUID> {
 
     // Statistics methods for dashboard
     fun countByCreatedAtAfter(sinceDate: Instant): Long
+
     fun countByLastLoginAfter(sinceDate: LocalDateTime): Long
+
     fun findTop10ByOrderByLastLoginDesc(): List<UserEntity>
 
     fun findByIsActiveTrueAndStreakCountGreaterThan(streakCount: Int): List<UserEntity>

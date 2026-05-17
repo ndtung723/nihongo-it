@@ -21,5 +21,8 @@ interface ConversationRepository : JpaRepository<ConversationEntity, UUID> {
     /**
      * Find conversations by JLPT level
      */
-    fun findByJlptLevel(level: String, pageable: Pageable): Page<ConversationEntity>
+    fun findByJlptLevel(
+        level: String,
+        pageable: Pageable,
+    ): Page<ConversationEntity>
 }

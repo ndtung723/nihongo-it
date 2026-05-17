@@ -41,17 +41,25 @@ class UserService(
     }
 
     @Transactional
-    fun updateNotificationPreferences(userId: UUID, request: UpdatePreferencesRequest) {
+    fun updateNotificationPreferences(
+        userId: UUID,
+        request: UpdatePreferencesRequest,
+    ) {
         logger.info("Updating notification preferences for user $userId")
 
         val user = getUserById(userId)
         val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
-        val basePrefs: MutableSet<String> = if (request.notificationPreferences != null) {
-            request.notificationPreferences.split(",").map { it.trim() }.filter { it.isNotBlank() }.toMutableSet()
-        } else {
-            user.notificationPreferences.toMutableSet()
-        }
+        val basePrefs: MutableSet<String> =
+            if (request.notificationPreferences != null) {
+                request.notificationPreferences
+                    .split(",")
+                    .map { it.trim() }
+                    .filter { it.isNotBlank() }
+                    .toMutableSet()
+            } else {
+                user.notificationPreferences.toMutableSet()
+            }
 
         if (request.leechNotificationsEnabled == true) {
             basePrefs.add("leech")
@@ -82,7 +90,10 @@ class UserService(
     }
 
     @Transactional
-    fun updateProfile(userId: UUID, request: UpdateProfileRequestDto) {
+    fun updateProfile(
+        userId: UUID,
+        request: UpdateProfileRequestDto,
+    ) {
         val user = getUserById(userId)
 
         if (request.currentLevel.ordinal > request.jlptGoal.ordinal) {
@@ -104,8 +115,8 @@ class UserService(
     /**
      * Get user by ID
      */
-    fun getUserById(userId: UUID): UserEntity {
-        return userRepository.findById(userId)
+    fun getUserById(userId: UUID): UserEntity =
+        userRepository
+            .findById(userId)
             .orElseThrow { BusinessException("User not found with ID: $userId") }
-    }
 }

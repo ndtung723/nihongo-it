@@ -46,7 +46,12 @@ class AdminDashboardController(
         val now = LocalDateTime.now()
         val thirtyDaysAgo = now.minusDays(30)
         val sevenDaysAgo = now.minusDays(7)
-        val startOfDay = now.withHour(0).withMinute(0).withSecond(0).withNano(0)
+        val startOfDay =
+            now
+                .withHour(0)
+                .withMinute(0)
+                .withSecond(0)
+                .withNano(0)
 
         val userCount = userService.getUserCount()
         val vocabularyCount = vocabularyService.getVocabularyCount()
@@ -58,27 +63,29 @@ class AdminDashboardController(
         val flashcardsStudiedToday = flashcardCrudService.getFlashcardsStudiedCount(startOfDay)
         val searchesToday = 0
 
-        val recentActivities = userService.getRecentUserActivities(10).map { activity ->
-            val timestamp = activity["timestamp"] as? LocalDateTime
-            mapOf(
-                "user" to activity["user"]?.toString().orEmpty(),
-                "action" to activity["action"]?.toString().orEmpty(),
-                "timestamp" to timestamp?.format(dateTimeFormatter).orEmpty(),
-            )
-        }
+        val recentActivities =
+            userService.getRecentUserActivities(10).map { activity ->
+                val timestamp = activity["timestamp"] as? LocalDateTime
+                mapOf(
+                    "user" to activity["user"]?.toString().orEmpty(),
+                    "action" to activity["action"]?.toString().orEmpty(),
+                    "timestamp" to timestamp?.format(dateTimeFormatter).orEmpty(),
+                )
+            }
 
-        val stats = mapOf(
-            "userCount" to userCount,
-            "vocabularyCount" to vocabularyCount,
-            "categoryCount" to categoryCount,
-            "topicCount" to topicCount,
-            "newUsers" to newUsers,
-            "activeUsers" to activeUsers,
-            "flashcardsCreatedToday" to flashcardsCreatedToday,
-            "flashcardsStudiedToday" to flashcardsStudiedToday,
-            "searchesToday" to searchesToday,
-            "recentActivities" to recentActivities,
-        )
+        val stats =
+            mapOf(
+                "userCount" to userCount,
+                "vocabularyCount" to vocabularyCount,
+                "categoryCount" to categoryCount,
+                "topicCount" to topicCount,
+                "newUsers" to newUsers,
+                "activeUsers" to activeUsers,
+                "flashcardsCreatedToday" to flashcardsCreatedToday,
+                "flashcardsStudiedToday" to flashcardsStudiedToday,
+                "searchesToday" to searchesToday,
+                "recentActivities" to recentActivities,
+            )
 
         return ResponseEntity.ok(mapOf("data" to stats))
     }

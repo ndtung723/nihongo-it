@@ -43,11 +43,12 @@ class FlashcardStatisticsService(
         val cardsDueByDay = mutableMapOf<String, Int>()
         for (i in 0..6) {
             val date = now.plusDays(i.toLong()).toLocalDate()
-            cardsDueByDay[date.toString()] = if (i == 0) {
-                allUserCards.count { !it.due.toLocalDate().isAfter(date) }
-            } else {
-                dueCardsByDate[date] ?: 0
-            }
+            cardsDueByDay[date.toString()] =
+                if (i == 0) {
+                    allUserCards.count { !it.due.toLocalDate().isAfter(date) }
+                } else {
+                    dueCardsByDate[date] ?: 0
+                }
         }
 
         // Get review history
@@ -55,72 +56,83 @@ class FlashcardStatisticsService(
         val recentReviews = reviewLogRepository.findByUserIdAndReviewTimestampAfter(userId, thirtyDaysAgo)
 
         // Daily review counts
-        val dailyReviews = recentReviews
-            .groupBy { it.reviewTimestamp.toLocalDate().toString() }
-            .mapValues { it.value.size }
+        val dailyReviews =
+            recentReviews
+                .groupBy { it.reviewTimestamp.toLocalDate().toString() }
+                .mapValues { it.value.size }
 
         // Retention rate by day
-        val retentionRateByDay = recentReviews
-            .groupBy { it.reviewTimestamp.toLocalDate().toString() }
-            .mapValues { entry ->
-                val dayReviews = entry.value
-                val correctCount = dayReviews.count { it.rating >= 3 }
-                if (dayReviews.isNotEmpty()) {
-                    (correctCount.toDouble() / dayReviews.size) * 100.0
-                } else {
-                    0.0
+        val retentionRateByDay =
+            recentReviews
+                .groupBy { it.reviewTimestamp.toLocalDate().toString() }
+                .mapValues { entry ->
+                    val dayReviews = entry.value
+                    val correctCount = dayReviews.count { it.rating >= 3 }
+                    if (dayReviews.isNotEmpty()) {
+                        (correctCount.toDouble() / dayReviews.size) * 100.0
+                    } else {
+                        0.0
+                    }
                 }
-            }
 
         // Overall retention rate
         val correctReviews = recentReviews.count { it.rating >= 3 }
-        val overallRetentionRate = if (recentReviews.isNotEmpty()) {
-            (correctReviews.toDouble() / recentReviews.size) * 100.0
-        } else {
-            0.0
-        }
+        val overallRetentionRate =
+            if (recentReviews.isNotEmpty()) {
+                (correctReviews.toDouble() / recentReviews.size) * 100.0
+            } else {
+                0.0
+            }
 
         // Memory strength distribution
-        val memoryStrengthDistribution = allUserCards
-            .groupBy {
-                val stab = it.stability ?: 0.0
-                when {
-                    stab == 0.0 -> "new"
-                    stab <= 1.0 -> "weak"
-                    stab <= 10.0 -> "medium"
-                    else -> "strong"
-                }
-            }
-            .mapValues { it.value.size }
+        val memoryStrengthDistribution =
+            allUserCards
+                .groupBy {
+                    val stab = it.stability ?: 0.0
+                    when {
+                        stab == 0.0 -> "new"
+                        stab <= 1.0 -> "weak"
+                        stab <= 10.0 -> "medium"
+                        else -> "strong"
+                    }
+                }.mapValues { it.value.size }
 
         // Get cards by state
-        val cardsByState = allUserCards
-            .groupBy { FSRSService.State.entries.find { state -> state.value == it.state }?.name?.lowercase() ?: "unknown" }
-            .mapValues { it.value.size }
+        val cardsByState =
+            allUserCards
+                .groupBy {
+                    FSRSService.State.entries
+                        .find { state -> state.value == it.state }
+                        ?.name
+                        ?.lowercase() ?: "unknown"
+                }.mapValues { it.value.size }
 
         // JLPT level statistics (if vocabulary is available)
-        val cardsByJlptLevel = allUserCards
-            .filter { it.vocabulary != null }
-            .groupBy { it.vocabulary?.jlptLevel ?: "unknown" }
-            .mapValues { it.value.size }
+        val cardsByJlptLevel =
+            allUserCards
+                .filter { it.vocabulary != null }
+                .groupBy { it.vocabulary?.jlptLevel ?: "unknown" }
+                .mapValues { it.value.size }
 
-        val statistics = StudyStatisticsDto(
-            summary = StudySummaryDto(
-                totalCards = totalCards,
-                dueCardsNow = dueCardsNow,
-                reviewsLast30Days = recentReviews.size,
-                currentStreak = userService.getUserById(userId).streakCount,
-                overallRetentionRate = overallRetentionRate,
-            ),
-            cardsDueByDay = cardsDueByDay,
-            dailyReviews = dailyReviews,
-            retentionRateByDay = retentionRateByDay,
-            memoryStrengthDistribution = memoryStrengthDistribution,
-            cardsByState = cardsByState,
-            cardsByJlptLevel = cardsByJlptLevel.mapKeys { it.key.toString() },
-            reviewTrend = calculateReviewTrend(recentReviews),
-            averageRating = if (recentReviews.isNotEmpty()) recentReviews.map { it.rating }.average() else 0.0,
-        )
+        val statistics =
+            StudyStatisticsDto(
+                summary =
+                    StudySummaryDto(
+                        totalCards = totalCards,
+                        dueCardsNow = dueCardsNow,
+                        reviewsLast30Days = recentReviews.size,
+                        currentStreak = userService.getUserById(userId).streakCount,
+                        overallRetentionRate = overallRetentionRate,
+                    ),
+                cardsDueByDay = cardsDueByDay,
+                dailyReviews = dailyReviews,
+                retentionRateByDay = retentionRateByDay,
+                memoryStrengthDistribution = memoryStrengthDistribution,
+                cardsByState = cardsByState,
+                cardsByJlptLevel = cardsByJlptLevel.mapKeys { it.key.toString() },
+                reviewTrend = calculateReviewTrend(recentReviews),
+                averageRating = if (recentReviews.isNotEmpty()) recentReviews.map { it.rating }.average() else 0.0,
+            )
 
         return GetStatisticsResponseDto(data = statistics)
     }
@@ -132,8 +144,10 @@ class FlashcardStatisticsService(
     fun getUserFlashcardStatistics(userId: UUID): StudyStatisticsDto {
         logger.info("Getting flashcard statistics for user: $userId")
 
-        val user = userRepository.findById(userId)
-            .orElseThrow { EntityNotFoundException("User not found with id: $userId") }
+        val user =
+            userRepository
+                .findById(userId)
+                .orElseThrow { EntityNotFoundException("User not found with id: $userId") }
 
         val allFlashcards = flashcardRepository.findByUser_UserId(userId)
         if (allFlashcards.isEmpty()) {
@@ -154,66 +168,81 @@ class FlashcardStatisticsService(
         val thirtyDaysAgo = now.minusDays(30)
         val dueCardsNow = allFlashcards.count { it.due <= now }
 
-        val recentReviews = reviewLogRepository.findRecentReviewsByUser(
-            userId,
-            thirtyDaysAgo,
-        )
+        val recentReviews =
+            reviewLogRepository.findRecentReviewsByUser(
+                userId,
+                thirtyDaysAgo,
+            )
 
         val correctReviews = recentReviews.count { it.rating >= 3 }
-        val overallRetentionRate = if (recentReviews.isNotEmpty()) {
-            (correctReviews.toDouble() / recentReviews.size) * 100
-        } else {
-            0.0
-        }
-
-        val cardsByState = allFlashcards.groupBy {
-            FSRSService.State.entries.find { s -> s.value == it.state }?.name?.lowercase() ?: "new"
-        }.mapValues { it.value.size }
-
-        val cardsByJlptLevel = allFlashcards
-            .mapNotNull { it.vocabulary?.jlptLevel }
-            .groupBy { it.toString() }
-            .mapValues { it.value.size }
-
-        val dueCardsByDate = allFlashcards.groupingBy { it.due.toLocalDate() }.eachCount()
-        val cardsDueByDay = (0..29).associate { day ->
-            val dueDate = now.plusDays(day.toLong()).toLocalDate()
-            dueDate.toString() to (dueCardsByDate[dueDate] ?: 0)
-        }
-
-        val dailyReviews = recentReviews
-            .groupBy { it.reviewTimestamp.toLocalDate().toString() }
-            .mapValues { it.value.size }
-
-        val retentionRateByDay = recentReviews
-            .groupBy { it.reviewTimestamp.toLocalDate().toString() }
-            .mapValues { entry ->
-                val dayReviews = entry.value
-                val dayCorrect = dayReviews.count { it.rating >= 3 }
-                (dayCorrect.toDouble() / dayReviews.size) * 100
+        val overallRetentionRate =
+            if (recentReviews.isNotEmpty()) {
+                (correctReviews.toDouble() / recentReviews.size) * 100
+            } else {
+                0.0
             }
 
-        val memoryStrengthDistribution = mapOf(
-            "new" to allFlashcards.count { (it.stability ?: 0.0) == 0.0 },
-            "weak" to allFlashcards.count {
-                val s = it.stability ?: 0.0
-                s > 0.0 && s < 1.0
-            },
-            "medium" to allFlashcards.count {
-                val s = it.stability ?: 0.0
-                s >= 1.0 && s < 10.0
-            },
-            "strong" to allFlashcards.count { (it.stability ?: 0.0) >= 10.0 },
-        )
+        val cardsByState =
+            allFlashcards
+                .groupBy {
+                    FSRSService.State.entries
+                        .find { s -> s.value == it.state }
+                        ?.name
+                        ?.lowercase() ?: "new"
+                }.mapValues { it.value.size }
+
+        val cardsByJlptLevel =
+            allFlashcards
+                .mapNotNull { it.vocabulary?.jlptLevel }
+                .groupBy { it.toString() }
+                .mapValues { it.value.size }
+
+        val dueCardsByDate = allFlashcards.groupingBy { it.due.toLocalDate() }.eachCount()
+        val cardsDueByDay =
+            (0..29).associate { day ->
+                val dueDate = now.plusDays(day.toLong()).toLocalDate()
+                dueDate.toString() to (dueCardsByDate[dueDate] ?: 0)
+            }
+
+        val dailyReviews =
+            recentReviews
+                .groupBy { it.reviewTimestamp.toLocalDate().toString() }
+                .mapValues { it.value.size }
+
+        val retentionRateByDay =
+            recentReviews
+                .groupBy { it.reviewTimestamp.toLocalDate().toString() }
+                .mapValues { entry ->
+                    val dayReviews = entry.value
+                    val dayCorrect = dayReviews.count { it.rating >= 3 }
+                    (dayCorrect.toDouble() / dayReviews.size) * 100
+                }
+
+        val memoryStrengthDistribution =
+            mapOf(
+                "new" to allFlashcards.count { (it.stability ?: 0.0) == 0.0 },
+                "weak" to
+                    allFlashcards.count {
+                        val s = it.stability ?: 0.0
+                        s > 0.0 && s < 1.0
+                    },
+                "medium" to
+                    allFlashcards.count {
+                        val s = it.stability ?: 0.0
+                        s >= 1.0 && s < 10.0
+                    },
+                "strong" to allFlashcards.count { (it.stability ?: 0.0) >= 10.0 },
+            )
 
         return StudyStatisticsDto(
-            summary = StudySummaryDto(
-                totalCards = allFlashcards.size,
-                dueCardsNow = dueCardsNow,
-                reviewsLast30Days = recentReviews.size,
-                currentStreak = user.streakCount,
-                overallRetentionRate = overallRetentionRate,
-            ),
+            summary =
+                StudySummaryDto(
+                    totalCards = allFlashcards.size,
+                    dueCardsNow = dueCardsNow,
+                    reviewsLast30Days = recentReviews.size,
+                    currentStreak = user.streakCount,
+                    overallRetentionRate = overallRetentionRate,
+                ),
             cardsByState = cardsByState,
             cardsByJlptLevel = cardsByJlptLevel,
             dailyReviews = dailyReviews,
@@ -229,41 +258,47 @@ class FlashcardStatisticsService(
      * Get the last review date for a user
      */
     @Transactional(readOnly = true)
-    fun getLastReviewDate(userId: UUID): LocalDateTime? {
-        return reviewLogRepository.findFirstByUserIdOrderByReviewTimestampDesc(userId)
+    fun getLastReviewDate(userId: UUID): LocalDateTime? =
+        reviewLogRepository
+            .findFirstByUserIdOrderByReviewTimestampDesc(userId)
             ?.reviewTimestamp
-    }
 
     /**
      * Get review history for a user
      */
     @Transactional(readOnly = true)
-    fun getUserReviewHistory(userId: UUID, days: Int): List<Map<String, Any>> {
+    fun getUserReviewHistory(
+        userId: UUID,
+        days: Int,
+    ): List<Map<String, Any>> {
         val startDate = LocalDateTime.now().minusDays(days.toLong())
-        val reviews = reviewLogRepository.findRecentReviewsByUser(
-            userId,
-            startDate,
-        )
+        val reviews =
+            reviewLogRepository.findRecentReviewsByUser(
+                userId,
+                startDate,
+            )
 
         return reviews.map { review ->
-            val map = mutableMapOf<String, Any>(
-                ("reviewId" to review.reviewLogId) as Pair<String, Any>,
-                ("flashcardId" to review.flashcard.flashcardId) as Pair<String, Any>,
-                "rating" to review.rating,
-                "elapsedDays" to review.elapsedDays,
-                "scheduledDays" to review.scheduledDays,
-                "state" to review.state,
-                "timestamp" to review.reviewTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
-            )
+            val map =
+                mutableMapOf<String, Any>(
+                    ("reviewId" to review.reviewLogId) as Pair<String, Any>,
+                    ("flashcardId" to review.flashcard.flashcardId) as Pair<String, Any>,
+                    "rating" to review.rating,
+                    "elapsedDays" to review.elapsedDays,
+                    "scheduledDays" to review.scheduledDays,
+                    "state" to review.state,
+                    "timestamp" to review.reviewTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
+                )
 
             // Handle nullable vocabulary separately
             review.flashcard.vocabulary?.let { vocab ->
-                map["vocabulary"] = mapOf(
-                    "vocabId" to vocab.vocabId,
-                    "term" to vocab.term,
-                    "meaning" to vocab.meaning,
-                    "jlptLevel" to vocab.jlptLevel,
-                )
+                map["vocabulary"] =
+                    mapOf(
+                        "vocabId" to vocab.vocabId,
+                        "term" to vocab.term,
+                        "meaning" to vocab.meaning,
+                        "jlptLevel" to vocab.jlptLevel,
+                    )
             } ?: run {
                 map["vocabulary"] = emptyMap<String, Any>()
             }
@@ -279,23 +314,26 @@ class FlashcardStatisticsService(
         val twoWeeksAgo = LocalDateTime.now().minusDays(14)
         val oneWeekAgo = LocalDateTime.now().minusDays(7)
 
-        val previousWeekCount = reviews.count {
-            it.reviewTimestamp.isAfter(twoWeeksAgo) && it.reviewTimestamp.isBefore(oneWeekAgo)
-        }
+        val previousWeekCount =
+            reviews.count {
+                it.reviewTimestamp.isAfter(twoWeeksAgo) && it.reviewTimestamp.isBefore(oneWeekAgo)
+            }
         val currentWeekCount = reviews.count { it.reviewTimestamp.isAfter(oneWeekAgo) }
 
-        val trend = when {
-            previousWeekCount == 0 -> "up"
-            currentWeekCount > previousWeekCount -> "up"
-            currentWeekCount < previousWeekCount -> "down"
-            else -> "neutral"
-        }
+        val trend =
+            when {
+                previousWeekCount == 0 -> "up"
+                currentWeekCount > previousWeekCount -> "up"
+                currentWeekCount < previousWeekCount -> "down"
+                else -> "neutral"
+            }
 
-        val percentage = when {
-            previousWeekCount > 0 -> ((currentWeekCount - previousWeekCount).toDouble() / previousWeekCount) * 100.0
-            currentWeekCount > 0 -> 100.0
-            else -> 0.0
-        }
+        val percentage =
+            when {
+                previousWeekCount > 0 -> ((currentWeekCount - previousWeekCount).toDouble() / previousWeekCount) * 100.0
+                currentWeekCount > 0 -> 100.0
+                else -> 0.0
+            }
 
         return ReviewTrendDto(trend, percentage)
     }

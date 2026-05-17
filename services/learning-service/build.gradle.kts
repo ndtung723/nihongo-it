@@ -1,11 +1,10 @@
 ﻿plugins {
-    kotlin("jvm") version "2.0.21"
-    kotlin("plugin.spring") version "2.0.21"
-    kotlin("plugin.jpa") version "2.0.21"
-    id("org.springframework.boot") version "3.4.3"
-    id("io.spring.dependency-management") version "1.1.7"
+    kotlin("jvm") version "2.3.0"
+    kotlin("plugin.spring") version "2.3.0"
+    kotlin("plugin.jpa") version "2.3.0"
+    id("org.springframework.boot") version "4.0.2"
     jacoco
-    id("io.gitlab.arturbosch.detekt") version "1.23.7"
+    id("dev.detekt") version "2.0.0-alpha.2"
     id("org.jlleitschuh.gradle.ktlint") version "12.2.0"
 }
 
@@ -14,7 +13,7 @@ version = "0.0.1-SNAPSHOT"
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 
@@ -22,9 +21,10 @@ repositories {
     mavenCentral()
 }
 
-extra["springCloudVersion"] = "2024.0.1"
-
 dependencies {
+    implementation(platform("org.springframework.boot:spring-boot-dependencies:4.0.2"))
+    implementation(platform("org.springframework.cloud:spring-cloud-dependencies:2025.1.1"))
+
     implementation(project(":common"))
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
@@ -32,43 +32,32 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
 
-    // Spring Cloud for microservice communication
     implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
     implementation("org.springframework.cloud:spring-cloud-starter-loadbalancer")
 
-    // Database
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     runtimeOnly("org.postgresql:postgresql")
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
 
-    // JSON
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
-    // Kotlin
     implementation("org.jetbrains.kotlin:kotlin-reflect")
 
-    // JWT
-    implementation("io.jsonwebtoken:jjwt-api:0.11.5")
-    implementation("io.jsonwebtoken:jjwt-impl:0.11.5")
-    implementation("io.jsonwebtoken:jjwt-jackson:0.11.5")
+    implementation("io.jsonwebtoken:jjwt-api:0.12.6")
+    implementation("io.jsonwebtoken:jjwt-impl:0.12.6")
+    implementation("io.jsonwebtoken:jjwt-jackson:0.12.6")
 
-    // Add Kuromoji for Japanese text analysis
     implementation("com.atilika.kuromoji:kuromoji-ipadic:0.9.0")
 
-    // Caching
     implementation("org.springframework.boot:spring-boot-starter-cache")
     implementation("com.github.ben-manes.caffeine:caffeine")
 
-    // OpenAPI
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
 
-    // Dev tools
-    developmentOnly("org.springframework.boot:spring-boot-devtools")
+    developmentOnly("org.springframework.boot:spring-boot-devtools:4.0.2")
 
-    // Test
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.mockito")
     }
@@ -76,12 +65,6 @@ dependencies {
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.0")
     testImplementation("org.mockito:mockito-core:5.11.0")
-}
-
-dependencyManagement {
-    imports {
-        mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
-    }
 }
 
 kotlin {
@@ -130,18 +113,10 @@ detekt {
 }
 
 ktlint {
-    version.set("0.50.0")
+    version.set("1.3.0")
     outputToConsole.set(true)
     filter {
         exclude("**/generated/**")
         include("**/kotlin/**")
-    }
-}
-
-configurations.matching { it.name.startsWith("detekt") }.all {
-    resolutionStrategy.eachDependency {
-        if (requested.group == "org.jetbrains.kotlin") {
-            useVersion("2.0.10")
-        }
     }
 }

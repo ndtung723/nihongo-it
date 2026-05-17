@@ -28,10 +28,10 @@ class UserService(
      * Get user by ID
      */
     @Transactional(readOnly = true)
-    fun getUserById(userId: UUID): UserEntity {
-        return userRepository.findById(userId)
+    fun getUserById(userId: UUID): UserEntity =
+        userRepository
+            .findById(userId)
             .orElseThrow { BusinessException("User not found with ID: $userId") }
-    }
 
     // Dashboard statistics methods
 
@@ -39,25 +39,19 @@ class UserService(
      * Get total number of users in the system
      */
     @Transactional(readOnly = true)
-    fun getUserCount(): Int {
-        return userRepository.count().toInt()
-    }
+    fun getUserCount(): Int = userRepository.count().toInt()
 
     /**
      * Get number of new users registered since the given date
      */
     @Transactional(readOnly = true)
-    fun getNewUserCount(sinceDate: Instant): Int {
-        return userRepository.countByCreatedAtAfter(sinceDate).toInt()
-    }
+    fun getNewUserCount(sinceDate: Instant): Int = userRepository.countByCreatedAtAfter(sinceDate).toInt()
 
     /**
      * Get number of active users who logged in since the given date
      */
     @Transactional(readOnly = true)
-    fun getActiveUserCount(sinceDate: LocalDateTime): Int {
-        return userRepository.countByLastLoginAfter(sinceDate).toInt()
-    }
+    fun getActiveUserCount(sinceDate: LocalDateTime): Int = userRepository.countByLastLoginAfter(sinceDate).toInt()
 
     /**
      * Get recent user activities for the dashboard
@@ -68,24 +62,26 @@ class UserService(
         // In a real application, you would retrieve this data from an activity log table
         val recentUsersWithActivity = userRepository.findTop10ByOrderByLastLoginDesc()
 
-        val activities = recentUsersWithActivity.mapIndexedNotNull { index, user ->
-            val lastLogin = user.lastLogin
-            if (index < limit && lastLogin != null) {
-                val action = when {
-                    lastLogin.isAfter(LocalDateTime.now().minusHours(1)) -> "Đã đăng nhập"
-                    user.createdAt.isAfter(Instant.now().minus(1, ChronoUnit.DAYS)) -> "Đã tạo tài khoản mới"
-                    else -> "Đã truy cập hệ thống"
-                }
+        val activities =
+            recentUsersWithActivity.mapIndexedNotNull { index, user ->
+                val lastLogin = user.lastLogin
+                if (index < limit && lastLogin != null) {
+                    val action =
+                        when {
+                            lastLogin.isAfter(LocalDateTime.now().minusHours(1)) -> "Đã đăng nhập"
+                            user.createdAt.isAfter(Instant.now().minus(1, ChronoUnit.DAYS)) -> "Đã tạo tài khoản mới"
+                            else -> "Đã truy cập hệ thống"
+                        }
 
-                mapOf(
-                    "user" to user.email,
-                    "action" to action,
-                    "timestamp" to user.lastLogin,
-                )
-            } else {
-                null
+                    mapOf(
+                        "user" to user.email,
+                        "action" to action,
+                        "timestamp" to user.lastLogin,
+                    )
+                } else {
+                    null
+                }
             }
-        }
 
         // Ensure we always return a list, even if empty
         return activities as List<Map<String, Any>>
@@ -103,24 +99,26 @@ class UserService(
         // want to query the database directly for this information
         val allUsers = userRepository.findAll()
 
-        val userStats = allUsers.map { user ->
-            // Get review data for each user
-            val reviews = reviewLogRepository.findRecentReviewsByUser(
-                requireNotNull(user.userId) { "User ID missing" },
-                thirtyDaysAgo,
-            )
+        val userStats =
+            allUsers.map { user ->
+                // Get review data for each user
+                val reviews =
+                    reviewLogRepository.findRecentReviewsByUser(
+                        requireNotNull(user.userId) { "User ID missing" },
+                        thirtyDaysAgo,
+                    )
 
-            // Skip users with no reviews
-            if (reviews.isEmpty()) {
-                return@map Pair(user, 0.0)
+                // Skip users with no reviews
+                if (reviews.isEmpty()) {
+                    return@map Pair(user, 0.0)
+                }
+
+                // Calculate retention rate
+                val correctReviews = reviews.count { it.rating >= 3 }
+                val retentionRate = (correctReviews.toDouble() / reviews.size) * 100
+
+                Pair(user, retentionRate)
             }
-
-            // Calculate retention rate
-            val correctReviews = reviews.count { it.rating >= 3 }
-            val retentionRate = (correctReviews.toDouble() / reviews.size) * 100
-
-            Pair(user, retentionRate)
-        }
 
         // Filter out users with no reviews, then sort by retention rate and limit
         return userStats
@@ -141,15 +139,17 @@ class UserService(
         // want to query the database directly for this information
         val allUsers = userRepository.findAll()
 
-        val userStats = allUsers.map { user ->
-            // Count reviews for each user
-            val reviewCount = reviewLogRepository.countByUserIdAndReviewTimestampAfter(
-                requireNotNull(user.userId) { "User ID missing" },
-                thirtyDaysAgo,
-            )
+        val userStats =
+            allUsers.map { user ->
+                // Count reviews for each user
+                val reviewCount =
+                    reviewLogRepository.countByUserIdAndReviewTimestampAfter(
+                        requireNotNull(user.userId) { "User ID missing" },
+                        thirtyDaysAgo,
+                    )
 
-            Pair(user, reviewCount)
-        }
+                Pair(user, reviewCount)
+            }
 
         // Sort by review count and limit
         return userStats
@@ -220,49 +220,50 @@ class UserService(
         val reviewsToday = reviewLogRepository.countByUserIdAndReviewTimestampAfter(userId, startOfToday)
         logger.info("Total reviews today: $reviewsToday")
 
-        val updatedUser = if (previousReview != null) {
-            val previousReviewDate = previousReview.reviewTimestamp.toLocalDate()
+        val updatedUser =
+            if (previousReview != null) {
+                val previousReviewDate = previousReview.reviewTimestamp.toLocalDate()
 
-            when {
-                // If last review was today
-                previousReviewDate == today -> {
-                    // If streak is 0, set it to 1
-                    if (user.streakCount == 0) {
-                        logger.info("Last review was today but streak is 0 - setting streak to 1")
+                when {
+                    // If last review was today
+                    previousReviewDate == today -> {
+                        // If streak is 0, set it to 1
+                        if (user.streakCount == 0) {
+                            logger.info("Last review was today but streak is 0 - setting streak to 1")
+                            user.copy(
+                                streakCount = 1,
+                                updatedAt = Instant.now(),
+                            )
+                        } else {
+                            logger.info("Last review was today - not changing streak")
+                            user
+                        }
+                    }
+                    // If last review was yesterday, increment the streak
+                    previousReviewDate == yesterday -> {
+                        logger.info("Last review was yesterday - incrementing streak from ${user.streakCount} to ${user.streakCount + 1}")
+                        user.copy(
+                            streakCount = user.streakCount + 1,
+                            updatedAt = Instant.now(),
+                        )
+                    }
+                    // If the user missed a day or more, reset streak to 1
+                    else -> {
+                        logger.info("Last review was before yesterday ($previousReviewDate) - resetting streak to 1")
                         user.copy(
                             streakCount = 1,
                             updatedAt = Instant.now(),
                         )
-                    } else {
-                        logger.info("Last review was today - not changing streak")
-                        user
                     }
                 }
-                // If last review was yesterday, increment the streak
-                previousReviewDate == yesterday -> {
-                    logger.info("Last review was yesterday - incrementing streak from ${user.streakCount} to ${user.streakCount + 1}")
-                    user.copy(
-                        streakCount = user.streakCount + 1,
-                        updatedAt = Instant.now(),
-                    )
-                }
-                // If the user missed a day or more, reset streak to 1
-                else -> {
-                    logger.info("Last review was before yesterday ($previousReviewDate) - resetting streak to 1")
-                    user.copy(
-                        streakCount = 1,
-                        updatedAt = Instant.now(),
-                    )
-                }
+            } else {
+                // First time user is reviewing, set streak to 1
+                logger.info("First time user is reviewing - setting streak to 1")
+                user.copy(
+                    streakCount = 1,
+                    updatedAt = Instant.now(),
+                )
             }
-        } else {
-            // First time user is reviewing, set streak to 1
-            logger.info("First time user is reviewing - setting streak to 1")
-            user.copy(
-                streakCount = 1,
-                updatedAt = Instant.now(),
-            )
-        }
 
         if (updatedUser != user) {
             val savedUser = userRepository.save(updatedUser)
@@ -279,41 +280,50 @@ class UserService(
      */
     @Transactional(readOnly = true)
     @Suppress("LongMethod", "CyclomaticComplexMethod")
-    fun getAllUsers(pageable: Pageable, search: String? = null): Page<UserEntity> {
+    fun getAllUsers(
+        pageable: Pageable,
+        search: String? = null,
+    ): Page<UserEntity> {
         // Since lastActive is not a field in UserEntity, we need special handling
         val sortBy = pageable.sort.map { order -> order.property }.firstOrNull() ?: "lastActive"
 
         // Get all users, possibly filtered by search term
-        val allUsers = if (search.isNullOrBlank()) {
-            userRepository.findAll()
-        } else {
-            // Filter users by name or email containing the search term
-            val searchTerm = search.lowercase()
-            userRepository.findAll().filter { user ->
-                user.fullName.lowercase().contains(searchTerm) ||
-                    user.email.lowercase().contains(searchTerm)
+        val allUsers =
+            if (search.isNullOrBlank()) {
+                userRepository.findAll()
+            } else {
+                // Filter users by name or email containing the search term
+                val searchTerm = search.lowercase()
+                userRepository.findAll().filter { user ->
+                    user.fullName.lowercase().contains(searchTerm) ||
+                        user.email.lowercase().contains(searchTerm)
+                }
             }
-        }
 
         // For non-standard sort fields, we need to fetch all and sort in-memory
         if (sortBy == "lastActive") {
             // Get review dates for all users
-            val userLastActiveDates = allUsers.associate { user ->
-                val uid = requireNotNull(user.userId) { "User ID missing" }
-                val lastReview = reviewLogRepository.findTopByUserIdOrderByReviewTimestampDesc(uid)
-                val lastActive: Instant = lastReview?.reviewTimestamp
-                    ?.atZone(ZoneOffset.UTC)?.toInstant()
-                    ?: user.updatedAt
-                user to lastActive
-            }
+            val userLastActiveDates =
+                allUsers.associate { user ->
+                    val uid = requireNotNull(user.userId) { "User ID missing" }
+                    val lastReview = reviewLogRepository.findTopByUserIdOrderByReviewTimestampDesc(uid)
+                    val lastActive: Instant =
+                        lastReview
+                            ?.reviewTimestamp
+                            ?.atZone(ZoneOffset.UTC)
+                            ?.toInstant()
+                            ?: user.updatedAt
+                    user to lastActive
+                }
 
             // Sort based on the lastActive dates
             val direction = pageable.sort.getOrderFor(sortBy)?.direction ?: Sort.Direction.DESC
-            val sortedUsers = if (direction == Sort.Direction.ASC) {
-                allUsers.sortedBy { userLastActiveDates[it] }
-            } else {
-                allUsers.sortedByDescending { userLastActiveDates[it] }
-            }
+            val sortedUsers =
+                if (direction == Sort.Direction.ASC) {
+                    allUsers.sortedBy { userLastActiveDates[it] }
+                } else {
+                    allUsers.sortedByDescending { userLastActiveDates[it] }
+                }
 
             // Apply pagination
             val start = pageable.pageNumber * pageable.pageSize
@@ -331,24 +341,28 @@ class UserService(
             // Sort users based on the standard field
             val direction = pageable.sort.getOrderFor(sortBy)?.direction ?: Sort.Direction.ASC
 
-            val sortedUsers = when (sortBy) {
-                "userName", "fullName" -> if (direction == Sort.Direction.ASC) {
-                    allUsers.sortedBy { it.fullName }
-                } else {
-                    allUsers.sortedByDescending { it.fullName }
+            val sortedUsers =
+                when (sortBy) {
+                    "userName", "fullName" ->
+                        if (direction == Sort.Direction.ASC) {
+                            allUsers.sortedBy { it.fullName }
+                        } else {
+                            allUsers.sortedByDescending { it.fullName }
+                        }
+                    "email" ->
+                        if (direction == Sort.Direction.ASC) {
+                            allUsers.sortedBy { it.email }
+                        } else {
+                            allUsers.sortedByDescending { it.email }
+                        }
+                    "userId" ->
+                        if (direction == Sort.Direction.ASC) {
+                            allUsers.sortedBy { it.userId }
+                        } else {
+                            allUsers.sortedByDescending { it.userId }
+                        }
+                    else -> allUsers // No specific sorting
                 }
-                "email" -> if (direction == Sort.Direction.ASC) {
-                    allUsers.sortedBy { it.email }
-                } else {
-                    allUsers.sortedByDescending { it.email }
-                }
-                "userId" -> if (direction == Sort.Direction.ASC) {
-                    allUsers.sortedBy { it.userId }
-                } else {
-                    allUsers.sortedByDescending { it.userId }
-                }
-                else -> allUsers // No specific sorting
-            }
 
             // Apply pagination
             val start = pageable.pageNumber * pageable.pageSize

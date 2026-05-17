@@ -13,9 +13,7 @@ class FlashcardAdminService(
     /**
      * Get total count of all flashcards in the system
      */
-    fun getTotalFlashcardsCount(): Int {
-        return flashcardRepository.count().toInt()
-    }
+    fun getTotalFlashcardsCount(): Int = flashcardRepository.count().toInt()
 
     /**
      * Get average retention rate across all users

@@ -19,7 +19,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class FSRSServiceTest {
-
     private lateinit var flashcardRepository: FlashcardRepository
     private lateinit var fsrsService: FSRSService
     private val props = FsrsProperties()
@@ -27,28 +26,33 @@ class FSRSServiceTest {
     private val userId = UUID.randomUUID()
     private val flashcardId = UUID.randomUUID()
 
-    private fun makeUser() = UserEntity(
-        userId = userId,
-        email = "test@test.com",
-        password = "pw",
-        fullName = "Test",
-        role = RoleEntity(RoleEntity.ROLE_USER, "ROLE_USER"),
-    )
+    private fun makeUser() =
+        UserEntity(
+            userId = userId,
+            email = "test@test.com",
+            password = "pw",
+            fullName = "Test",
+            role = RoleEntity(RoleEntity.ROLE_USER, "ROLE_USER"),
+        )
 
-    private fun makeNewFlashcard() = FlashcardEntity(
-        flashcardId = flashcardId,
-        user = makeUser(),
-        frontText = "テスト",
-        backText = "test",
-        stability = 0.0,
-        difficulty = 0.0,
-        state = FSRSService.State.NEW.value,
-        due = LocalDateTime.now(),
-        reps = 0,
-        lapses = 0,
-    )
+    private fun makeNewFlashcard() =
+        FlashcardEntity(
+            flashcardId = flashcardId,
+            user = makeUser(),
+            frontText = "テスト",
+            backText = "test",
+            stability = 0.0,
+            difficulty = 0.0,
+            state = FSRSService.State.NEW.value,
+            due = LocalDateTime.now(),
+            reps = 0,
+            lapses = 0,
+        )
 
-    private fun makeReviewFlashcard(stability: Double = 2.4, difficulty: Double = 4.93) = FlashcardEntity(
+    private fun makeReviewFlashcard(
+        stability: Double = 2.4,
+        difficulty: Double = 4.93,
+    ) = FlashcardEntity(
         flashcardId = flashcardId,
         user = makeUser(),
         frontText = "テスト",
@@ -72,7 +76,6 @@ class FSRSServiceTest {
     @Nested
     @DisplayName("initializeFlashcard()")
     inner class InitializeFlashcard {
-
         @Test
         @DisplayName("newly created card → state=NEW, stability=0, difficulty=0, reps=0")
         fun freshCard_hasNewState() {
@@ -91,7 +94,6 @@ class FSRSServiceTest {
     @Nested
     @DisplayName("processReview() — first review (reps=0)")
     inner class FirstReview {
-
         @Test
         @DisplayName("rating GOOD (3) → state=REVIEW, reps becomes 1")
         fun rating3_stateBecomesReview() {
@@ -162,7 +164,6 @@ class FSRSServiceTest {
     @Nested
     @DisplayName("processReview() — subsequent review (reps > 0)")
     inner class SubsequentReview {
-
         @Test
         @DisplayName("AGAIN rating → state=RELEARNING, lapses incremented")
         fun againRating_becomesRelearning() {
@@ -199,7 +200,6 @@ class FSRSServiceTest {
     @Nested
     @DisplayName("Rating.fromInt()")
     inner class RatingFromInt {
-
         @Test
         @DisplayName("1 → AGAIN, 2 → HARD, 3 → GOOD, 4 → EASY")
         fun validValues_returnCorrectRating() {

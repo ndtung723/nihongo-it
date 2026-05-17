@@ -39,8 +39,9 @@ class VocabularyService(
     @Transactional
     @Suppress("ThrowsCount")
     fun createVocabulary(request: CreateVocabularyRequestDto): CreateVocabularyResponseDto {
-        val currentUserId = userAuthUtil.getCurrentUserId()
-            ?: throw BusinessException("User not authenticated")
+        val currentUserId =
+            userAuthUtil.getCurrentUserId()
+                ?: throw BusinessException("User not authenticated")
 
         if (request.term.isBlank()) {
             throw BusinessException("Term must be provided")
@@ -56,17 +57,18 @@ class VocabularyService(
         }
         val topic = topics.first()
 
-        val vocabulary = VocabularyEntity(
-            term = request.term,
-            meaning = request.meaning,
-            pronunciation = request.pronunciation,
-            example = request.example,
-            exampleMeaning = request.exampleMeaning,
-            audioPath = request.audioPath,
-            jlptLevel = JlptLevel.valueOf(request.jlptLevel),
-            topic = topic,
-            createdAt = Instant.now(),
-        )
+        val vocabulary =
+            VocabularyEntity(
+                term = request.term,
+                meaning = request.meaning,
+                pronunciation = request.pronunciation,
+                example = request.example,
+                exampleMeaning = request.exampleMeaning,
+                audioPath = request.audioPath,
+                jlptLevel = JlptLevel.valueOf(request.jlptLevel),
+                topic = topic,
+                createdAt = Instant.now(),
+            )
 
         val saved = vocabularyRepository.save(vocabulary)
         return CreateVocabularyResponseDto(
@@ -80,9 +82,10 @@ class VocabularyService(
         val currentUserId = userAuthUtil.getCurrentUserId()
         val vocabulary = vocabularyRepository.findById(vocabId).orThrow("Vocabulary not found")
 
-        val isSaved = currentUserId?.let { userId ->
-            vocabulary.savedByUsers.any { it.userId == userId }
-        } ?: false
+        val isSaved =
+            currentUserId?.let { userId ->
+                vocabulary.savedByUsers.any { it.userId == userId }
+            } ?: false
 
         return GetVocabularyResponseDto(data = mapToResponse(vocabulary, isSaved))
     }
@@ -92,18 +95,23 @@ class VocabularyService(
         val currentUserId = userAuthUtil.getCurrentUserId()
         val vocabulary = vocabularyRepository.findByTerm(term).orThrow("Vocabulary not found with term: $term")
 
-        val isSaved = currentUserId?.let { userId ->
-            vocabulary.savedByUsers.any { it.userId == userId }
-        } ?: false
+        val isSaved =
+            currentUserId?.let { userId ->
+                vocabulary.savedByUsers.any { it.userId == userId }
+            } ?: false
 
         return GetVocabularyResponseDto(data = mapToResponse(vocabulary, isSaved))
     }
 
     @Transactional
     @Suppress("ThrowsCount")
-    fun updateVocabulary(vocabId: UUID, request: UpdateVocabularyRequestDto): UpdateVocabularyResponseDto {
-        val currentUserId = userAuthUtil.getCurrentUserId()
-            ?: throw BusinessException("User not authenticated")
+    fun updateVocabulary(
+        vocabId: UUID,
+        request: UpdateVocabularyRequestDto,
+    ): UpdateVocabularyResponseDto {
+        val currentUserId =
+            userAuthUtil.getCurrentUserId()
+                ?: throw BusinessException("User not authenticated")
 
         val vocabulary = vocabularyRepository.findById(vocabId).orThrow("Vocabulary not found")
 
@@ -115,22 +123,24 @@ class VocabularyService(
             throw BusinessException("Vocabulary with term '${request.term}' already exists")
         }
 
-        val topic = request.topicName?.let { topicName ->
-            val topics = topicRepository.findByName(topicName)
-            if (topics.isEmpty()) throw BusinessException("Topic '$topicName' does not exist")
-            topics.first()
-        } ?: vocabulary.topic
+        val topic =
+            request.topicName?.let { topicName ->
+                val topics = topicRepository.findByName(topicName)
+                if (topics.isEmpty()) throw BusinessException("Topic '$topicName' does not exist")
+                topics.first()
+            } ?: vocabulary.topic
 
-        val updatedVocabulary = vocabulary.copy(
-            term = request.term,
-            meaning = request.meaning,
-            pronunciation = request.pronunciation,
-            example = request.example,
-            exampleMeaning = request.exampleMeaning,
-            audioPath = request.audioPath,
-            jlptLevel = JlptLevel.valueOf(request.jlptLevel),
-            topic = topic,
-        )
+        val updatedVocabulary =
+            vocabulary.copy(
+                term = request.term,
+                meaning = request.meaning,
+                pronunciation = request.pronunciation,
+                example = request.example,
+                exampleMeaning = request.exampleMeaning,
+                audioPath = request.audioPath,
+                jlptLevel = JlptLevel.valueOf(request.jlptLevel),
+                topic = topic,
+            )
 
         val savedVocab = vocabularyRepository.save(updatedVocabulary)
         return UpdateVocabularyResponseDto(data = mapToResponse(savedVocab))
@@ -143,40 +153,43 @@ class VocabularyService(
         val keyword = filter.keyword
         val topicName = filter.topicName
 
-        val result: Page<VocabularyEntity> = when {
-            // Kết hợp tìm kiếm theo cả topicId và jlptLevel nếu cả hai đều được cung cấp
-            filter.topicId != null && filter.jlptLevel != null -> {
-                vocabularyRepository.findByTopic_TopicIdAndJlptLevel(filter.topicId, filter.jlptLevel, pageable)
+        val result: Page<VocabularyEntity> =
+            when {
+                // Kết hợp tìm kiếm theo cả topicId và jlptLevel nếu cả hai đều được cung cấp
+                filter.topicId != null && filter.jlptLevel != null -> {
+                    vocabularyRepository.findByTopic_TopicIdAndJlptLevel(filter.topicId, filter.jlptLevel, pageable)
+                }
+                // Tìm kiếm theo keyword
+                keyword != null -> {
+                    vocabularyRepository.searchVocabulary(keyword, pageable)
+                }
+                // Tìm kiếm theo jlptLevel
+                filter.jlptLevel != null -> {
+                    vocabularyRepository.findByJlptLevel(filter.jlptLevel, pageable)
+                }
+                // Tìm kiếm theo topicId
+                filter.topicId != null -> {
+                    vocabularyRepository.findByTopic_TopicId(filter.topicId, pageable)
+                }
+                // Tìm kiếm theo topicName
+                topicName != null -> {
+                    vocabularyRepository.findByTopicName(topicName, pageable)
+                }
+                // Lấy tất cả
+                else -> {
+                    vocabularyRepository.findAll(pageable)
+                }
             }
-            // Tìm kiếm theo keyword
-            keyword != null -> {
-                vocabularyRepository.searchVocabulary(keyword, pageable)
-            }
-            // Tìm kiếm theo jlptLevel
-            filter.jlptLevel != null -> {
-                vocabularyRepository.findByJlptLevel(filter.jlptLevel, pageable)
-            }
-            // Tìm kiếm theo topicId
-            filter.topicId != null -> {
-                vocabularyRepository.findByTopic_TopicId(filter.topicId, pageable)
-            }
-            // Tìm kiếm theo topicName
-            topicName != null -> {
-                vocabularyRepository.findByTopicName(topicName, pageable)
-            }
-            // Lấy tất cả
-            else -> {
-                vocabularyRepository.findAll(pageable)
-            }
-        }
 
-        val content = result.content.map { vocabulary ->
-            val isSaved = currentUserId?.let { userId ->
-                vocabulary.savedByUsers.any { it.userId == userId }
-            } ?: false
+        val content =
+            result.content.map { vocabulary ->
+                val isSaved =
+                    currentUserId?.let { userId ->
+                        vocabulary.savedByUsers.any { it.userId == userId }
+                    } ?: false
 
-            mapToResponse(vocabulary, isSaved)
-        }
+                mapToResponse(vocabulary, isSaved)
+            }
 
         return PagedVocabularyResponseDto(
             content = content,
@@ -200,11 +213,14 @@ class VocabularyService(
 
     @Transactional
     fun saveVocabularyToNotebook(vocabId: UUID): VocabularyDto {
-        val currentUserId = userAuthUtil.getCurrentUserId()
-            ?: throw BusinessException("User not authenticated")
+        val currentUserId =
+            userAuthUtil.getCurrentUserId()
+                ?: throw BusinessException("User not authenticated")
 
-        val user = userRepository.findById(currentUserId)
-            .orElseThrow { BusinessException("User not found") }
+        val user =
+            userRepository
+                .findById(currentUserId)
+                .orElseThrow { BusinessException("User not found") }
 
         val vocabulary = vocabularyRepository.findById(vocabId).orThrow("Vocabulary not found")
 
@@ -227,8 +243,9 @@ class VocabularyService(
 
     @Transactional
     fun removeVocabularyFromNotebook(vocabId: UUID): VocabularyDto {
-        val currentUserId = userAuthUtil.getCurrentUserId()
-            ?: throw BusinessException("User not authenticated")
+        val currentUserId =
+            userAuthUtil.getCurrentUserId()
+                ?: throw BusinessException("User not authenticated")
 
         val vocabulary = vocabularyRepository.findById(vocabId).orThrow("Vocabulary not found")
 
@@ -255,23 +272,26 @@ class VocabularyService(
 
     @Transactional(readOnly = true)
     fun getSavedVocabulary(filter: VocabularyFilterRequestDto): PagedVocabularyResponseDto {
-        val currentUserId = userAuthUtil.getCurrentUserId()
-            ?: throw BusinessException("User not authenticated")
+        val currentUserId =
+            userAuthUtil.getCurrentUserId()
+                ?: throw BusinessException("User not authenticated")
 
         // Use pagination parameters from the filter
         val pageable = createPageableWithSort(filter.page, filter.size, filter.sort)
         val keyword = filter.keyword
 
         // Apply keyword filter if provided
-        val result = if (keyword != null && keyword.isNotBlank()) {
-            vocabularyRepository.findSavedByUserAndKeyword(currentUserId, keyword, pageable)
-        } else {
-            vocabularyRepository.findSavedByUser(currentUserId, pageable)
-        }
+        val result =
+            if (keyword != null && keyword.isNotBlank()) {
+                vocabularyRepository.findSavedByUserAndKeyword(currentUserId, keyword, pageable)
+            } else {
+                vocabularyRepository.findSavedByUser(currentUserId, pageable)
+            }
 
-        val content = result.content.map { vocabulary ->
-            mapToResponse(vocabulary, true)
-        }
+        val content =
+            result.content.map { vocabulary ->
+                mapToResponse(vocabulary, true)
+            }
 
         // Create a response with pagination information
         return PagedVocabularyResponseDto(
@@ -294,24 +314,29 @@ class VocabularyService(
         }
 
         // Kiểm tra topic tồn tại
-        val topic = topicRepository.findById(filter.topicId)
-            .orElseThrow { BusinessException("Topic not found with ID: ${filter.topicId}") }
+        val topic =
+            topicRepository
+                .findById(filter.topicId)
+                .orElseThrow { BusinessException("Topic not found with ID: ${filter.topicId}") }
 
         // Tìm vocabulary theo topic ID kết hợp với keyword nếu có
         val keyword = filter.keyword
-        val result = if (keyword != null) {
-            vocabularyRepository.findByTopicIdAndKeyword(filter.topicId, keyword, pageable)
-        } else {
-            vocabularyRepository.findByTopic_TopicId(filter.topicId, pageable)
-        }
+        val result =
+            if (keyword != null) {
+                vocabularyRepository.findByTopicIdAndKeyword(filter.topicId, keyword, pageable)
+            } else {
+                vocabularyRepository.findByTopic_TopicId(filter.topicId, pageable)
+            }
 
-        val content = result.content.map { vocabulary ->
-            val isSaved = currentUserId?.let { userId ->
-                vocabulary.savedByUsers.any { it.userId == userId }
-            } ?: false
+        val content =
+            result.content.map { vocabulary ->
+                val isSaved =
+                    currentUserId?.let { userId ->
+                        vocabulary.savedByUsers.any { it.userId == userId }
+                    } ?: false
 
-            mapToResponse(vocabulary, isSaved)
-        }
+                mapToResponse(vocabulary, isSaved)
+            }
 
         return PagedVocabularyResponseDto(
             content = content,
@@ -326,20 +351,75 @@ class VocabularyService(
     /**
      * Creates a PageRequest with sorting based on the sort parameter
      */
-    private fun createPageableWithSort(page: Int, size: Int, sort: String?): PageRequest {
-        return when (sort) {
-            "date_asc" -> PageRequest.of(page, size, org.springframework.data.domain.Sort.by("createdAt").ascending())
-            "date_desc" -> PageRequest.of(page, size, org.springframework.data.domain.Sort.by("createdAt").descending())
-            "jlpt_asc" -> PageRequest.of(page, size, org.springframework.data.domain.Sort.by("jlptLevel").ascending())
-            "jlpt_desc" -> PageRequest.of(page, size, org.springframework.data.domain.Sort.by("jlptLevel").descending())
-            "alpha_asc" -> PageRequest.of(page, size, org.springframework.data.domain.Sort.by("term").ascending())
-            "alpha_desc" -> PageRequest.of(page, size, org.springframework.data.domain.Sort.by("term").descending())
-            else -> PageRequest.of(page, size, org.springframework.data.domain.Sort.by("createdAt").descending())
+    private fun createPageableWithSort(
+        page: Int,
+        size: Int,
+        sort: String?,
+    ): PageRequest =
+        when (sort) {
+            "date_asc" ->
+                PageRequest.of(
+                    page,
+                    size,
+                    org.springframework.data.domain.Sort
+                        .by("createdAt")
+                        .ascending(),
+                )
+            "date_desc" ->
+                PageRequest.of(
+                    page,
+                    size,
+                    org.springframework.data.domain.Sort
+                        .by("createdAt")
+                        .descending(),
+                )
+            "jlpt_asc" ->
+                PageRequest.of(
+                    page,
+                    size,
+                    org.springframework.data.domain.Sort
+                        .by("jlptLevel")
+                        .ascending(),
+                )
+            "jlpt_desc" ->
+                PageRequest.of(
+                    page,
+                    size,
+                    org.springframework.data.domain.Sort
+                        .by("jlptLevel")
+                        .descending(),
+                )
+            "alpha_asc" ->
+                PageRequest.of(
+                    page,
+                    size,
+                    org.springframework.data.domain.Sort
+                        .by("term")
+                        .ascending(),
+                )
+            "alpha_desc" ->
+                PageRequest.of(
+                    page,
+                    size,
+                    org.springframework.data.domain.Sort
+                        .by("term")
+                        .descending(),
+                )
+            else ->
+                PageRequest.of(
+                    page,
+                    size,
+                    org.springframework.data.domain.Sort
+                        .by("createdAt")
+                        .descending(),
+                )
         }
-    }
 
-    private fun mapToResponse(vocabulary: VocabularyEntity, isSaved: Boolean = false): VocabularyDto {
-        return VocabularyDto(
+    private fun mapToResponse(
+        vocabulary: VocabularyEntity,
+        isSaved: Boolean = false,
+    ): VocabularyDto =
+        VocabularyDto(
             vocabId = requireNotNull(vocabulary.vocabId) { "Vocabulary ID missing" },
             term = vocabulary.term.orEmpty(),
             meaning = vocabulary.meaning,
@@ -353,12 +433,9 @@ class VocabularyService(
             createdAt = vocabulary.createdAt,
             isSaved = isSaved,
         )
-    }
 
     /**
      * Get total count of vocabulary entries
      */
-    fun getVocabularyCount(): Int {
-        return vocabularyRepository.count().toInt()
-    }
+    fun getVocabularyCount(): Int = vocabularyRepository.count().toInt()
 }

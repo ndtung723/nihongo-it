@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class OpenApiConfig {
-
     @Bean
     fun customOpenAPI(): OpenAPI {
         val securitySchemeName = "bearerAuth"
@@ -28,18 +27,15 @@ class OpenApiConfig {
                         Contact()
                             .name("Development Team")
                             .email("admin@example.com"),
-                    )
-                    .license(
+                    ).license(
                         License()
                             .name("MIT License"),
                     ),
-            )
-            .addServersItem(
+            ).addServersItem(
                 Server()
                     .url("/")
                     .description("Default Server URL"),
-            )
-            .addSecurityItem(SecurityRequirement().addList(securitySchemeName))
+            ).addSecurityItem(SecurityRequirement().addList(securitySchemeName))
             .components(
                 Components()
                     .addSecuritySchemes(

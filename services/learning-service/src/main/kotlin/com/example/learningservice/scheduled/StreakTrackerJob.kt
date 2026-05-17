@@ -44,41 +44,45 @@ class StreakTrackerJob(
         val userIds = allUsers.mapNotNull { it.userId }
 
         // Single aggregate query instead of 3 queries × N users
-        val activityRows = reviewLogRepository.getUserActivitySummary(
-            userIds,
-            startOfToday,
-            startOfYesterday,
-            startOfTwoDaysAgo,
-        )
-        val activityMap: Map<UUID, Triple<Boolean, Boolean, Boolean>> = activityRows.associate { row ->
-            val uid = UUID.fromString(row[COL_USER_ID].toString())
-            val reviewedToday = (row[COL_TODAY] as Number).toInt() > 0
-            val reviewedYesterday = (row[COL_YESTERDAY] as Number).toInt() > 0
-            val reviewedTwoDaysAgo = (row[COL_TWO_DAYS_AGO] as Number).toInt() > 0
-            uid to Triple(reviewedToday, reviewedYesterday, reviewedTwoDaysAgo)
-        }
+        val activityRows =
+            reviewLogRepository.getUserActivitySummary(
+                userIds,
+                startOfToday,
+                startOfYesterday,
+                startOfTwoDaysAgo,
+            )
+        val activityMap: Map<UUID, Triple<Boolean, Boolean, Boolean>> =
+            activityRows.associate { row ->
+                val uid = UUID.fromString(row[COL_USER_ID].toString())
+                val reviewedToday = (row[COL_TODAY] as Number).toInt() > 0
+                val reviewedYesterday = (row[COL_YESTERDAY] as Number).toInt() > 0
+                val reviewedTwoDaysAgo = (row[COL_TWO_DAYS_AGO] as Number).toInt() > 0
+                uid to Triple(reviewedToday, reviewedYesterday, reviewedTwoDaysAgo)
+            }
 
         val now = LocalDateTime.now()
         var resetCount = 0
         var reducedCount = 0
 
-        val updatedUsers = allUsers.mapNotNull { user ->
-            val userId = user.userId ?: return@mapNotNull null
-            val (reviewedToday, reviewedYesterday, reviewedTwoDaysAgo) = activityMap[userId]
-                ?: Triple(false, false, false)
+        val updatedUsers =
+            allUsers.mapNotNull { user ->
+                val userId = user.userId ?: return@mapNotNull null
+                val (reviewedToday, reviewedYesterday, reviewedTwoDaysAgo) =
+                    activityMap[userId]
+                        ?: Triple(false, false, false)
 
-            when {
-                reviewedToday || reviewedYesterday -> null
-                reviewedTwoDaysAgo && user.streakCount > 1 -> {
-                    reducedCount++
-                    user.copy(streakCount = user.streakCount - 1, updatedAt = Instant.now())
-                }
-                else -> {
-                    resetCount++
-                    user.copy(streakCount = 0, updatedAt = Instant.now())
+                when {
+                    reviewedToday || reviewedYesterday -> null
+                    reviewedTwoDaysAgo && user.streakCount > 1 -> {
+                        reducedCount++
+                        user.copy(streakCount = user.streakCount - 1, updatedAt = Instant.now())
+                    }
+                    else -> {
+                        resetCount++
+                        user.copy(streakCount = 0, updatedAt = Instant.now())
+                    }
                 }
             }
-        }
 
         if (updatedUsers.isNotEmpty()) {
             userRepository.saveAll(updatedUsers)

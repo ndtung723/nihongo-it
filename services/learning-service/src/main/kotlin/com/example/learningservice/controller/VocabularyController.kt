@@ -36,7 +36,6 @@ class VocabularyController(
     private val vocabularyService: VocabularyService,
     private val categoryService: CategoryService,
 ) {
-
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @PostMapping(produces = [MediaType.APPLICATION_JSON_VALUE], consumes = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.CREATED)
@@ -60,9 +59,7 @@ class VocabularyController(
         @Parameter(description = "Vocabulary creation details", required = true)
         @Valid
         @RequestBody request: CreateVocabularyRequestDto,
-    ): CreateVocabularyResponseDto {
-        return vocabularyService.createVocabulary(request)
-    }
+    ): CreateVocabularyResponseDto = vocabularyService.createVocabulary(request)
 
     @GetMapping("/{vocabId}", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(
@@ -82,9 +79,7 @@ class VocabularyController(
     fun getVocabulary(
         @Parameter(description = "Unique identifier of the vocabulary entry", required = true)
         @PathVariable vocabId: UUID,
-    ): GetVocabularyResponseDto {
-        return vocabularyService.getVocabularybyId(vocabId)
-    }
+    ): GetVocabularyResponseDto = vocabularyService.getVocabularybyId(vocabId)
 
     @GetMapping("/term/{term}", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(
@@ -104,9 +99,7 @@ class VocabularyController(
     fun getVocabularyByTerm(
         @Parameter(description = "Japanese term of the vocabulary entry", required = true)
         @PathVariable term: String,
-    ): GetVocabularyResponseDto {
-        return vocabularyService.getVocabularyByTerm(term)
-    }
+    ): GetVocabularyResponseDto = vocabularyService.getVocabularyByTerm(term)
 
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
@@ -128,34 +121,37 @@ class VocabularyController(
     fun filterVocabulary(
         @Parameter(description = "Filter by JLPT level")
         @RequestParam(required = false) jlptLevel: JlptLevel?,
-
         @Parameter(description = "Filter by topic name")
         @RequestParam(required = false) topicName: String?,
-
         @Parameter(description = "Search by keyword in hiragana, kanji, or meaning")
         @RequestParam(required = false) keyword: String?,
-
         @Parameter(description = "Page number (0-based)")
         @RequestParam(defaultValue = "0") page: Int,
-
         @Parameter(description = "Page size")
         @RequestParam(defaultValue = "20") size: Int,
-
         @Parameter(description = "Sort option")
         @RequestParam(required = false) sort: String?,
     ): PagedVocabularyResponseDto {
         // Validate page and size parameters to prevent invalid values
         val validPage = if (page < 0) 0 else page
-        val validSize = if (size <= 0) 20 else if (size > 100) 100 else size
+        val validSize =
+            if (size <= 0) {
+                20
+            } else if (size > 100) {
+                100
+            } else {
+                size
+            }
 
-        val filter = VocabularyFilterRequestDto(
-            jlptLevel = jlptLevel,
-            topicName = topicName,
-            keyword = keyword,
-            page = validPage,
-            size = validSize,
-            sort = sort,
-        )
+        val filter =
+            VocabularyFilterRequestDto(
+                jlptLevel = jlptLevel,
+                topicName = topicName,
+                keyword = keyword,
+                page = validPage,
+                size = validSize,
+                sort = sort,
+            )
         return vocabularyService.filterVocabulary(filter)
     }
 
@@ -181,13 +177,10 @@ class VocabularyController(
     fun updateVocabulary(
         @Parameter(description = "Unique identifier of the vocabulary to update", required = true)
         @PathVariable vocabId: UUID,
-
         @Parameter(description = "Updated vocabulary details", required = true)
         @Valid
         @RequestBody request: UpdateVocabularyRequestDto,
-    ): UpdateVocabularyResponseDto {
-        return vocabularyService.updateVocabulary(vocabId, request)
-    }
+    ): UpdateVocabularyResponseDto = vocabularyService.updateVocabulary(vocabId, request)
 
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @DeleteMapping("/{vocabId}", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -286,25 +279,31 @@ class VocabularyController(
     fun getSavedVocabulary(
         @Parameter(description = "Search by keyword in hiragana, kanji, or meaning")
         @RequestParam(required = false) keyword: String?,
-
         @Parameter(description = "Page number (0-based)")
         @RequestParam(defaultValue = "0") page: Int,
-
         @Parameter(description = "Page size")
         @RequestParam(defaultValue = "20") size: Int,
-
         @Parameter(description = "Sort option")
-        @RequestParam(defaultValue = "date_desc") sort: String?,
+        @RequestParam(defaultValue = "date_desc")
+        @Suppress("UnusedParameter") sort: String?,
     ): PagedVocabularyResponseDto {
         // Validate page and size parameters to prevent invalid values
         val validPage = if (page < 0) 0 else page
-        val validSize = if (size <= 0) 20 else if (size > 100) 100 else size
+        val validSize =
+            if (size <= 0) {
+                20
+            } else if (size > 100) {
+                100
+            } else {
+                size
+            }
 
-        val filter = VocabularyFilterRequestDto(
-            keyword = keyword,
-            page = validPage,
-            size = validSize,
-        )
+        val filter =
+            VocabularyFilterRequestDto(
+                keyword = keyword,
+                page = validPage,
+                size = validSize,
+            )
         val result = vocabularyService.getSavedVocabulary(filter)
         return result
     }
@@ -385,7 +384,5 @@ class VocabularyController(
     fun getTopicsByCategory(
         @Parameter(description = "Category ID", required = true)
         @PathVariable categoryId: UUID,
-    ): ResponseEntity<List<TopicDTO>> {
-        return ResponseEntity.ok(categoryService.getTopicsForCategory(categoryId))
-    }
+    ): ResponseEntity<List<TopicDTO>> = ResponseEntity.ok(categoryService.getTopicsForCategory(categoryId))
 }

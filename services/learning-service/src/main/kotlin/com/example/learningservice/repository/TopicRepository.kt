@@ -21,5 +21,8 @@ interface TopicRepository : JpaRepository<TopicEntity, UUID> {
 
     fun findByName(name: String): List<TopicEntity>
 
-    fun existsByNameAndCategory(name: String, category: CategoryEntity): Boolean
+    fun existsByNameAndCategory(
+        name: String,
+        category: CategoryEntity,
+    ): Boolean
 }

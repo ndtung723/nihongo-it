@@ -15,14 +15,14 @@ const val CORRELATION_ID_HEADER = "X-Correlation-Id"
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 class CorrelationIdFilter : OncePerRequestFilter() {
-
     override fun doFilterInternal(
         request: HttpServletRequest,
         response: HttpServletResponse,
         chain: FilterChain,
     ) {
-        val correlationId = request.getHeader(CORRELATION_ID_HEADER)
-            ?: UUID.randomUUID().toString()
+        val correlationId =
+            request.getHeader(CORRELATION_ID_HEADER)
+                ?: UUID.randomUUID().toString()
 
         MDC.put("correlationId", correlationId)
         MDC.put("userId", request.getHeader("X-User-Id") ?: "anonymous")

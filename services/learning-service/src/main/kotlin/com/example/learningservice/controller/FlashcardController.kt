@@ -38,7 +38,6 @@ class FlashcardController(
     private val flashcardStatisticsService: FlashcardStatisticsService,
     private val userAuthUtil: UserAuthUtil,
 ) {
-
     @GetMapping(
         "/due",
         produces = [MediaType.APPLICATION_JSON_VALUE],
@@ -57,9 +56,7 @@ class FlashcardController(
             ApiResponse(responseCode = "401", description = "Unauthorized - authentication required"),
         ],
     )
-    fun getDueCards(): GetDueCardsResponseDto {
-        return flashcardCrudService.getDueCards()
-    }
+    fun getDueCards(): GetDueCardsResponseDto = flashcardCrudService.getDueCards()
 
     @GetMapping(
         produces = [MediaType.APPLICATION_JSON_VALUE],
@@ -78,9 +75,7 @@ class FlashcardController(
             ApiResponse(responseCode = "401", description = "Unauthorized - authentication required"),
         ],
     )
-    fun getAllFlashcards(): GetFlashcardsResponseDto {
-        return flashcardCrudService.getAllFlashcards()
-    }
+    fun getAllFlashcards(): GetFlashcardsResponseDto = flashcardCrudService.getAllFlashcards()
 
     @GetMapping(
         "/paged",
@@ -93,9 +88,7 @@ class FlashcardController(
     fun getAllFlashcardsPaged(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
-    ): PagedFlashcardsResponseDto {
-        return flashcardCrudService.getAllFlashcardsPaged(page, size)
-    }
+    ): PagedFlashcardsResponseDto = flashcardCrudService.getAllFlashcardsPaged(page, size)
 
     @GetMapping(
         "/{id}",
@@ -119,9 +112,7 @@ class FlashcardController(
     fun getFlashcardById(
         @Parameter(description = "Unique identifier of the flashcard", required = true)
         @PathVariable id: UUID,
-    ): GetFlashcardResponseDto {
-        return flashcardCrudService.getFlashcardById(id).getOrThrow()
-    }
+    ): GetFlashcardResponseDto = flashcardCrudService.getFlashcardById(id).getOrThrow()
 
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @PostMapping(
@@ -149,9 +140,7 @@ class FlashcardController(
         @Parameter(description = "Flashcard creation details", required = true)
         @Valid
         @RequestBody request: CreateFlashcardRequestDto,
-    ): CreateFlashcardResponseDto {
-        return flashcardCrudService.createFlashcard(request)
-    }
+    ): CreateFlashcardResponseDto = flashcardCrudService.createFlashcard(request)
 
     @PutMapping(
         "/{id}",
@@ -180,9 +169,7 @@ class FlashcardController(
         @Parameter(description = "Updated flashcard details", required = true)
         @Valid
         @RequestBody request: UpdateFlashcardRequestDto,
-    ): UpdateFlashcardResponseDto {
-        return flashcardCrudService.updateFlashcard(id, request)
-    }
+    ): UpdateFlashcardResponseDto = flashcardCrudService.updateFlashcard(id, request)
 
     @DeleteMapping(
         "/{id}",
@@ -206,9 +193,7 @@ class FlashcardController(
     fun deleteFlashcard(
         @Parameter(description = "Unique identifier of the flashcard to delete", required = true)
         @PathVariable id: UUID,
-    ): DeleteFlashcardResponseDto {
-        return flashcardCrudService.deleteFlashcard(id)
-    }
+    ): DeleteFlashcardResponseDto = flashcardCrudService.deleteFlashcard(id)
 
     @PostMapping(
         "/{id}/review",
@@ -237,9 +222,7 @@ class FlashcardController(
         @Parameter(description = "Rating details (0-4 where 0 is hardest, 4 is easiest)", required = true)
         @Valid
         @RequestBody reviewRequest: ReviewRequest,
-    ): ReviewFlashcardResponseDto {
-        return flashcardCrudService.processReview(id, reviewRequest.rating)
-    }
+    ): ReviewFlashcardResponseDto = flashcardCrudService.processReview(id, reviewRequest.rating)
 
     @GetMapping(
         "/statistics",
@@ -259,9 +242,7 @@ class FlashcardController(
             ApiResponse(responseCode = "401", description = "Unauthorized - authentication required"),
         ],
     )
-    fun getStudyStatistics(): GetStatisticsResponseDto {
-        return flashcardStatisticsService.getStudyStatistics()
-    }
+    fun getStudyStatistics(): GetStatisticsResponseDto = flashcardStatisticsService.getStudyStatistics()
 
     @GetMapping(
         "/vocabulary/{vocabId}",
@@ -285,9 +266,7 @@ class FlashcardController(
     fun getFlashcardsByVocabulary(
         @Parameter(description = "Unique identifier of the vocabulary item", required = true)
         @PathVariable vocabId: UUID,
-    ): GetFlashcardsResponseDto {
-        return flashcardCrudService.getFlashcardsByVocabulary(vocabId)
-    }
+    ): GetFlashcardsResponseDto = flashcardCrudService.getFlashcardsByVocabulary(vocabId)
 
     @PostMapping(
         "/vocabulary/{vocabId}",
@@ -313,7 +292,5 @@ class FlashcardController(
     fun createFlashcardFromVocabulary(
         @Parameter(description = "Unique identifier of the vocabulary item", required = true)
         @PathVariable vocabId: UUID,
-    ): CreateFlashcardResponseDto {
-        return flashcardCrudService.createFlashcardFromVocabulary(vocabId)
-    }
+    ): CreateFlashcardResponseDto = flashcardCrudService.createFlashcardFromVocabulary(vocabId)
 }

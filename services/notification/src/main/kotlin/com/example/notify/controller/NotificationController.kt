@@ -15,8 +15,7 @@ import java.util.UUID
 class NotificationController(
     private val notificationService: NotificationService,
 ) {
-    private fun currentUserId(): UUID =
-        UUID.fromString(SecurityContextHolder.getContext().authentication.principal as String)
+    private fun currentUserId(): UUID = UUID.fromString(SecurityContextHolder.getContext().authentication?.principal as String)
 
     @GetMapping
     @Operation(summary = "Get paginated notifications for current user")
@@ -43,7 +42,9 @@ class NotificationController(
 
     @PutMapping("/{id}/read")
     @Operation(summary = "Mark a notification as read")
-    fun markAsRead(@PathVariable id: UUID): ResponseEntity<Any> =
+    fun markAsRead(
+        @PathVariable id: UUID,
+    ): ResponseEntity<Any> =
         if (notificationService.markAsReadForUser(currentUserId(), id)) {
             ResponseEntity.ok(mapOf("message" to "Notification marked as read"))
         } else {
@@ -57,7 +58,9 @@ class NotificationController(
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a notification")
-    fun deleteNotification(@PathVariable id: UUID): ResponseEntity<Any> =
+    fun deleteNotification(
+        @PathVariable id: UUID,
+    ): ResponseEntity<Any> =
         if (notificationService.deleteForUser(currentUserId(), id)) {
             ResponseEntity.ok(mapOf("message" to "Notification deleted"))
         } else {
@@ -65,15 +68,16 @@ class NotificationController(
         }
 }
 
-private fun NotificationEntity.toDto() = mapOf(
-    "id" to notificationId,
-    "title" to title,
-    "message" to message,
-    "type" to type.name,
-    "isRead" to isRead,
-    "actionUrl" to actionUrl,
-    "sentAt" to sentAt.toString(),
-    "readAt" to readAt?.toString(),
-    "reviewCount" to reviewCount,
-    "priorityLevel" to priorityLevel,
-)
+private fun NotificationEntity.toDto() =
+    mapOf(
+        "id" to notificationId,
+        "title" to title,
+        "message" to message,
+        "type" to type.name,
+        "isRead" to isRead,
+        "actionUrl" to actionUrl,
+        "sentAt" to sentAt.toString(),
+        "readAt" to readAt?.toString(),
+        "reviewCount" to reviewCount,
+        "priorityLevel" to priorityLevel,
+    )

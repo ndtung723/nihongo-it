@@ -17,18 +17,21 @@ class FeedbackService(
     @Transactional
     fun saveFeedback(feedbackDTO: FeedbackDTO): FeedbackDTO {
         // Find the user entity
-        val userEntity = userRepository.findById(feedbackDTO.userId)
-            .orElseThrow { BusinessException("User not found with id: ${feedbackDTO.userId}") }
+        val userEntity =
+            userRepository
+                .findById(feedbackDTO.userId)
+                .orElseThrow { BusinessException("User not found with id: ${feedbackDTO.userId}") }
 
         // Create feedback entity
-        val feedbackEntity = FeedbackEntity(
-            feedbackId = null, // Let the database generate the ID
-            user = userEntity,
-            contentType = feedbackDTO.contentType,
-            contentId = feedbackDTO.contentId,
-            content = feedbackDTO.content,
-            createdAt = LocalDateTime.now(),
-        )
+        val feedbackEntity =
+            FeedbackEntity(
+                feedbackId = null, // Let the database generate the ID
+                user = userEntity,
+                contentType = feedbackDTO.contentType,
+                contentId = feedbackDTO.contentId,
+                content = feedbackDTO.content,
+                createdAt = LocalDateTime.now(),
+            )
 
         // Save to repository
         val savedEntity = feedbackRepository.save(feedbackEntity)

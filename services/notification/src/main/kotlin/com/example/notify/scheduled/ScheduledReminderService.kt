@@ -75,7 +75,11 @@ class ScheduledReminderService(
      * @return true if a notification was sent, false otherwise
      */
     @Suppress("ReturnCount")
-    private fun processUserReminderWithLogging(user: UserEntity, now: LocalDateTime, currentTime: LocalTime): Boolean {
+    private fun processUserReminderWithLogging(
+        user: UserEntity,
+        now: LocalDateTime,
+        currentTime: LocalTime,
+    ): Boolean {
         try {
             logger.debug("SCHEDULER: Processing reminders for user ${user.userId} (${user.email})")
 
@@ -135,14 +139,19 @@ class ScheduledReminderService(
     /**
      * Check if the current time matches the user's reminder time (within a 15-minute window)
      */
-    private fun isReminderTime(reminderTime: LocalTime?, currentTime: LocalTime): Boolean {
+    private fun isReminderTime(
+        reminderTime: LocalTime?,
+        currentTime: LocalTime,
+    ): Boolean {
         if (reminderTime == null) return false
 
         // Check if current time is within 15 minutes of the reminder time
-        val minuteDifference = ChronoUnit.MINUTES.between(
-            reminderTime,
-            currentTime,
-        ).let { if (it < 0) it + MINUTES_PER_DAY else it }
+        val minuteDifference =
+            ChronoUnit.MINUTES
+                .between(
+                    reminderTime,
+                    currentTime,
+                ).let { if (it < 0) it + MINUTES_PER_DAY else it }
 
         return minuteDifference < REMINDER_WINDOW_MINUTES
     }

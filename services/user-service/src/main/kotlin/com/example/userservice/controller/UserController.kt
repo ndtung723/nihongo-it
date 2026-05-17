@@ -15,21 +15,22 @@ class UserController(
     private val userService: UserService,
     private val userAuthUtil: UserAuthUtil,
 ) {
-
     /**
      * Get user profile information
      */
     @GetMapping("/profile")
     @Operation(summary = "Get current user's profile information")
     fun getUserProfile(): ResponseEntity<Any> {
-        val userId = userAuthUtil.getCurrentUserId()
-            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated")
+        val userId =
+            userAuthUtil.getCurrentUserId()
+                ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated")
 
         return try {
             val profile = userService.getUserProfile(userId)
             ResponseEntity.ok(profile)
         } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(mapOf("error" to "Failed to get user profile: ${e.message}"))
         }
     }
@@ -39,15 +40,19 @@ class UserController(
      */
     @PutMapping("/preferences")
     @Operation(summary = "Update notification preferences for the current user")
-    fun updateNotificationPreferences(@RequestBody request: UpdatePreferencesRequest): ResponseEntity<Any> {
-        val userId = userAuthUtil.getCurrentUserId()
-            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated")
+    fun updateNotificationPreferences(
+        @RequestBody request: UpdatePreferencesRequest,
+    ): ResponseEntity<Any> {
+        val userId =
+            userAuthUtil.getCurrentUserId()
+                ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated")
 
         return try {
             userService.updateNotificationPreferences(userId, request)
             ResponseEntity.ok(mapOf("message" to "Preferences updated successfully"))
         } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(mapOf("error" to "Failed to update preferences: ${e.message}"))
         }
     }
@@ -58,14 +63,16 @@ class UserController(
     @GetMapping("/preferences")
     @Operation(summary = "Get current user's notification preferences")
     fun getNotificationPreferences(): ResponseEntity<Any> {
-        val userId = userAuthUtil.getCurrentUserId()
-            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated")
+        val userId =
+            userAuthUtil.getCurrentUserId()
+                ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated")
 
         return try {
             val preferences = userService.getNotificationPreferences(userId)
             ResponseEntity.ok(preferences)
         } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(mapOf("error" to "Failed to get preferences: ${e.message}"))
         }
     }

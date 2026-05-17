@@ -7,9 +7,19 @@ import java.util.UUID
 
 @Repository
 interface FeedbackRepository : JpaRepository<FeedbackEntity, UUID> {
-    fun findByContentTypeAndContentId(contentType: String, contentId: UUID): List<FeedbackEntity>
+    fun findByContentTypeAndContentId(
+        contentType: String,
+        contentId: UUID,
+    ): List<FeedbackEntity>
 
-    fun findByUserUserIdAndContentType(userId: UUID, contentType: String): List<FeedbackEntity>
+    fun findByUserUserIdAndContentType(
+        userId: UUID,
+        contentType: String,
+    ): List<FeedbackEntity>
 
-    fun findByContentTypeAndContentIdAndUserUserId(contentType: String, contentId: UUID, userId: UUID): List<FeedbackEntity>
+    fun findByContentTypeAndContentIdAndUserUserId(
+        contentType: String,
+        contentId: UUID,
+        userId: UUID,
+    ): List<FeedbackEntity>
 }

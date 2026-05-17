@@ -21,7 +21,6 @@ class SecurityConfig(
     private val gatewayHeaderAuthFilter: GatewayHeaderAuthFilter,
     private val jwtAuthEntryPoint: JwtAuthenticationEntryPoint,
 ) {
-
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
@@ -34,12 +33,18 @@ class SecurityConfig(
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { auth ->
                 auth
-                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                    .requestMatchers("/api/v1/learning/public/**").permitAll()
-                    .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                    .requestMatchers("/actuator/**").permitAll()
-                    .requestMatchers("/api/v1/learning/admin/**").hasRole("ADMIN")
-                    .anyRequest().authenticated()
+                    .requestMatchers(HttpMethod.OPTIONS, "/**")
+                    .permitAll()
+                    .requestMatchers("/api/v1/learning/public/**")
+                    .permitAll()
+                    .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
+                    .permitAll()
+                    .requestMatchers("/actuator/**")
+                    .permitAll()
+                    .requestMatchers("/api/v1/learning/admin/**")
+                    .hasRole("ADMIN")
+                    .anyRequest()
+                    .authenticated()
             }
 
         http.addFilterBefore(gatewayHeaderAuthFilter, UsernamePasswordAuthenticationFilter::class.java)

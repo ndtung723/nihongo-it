@@ -23,49 +23,60 @@ class ChatService(
     @Value("\${ai-service.openai.economy-model:gpt-3.5-turbo}")
     private lateinit var economyModel: String
 
-    fun getResponse(prompt: String): String {
-        return chatModel.call(prompt)
-    }
+    fun getResponse(prompt: String): String = chatModel.call(prompt)
 
     fun getResponseOptions(prompt: String): String {
-        val response: ChatResponse = chatModel.call(
-            Prompt(
-                prompt,
-                OpenAiChatOptions.builder()
-                    .model(defaultModel)
-                    .temperature(DEFAULT_TEMPERATURE)
-                    .build(),
-            ),
-        )
+        val response: ChatResponse =
+            chatModel.call(
+                Prompt(
+                    prompt,
+                    OpenAiChatOptions
+                        .builder()
+                        .model(defaultModel)
+                        .temperature(DEFAULT_TEMPERATURE)
+                        .build(),
+                ),
+            )
         return response.result.output.text
+            .orEmpty()
     }
 
     fun getEconomyResponse(prompt: String): String {
-        val response: ChatResponse = chatModel.call(
-            Prompt(
-                prompt,
-                OpenAiChatOptions.builder()
-                    .model(economyModel)
-                    .temperature(DEFAULT_TEMPERATURE)
-                    .build(),
-            ),
-        )
+        val response: ChatResponse =
+            chatModel.call(
+                Prompt(
+                    prompt,
+                    OpenAiChatOptions
+                        .builder()
+                        .model(economyModel)
+                        .temperature(DEFAULT_TEMPERATURE)
+                        .build(),
+                ),
+            )
         return response.result.output.text
+            .orEmpty()
     }
 
-    fun streamVocabularyChatResponse(vocabWord: String, userMessage: String): Flux<String> =
-        chatModel.stream(
-            Prompt(
-                buildVocabChatPrompt(vocabWord, userMessage),
-                OpenAiChatOptions.builder()
-                    .model(defaultModel)
-                    .temperature(DEFAULT_TEMPERATURE)
-                    .build(),
-            ),
-        ).mapNotNull { it.result?.output?.text }
+    fun streamVocabularyChatResponse(
+        vocabWord: String,
+        userMessage: String,
+    ): Flux<String> =
+        chatModel
+            .stream(
+                Prompt(
+                    buildVocabChatPrompt(vocabWord, userMessage),
+                    OpenAiChatOptions
+                        .builder()
+                        .model(defaultModel)
+                        .temperature(DEFAULT_TEMPERATURE)
+                        .build(),
+                ),
+            ).mapNotNull { it.result?.output?.text }
 
-    private fun buildVocabChatPrompt(vocabWord: String, userMessage: String) =
-        """
+    private fun buildVocabChatPrompt(
+        vocabWord: String,
+        userMessage: String,
+    ) = """
         Hãy đóng vai trò như một giáo viên tiếng Nhật cho học sinh Việt Nam liên quan đến từ vựng "$vocabWord". Học sinh đã hỏi về từ "$vocabWord".:
         "$userMessage"
         Vui lòng cung cấp một phản hồi hữu ích, giới hạn tối đa $VOCAB_CHAT_MAX_WORDS từ bằng tiếng Việt với các ví dụ.

@@ -31,16 +31,20 @@ class AdminService(
 ) {
     private val logger = LoggerFactory.getLogger(AdminService::class.java)
 
-    fun getAllUsers(pageable: Pageable, search: String?): UserListResponse {
-        val userPage: Page<UserEntity> = if (search.isNullOrBlank()) {
-            userRepository.findAll(pageable)
-        } else {
-            userRepository.findByEmailContainingIgnoreCaseOrFullNameContainingIgnoreCase(
-                search,
-                search,
-                pageable,
-            )
-        }
+    fun getAllUsers(
+        pageable: Pageable,
+        search: String?,
+    ): UserListResponse {
+        val userPage: Page<UserEntity> =
+            if (search.isNullOrBlank()) {
+                userRepository.findAll(pageable)
+            } else {
+                userRepository.findByEmailContainingIgnoreCaseOrFullNameContainingIgnoreCase(
+                    search,
+                    search,
+                    pageable,
+                )
+            }
 
         val users = userPage.content.map { it.toUserDto() }
 
@@ -63,23 +67,25 @@ class AdminService(
             throw BusinessException("Email ${request.email} is already registered")
         }
 
-        val role = roleRepository.findByRoleId(request.roleId)
-            ?: throw BusinessException("Invalid role ID: ${request.roleId}")
+        val role =
+            roleRepository.findByRoleId(request.roleId)
+                ?: throw BusinessException("Invalid role ID: ${request.roleId}")
 
-        val newUser = UserEntity(
-            email = request.email,
-            password = passwordEncoder.encode(request.password),
-            fullName = request.fullName,
-            profilePicture = request.profilePicture,
-            currentLevel = request.currentLevel,
-            jlptGoal = request.jlptGoal,
-            isActive = true,
-            isEmailVerified = true,
-            lastLogin = null,
-            role = role,
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now(),
-        )
+        val newUser =
+            UserEntity(
+                email = request.email,
+                password = passwordEncoder.encode(request.password)!!,
+                fullName = request.fullName,
+                profilePicture = request.profilePicture,
+                currentLevel = request.currentLevel,
+                jlptGoal = request.jlptGoal,
+                isActive = true,
+                isEmailVerified = true,
+                lastLogin = null,
+                role = role,
+                createdAt = LocalDateTime.now(),
+                updatedAt = LocalDateTime.now(),
+            )
 
         val savedUser = userRepository.save(newUser)
         val actorId = userAuthUtil.getCurrentUserId()
@@ -96,7 +102,10 @@ class AdminService(
     }
 
     @Transactional
-    fun updateUser(userId: UUID, request: UserUpdateRequest): UserDto {
+    fun updateUser(
+        userId: UUID,
+        request: UserUpdateRequest,
+    ): UserDto {
         val existingUser = findUserById(userId)
 
         if (request.email != null &&
@@ -106,45 +115,52 @@ class AdminService(
             throw BusinessException("Email ${request.email} is already registered")
         }
 
-        val role = if (request.roleId != null) {
-            roleRepository.findByRoleId(request.roleId)
-                ?: throw BusinessException("Invalid role ID: ${request.roleId}")
-        } else {
-            existingUser.role
-        }
-
-        val reminderTime = if (request.reminderTime != null) {
-            try {
-                LocalTime.parse(request.reminderTime, DateTimeFormatter.ofPattern("HH:mm"))
-            } catch (e: Exception) {
-                throw BusinessException("Invalid reminder time format. Use HH:mm")
-            }
-        } else {
-            existingUser.reminderTime
-        }
-
-        val updatedUser = existingUser.copy(
-            email = request.email ?: existingUser.email,
-            password = if (request.password != null) {
-                passwordEncoder.encode(request.password)
+        val role =
+            if (request.roleId != null) {
+                roleRepository.findByRoleId(request.roleId)
+                    ?: throw BusinessException("Invalid role ID: ${request.roleId}")
             } else {
-                existingUser.password
-            },
-            fullName = request.fullName ?: existingUser.fullName,
-            profilePicture = request.profilePicture ?: existingUser.profilePicture,
-            currentLevel = request.currentLevel ?: existingUser.currentLevel,
-            jlptGoal = request.jlptGoal ?: existingUser.jlptGoal,
-            isActive = request.isActive ?: existingUser.isActive,
-            isEmailVerified = request.isEmailVerified ?: existingUser.isEmailVerified,
-            reminderEnabled = request.reminderEnabled ?: existingUser.reminderEnabled,
-            reminderTime = reminderTime,
-            notificationPreferences = request.notificationPreferences
-                ?.split(",")?.map { it.trim() }?.toMutableSet()
-                ?: existingUser.notificationPreferences,
-            minCardThreshold = request.minCardThreshold ?: existingUser.minCardThreshold,
-            role = role,
-            updatedAt = LocalDateTime.now(),
-        )
+                existingUser.role
+            }
+
+        val reminderTime =
+            if (request.reminderTime != null) {
+                try {
+                    LocalTime.parse(request.reminderTime, DateTimeFormatter.ofPattern("HH:mm"))
+                } catch (e: Exception) {
+                    throw BusinessException("Invalid reminder time format. Use HH:mm")
+                }
+            } else {
+                existingUser.reminderTime
+            }
+
+        val updatedUser =
+            existingUser.copy(
+                email = request.email ?: existingUser.email,
+                password =
+                    if (request.password != null) {
+                        passwordEncoder.encode(request.password)!!
+                    } else {
+                        existingUser.password
+                    },
+                fullName = request.fullName ?: existingUser.fullName,
+                profilePicture = request.profilePicture ?: existingUser.profilePicture,
+                currentLevel = request.currentLevel ?: existingUser.currentLevel,
+                jlptGoal = request.jlptGoal ?: existingUser.jlptGoal,
+                isActive = request.isActive ?: existingUser.isActive,
+                isEmailVerified = request.isEmailVerified ?: existingUser.isEmailVerified,
+                reminderEnabled = request.reminderEnabled ?: existingUser.reminderEnabled,
+                reminderTime = reminderTime,
+                notificationPreferences =
+                    request.notificationPreferences
+                        ?.split(",")
+                        ?.map { it.trim() }
+                        ?.toMutableSet()
+                        ?: existingUser.notificationPreferences,
+                minCardThreshold = request.minCardThreshold ?: existingUser.minCardThreshold,
+                role = role,
+                updatedAt = LocalDateTime.now(),
+            )
 
         val savedUser = userRepository.save(updatedUser)
         val actorId = userAuthUtil.getCurrentUserId()
@@ -199,11 +215,15 @@ class AdminService(
     }
 
     @Transactional
-    fun changeUserRole(userId: UUID, roleId: Int) {
+    fun changeUserRole(
+        userId: UUID,
+        roleId: Int,
+    ) {
         val user = findUserById(userId)
 
-        val newRole = roleRepository.findByRoleId(roleId)
-            ?: throw BusinessException("Invalid role ID: $roleId")
+        val newRole =
+            roleRepository.findByRoleId(roleId)
+                ?: throw BusinessException("Invalid role ID: $roleId")
 
         if (user.role.roleId == 1 && roleId != 1) {
             val adminCount = userRepository.countByRoleRoleIdAndIsActive(1, true)

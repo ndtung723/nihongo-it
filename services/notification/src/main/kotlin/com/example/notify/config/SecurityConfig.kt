@@ -16,7 +16,6 @@ class SecurityConfig(
     private val gatewayHeaderAuthFilter: GatewayHeaderAuthFilter,
     private val jwtAuthenticationEntryPoint: JwtAuthenticationEntryPoint,
 ) {
-
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http
@@ -25,11 +24,13 @@ class SecurityConfig(
             .exceptionHandling { it.authenticationEntryPoint(jwtAuthenticationEntryPoint) }
             .authorizeHttpRequests { auth ->
                 auth
-                    .requestMatchers("/actuator/**").permitAll()
-                    .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                    .anyRequest().authenticated()
-            }
-            .addFilterBefore(gatewayHeaderAuthFilter, UsernamePasswordAuthenticationFilter::class.java)
+                    .requestMatchers("/actuator/**")
+                    .permitAll()
+                    .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
+                    .permitAll()
+                    .anyRequest()
+                    .authenticated()
+            }.addFilterBefore(gatewayHeaderAuthFilter, UsernamePasswordAuthenticationFilter::class.java)
 
         return http.build()
     }

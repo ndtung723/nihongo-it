@@ -8,7 +8,9 @@ import org.springframework.stereotype.Service
 import java.util.UUID
 
 @Service
-class AuditService(private val auditLogRepository: AuditLogRepository) {
+class AuditService(
+    private val auditLogRepository: AuditLogRepository,
+) {
     private val logger = LoggerFactory.getLogger(AuditService::class.java)
 
     fun log(

@@ -37,7 +37,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 class AuthServiceTest {
-
     private lateinit var authenticationManager: AuthenticationManager
     private lateinit var userRepository: UserRepository
     private lateinit var roleRepository: RoleRepository
@@ -53,17 +52,18 @@ class AuthServiceTest {
 
     private val userId = UUID.randomUUID()
     private val userRole = RoleEntity(roleId = RoleEntity.ROLE_USER, roleName = "ROLE_USER")
-    private val testUser = UserEntity(
-        userId = userId,
-        email = "test@example.com",
-        password = "encoded_password",
-        fullName = "Test User",
-        profilePicture = null,
-        currentLevel = null,
-        jlptGoal = null,
-        lastLogin = LocalDateTime.now(),
-        role = userRole,
-    )
+    private val testUser =
+        UserEntity(
+            userId = userId,
+            email = "test@example.com",
+            password = "encoded_password",
+            fullName = "Test User",
+            profilePicture = null,
+            currentLevel = null,
+            jlptGoal = null,
+            lastLogin = LocalDateTime.now(),
+            role = userRole,
+        )
 
     @BeforeEach
     fun setup() {
@@ -79,17 +79,25 @@ class AuthServiceTest {
         auditService = mock()
         notificationService = mock()
 
-        authService = AuthService(
-            authenticationManager, userRepository, roleRepository, passwordEncoder,
-            jwtTokenUtil, refreshTokenRepository, googleAuthService, userAuthUtil,
-            securityEventLogger, auditService, notificationService,
-        )
+        authService =
+            AuthService(
+                authenticationManager,
+                userRepository,
+                roleRepository,
+                passwordEncoder,
+                jwtTokenUtil,
+                refreshTokenRepository,
+                googleAuthService,
+                userAuthUtil,
+                securityEventLogger,
+                auditService,
+                notificationService,
+            )
     }
 
     @Nested
     @DisplayName("login()")
     inner class Login {
-
         @Test
         @DisplayName("thành công — trả về token và refreshToken")
         fun success() {
@@ -140,18 +148,18 @@ class AuthServiceTest {
     @Nested
     @DisplayName("register()")
     inner class Register {
-
         @Test
         @DisplayName("thành công — tạo user mới")
         fun success() {
-            val request = SignupRequest(
-                email = "new@example.com",
-                password = "password123",
-                fullName = "New User",
-                profilePicture = null,
-                currentLevel = JlptLevel.N5,
-                jlptGoal = JlptLevel.N3,
-            )
+            val request =
+                SignupRequest(
+                    email = "new@example.com",
+                    password = "password123",
+                    fullName = "New User",
+                    profilePicture = null,
+                    currentLevel = JlptLevel.N5,
+                    jlptGoal = JlptLevel.N3,
+                )
             whenever(userRepository.existsByEmail(request.email)).thenReturn(false)
             whenever(roleRepository.findByRoleId(RoleEntity.ROLE_USER)).thenReturn(userRole)
             whenever(passwordEncoder.encode(request.password)).thenReturn("encoded")
@@ -166,12 +174,13 @@ class AuthServiceTest {
         @Test
         @DisplayName("email đã tồn tại — ném BusinessException")
         fun emailAlreadyUsed() {
-            val request = SignupRequest(
-                email = "test@example.com",
-                password = "pw",
-                fullName = "Dup",
-                profilePicture = null,
-            )
+            val request =
+                SignupRequest(
+                    email = "test@example.com",
+                    password = "pw",
+                    fullName = "Dup",
+                    profilePicture = null,
+                )
             whenever(userRepository.existsByEmail(request.email)).thenReturn(true)
 
             assertThrows<BusinessException> {
@@ -184,16 +193,16 @@ class AuthServiceTest {
     @Nested
     @DisplayName("refreshToken()")
     inner class RefreshToken {
-
         @Test
         @DisplayName("token hợp lệ — rotate và trả về access token mới")
         fun validToken() {
             val oldToken = "old_refresh"
-            val storedToken = RefreshTokenEntity(
-                userId = userId,
-                token = oldToken,
-                expiresAt = LocalDateTime.now().plusDays(1),
-            )
+            val storedToken =
+                RefreshTokenEntity(
+                    userId = userId,
+                    token = oldToken,
+                    expiresAt = LocalDateTime.now().plusDays(1),
+                )
             whenever(refreshTokenRepository.findByToken(oldToken)).thenReturn(storedToken)
             whenever(userRepository.findById(userId)).thenReturn(Optional.of(testUser))
             whenever(jwtTokenUtil.generateToken(any<UserEntity>())).thenReturn("new_jwt")
@@ -212,14 +221,15 @@ class AuthServiceTest {
         @DisplayName("token đã bị revoke — xóa family và ném UnauthorizedException")
         fun revokedTokenDetectsTheft() {
             val familyId = UUID.randomUUID()
-            val revokedToken = RefreshTokenEntity(
-                userId = userId,
-                token = "revoked_token",
-                expiresAt = LocalDateTime.now().plusDays(1),
-                familyId = familyId,
-                isRevoked = true,
-                revokedAt = LocalDateTime.now().minusMinutes(5),
-            )
+            val revokedToken =
+                RefreshTokenEntity(
+                    userId = userId,
+                    token = "revoked_token",
+                    expiresAt = LocalDateTime.now().plusDays(1),
+                    familyId = familyId,
+                    isRevoked = true,
+                    revokedAt = LocalDateTime.now().minusMinutes(5),
+                )
             whenever(refreshTokenRepository.findByToken("revoked_token")).thenReturn(revokedToken)
 
             assertThrows<UnauthorizedException> {
@@ -241,11 +251,12 @@ class AuthServiceTest {
         @Test
         @DisplayName("token đã hết hạn — xóa và ném UnauthorizedException")
         fun expiredToken() {
-            val expiredToken = RefreshTokenEntity(
-                userId = userId,
-                token = "expired",
-                expiresAt = LocalDateTime.now().minusHours(1),
-            )
+            val expiredToken =
+                RefreshTokenEntity(
+                    userId = userId,
+                    token = "expired",
+                    expiresAt = LocalDateTime.now().minusHours(1),
+                )
             whenever(refreshTokenRepository.findByToken("expired")).thenReturn(expiredToken)
 
             assertThrows<UnauthorizedException> {
@@ -258,7 +269,6 @@ class AuthServiceTest {
     @Nested
     @DisplayName("logout()")
     inner class Logout {
-
         @Test
         @DisplayName("xóa refresh token khỏi DB")
         fun deletesToken() {
@@ -273,7 +283,6 @@ class AuthServiceTest {
     @Nested
     @DisplayName("logoutAll()")
     inner class LogoutAll {
-
         @Test
         @DisplayName("xóa tất cả refresh token của user")
         fun deletesAllTokens() {

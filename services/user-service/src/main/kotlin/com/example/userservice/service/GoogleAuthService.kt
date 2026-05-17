@@ -38,11 +38,13 @@ class GoogleAuthService(
             logger.debug("Using client ID: $clientId")
 
             // Use Google's token info endpoint to verify the token
-            val response = webClient.get()
-                .uri("https://oauth2.googleapis.com/tokeninfo?id_token=$tokenId")
-                .retrieve()
-                .bodyToMono<Map<String, Any>>()
-                .block() ?: throw BusinessException("Failed to verify Google token")
+            val response =
+                webClient
+                    .get()
+                    .uri("https://oauth2.googleapis.com/tokeninfo?id_token=$tokenId")
+                    .retrieve()
+                    .bodyToMono<Map<String, Any>>()
+                    .block() ?: throw BusinessException("Failed to verify Google token")
 
             logger.debug("Token verification response received from Google: $response")
 
@@ -84,10 +86,11 @@ class GoogleAuthService(
 
             // Update picture if necessary
             if (existingUser.profilePicture != googleUserInfo.picture && googleUserInfo.picture != null) {
-                val updatedUser = existingUser.copy(
-                    profilePicture = googleUserInfo.picture,
-                    lastLogin = LocalDateTime.now(),
-                )
+                val updatedUser =
+                    existingUser.copy(
+                        profilePicture = googleUserInfo.picture,
+                        lastLogin = LocalDateTime.now(),
+                    )
                 return userRepository.save(updatedUser)
             }
 
@@ -100,22 +103,24 @@ class GoogleAuthService(
         logger.info("Creating new user from Google account: ${googleUserInfo.email}")
 
         // Find the user role
-        val role = roleRepository.findByRoleId(2)
-            ?: throw BusinessException("Role not found")
+        val role =
+            roleRepository.findByRoleId(2)
+                ?: throw BusinessException("Role not found")
 
         // Create a random, strong password for the user (they will log in via Google, not using this password)
         val randomPassword = UUID.randomUUID().toString() + UUID.randomUUID().toString()
 
-        val newUser = UserEntity(
-            email = googleUserInfo.email,
-            password = passwordEncoder.encode(randomPassword),
-            fullName = googleUserInfo.name,
-            profilePicture = googleUserInfo.picture,
-            currentLevel = JlptLevel.N5, // Default level for new users
-            lastLogin = LocalDateTime.now(),
-            role = role,
-            jlptGoal = JlptLevel.N3, // Default goal for new users
-        )
+        val newUser =
+            UserEntity(
+                email = googleUserInfo.email,
+                password = passwordEncoder.encode(randomPassword)!!,
+                fullName = googleUserInfo.name,
+                profilePicture = googleUserInfo.picture,
+                currentLevel = JlptLevel.N5, // Default level for new users
+                lastLogin = LocalDateTime.now(),
+                role = role,
+                jlptGoal = JlptLevel.N3, // Default goal for new users
+            )
 
         return userRepository.save(newUser)
     }

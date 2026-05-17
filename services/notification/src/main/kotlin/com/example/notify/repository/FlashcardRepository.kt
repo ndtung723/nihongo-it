@@ -11,5 +11,8 @@ import java.util.UUID
 @Repository
 interface FlashcardRepository : JpaRepository<FlashcardEntity, UUID> {
     @Query("SELECT f FROM FlashcardEntity f WHERE f.user.userId = :userId AND f.due <= :now ORDER BY f.due")
-    fun findDueCards(@Param("userId") userId: UUID, @Param("now") now: LocalDateTime): List<FlashcardEntity>
+    fun findDueCards(
+        @Param("userId") userId: UUID,
+        @Param("now") now: LocalDateTime,
+    ): List<FlashcardEntity>
 }

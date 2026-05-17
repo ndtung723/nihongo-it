@@ -38,9 +38,7 @@ class TopicController(
             ),
         ],
     )
-    fun getAllTopics(): ResponseEntity<List<TopicDTO>> {
-        return ResponseEntity.ok(topicService.getAllTopics())
-    }
+    fun getAllTopics(): ResponseEntity<List<TopicDTO>> = ResponseEntity.ok(topicService.getAllTopics())
 
     @GetMapping("/{topicId}", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(
@@ -60,9 +58,7 @@ class TopicController(
     fun getTopicById(
         @Parameter(description = "Topic ID", required = true)
         @PathVariable topicId: UUID,
-    ): ResponseEntity<TopicDTO> {
-        return ResponseEntity.ok(topicService.getTopicById(topicId))
-    }
+    ): ResponseEntity<TopicDTO> = ResponseEntity.ok(topicService.getTopicById(topicId))
 
     @PostMapping(produces = [MediaType.APPLICATION_JSON_VALUE], consumes = [MediaType.APPLICATION_JSON_VALUE])
     @PreAuthorize("hasRole('ADMIN')")
@@ -84,9 +80,7 @@ class TopicController(
     )
     fun createTopic(
         @RequestBody request: CreateTopicRequest,
-    ): ResponseEntity<TopicDTO> {
-        return ResponseEntity.status(HttpStatus.CREATED).body(topicService.createTopic(request))
-    }
+    ): ResponseEntity<TopicDTO> = ResponseEntity.status(HttpStatus.CREATED).body(topicService.createTopic(request))
 
     @PutMapping("/{topicId}", produces = [MediaType.APPLICATION_JSON_VALUE], consumes = [MediaType.APPLICATION_JSON_VALUE])
     @PreAuthorize("hasRole('ADMIN')")
@@ -111,9 +105,7 @@ class TopicController(
         @Parameter(description = "Topic ID", required = true)
         @PathVariable topicId: UUID,
         @RequestBody request: UpdateTopicRequest,
-    ): ResponseEntity<TopicDTO> {
-        return ResponseEntity.ok(topicService.updateTopic(topicId, request))
-    }
+    ): ResponseEntity<TopicDTO> = ResponseEntity.ok(topicService.updateTopic(topicId, request))
 
     @DeleteMapping("/{topicId}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -159,7 +151,5 @@ class TopicController(
         @RequestParam categoryId: UUID,
         @Parameter(description = "Search query", required = true)
         @RequestParam query: String,
-    ): ResponseEntity<List<TopicDTO>> {
-        return ResponseEntity.ok(topicService.searchTopicsInCategory(categoryId, query))
-    }
+    ): ResponseEntity<List<TopicDTO>> = ResponseEntity.ok(topicService.searchTopicsInCategory(categoryId, query))
 }

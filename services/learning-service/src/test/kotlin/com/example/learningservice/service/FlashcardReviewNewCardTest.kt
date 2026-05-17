@@ -48,33 +48,35 @@ class FlashcardReviewNewCardTest {
 
         // Tạo user
         val userRole = RoleEntity(RoleEntity.ROLE_USER, "ROLE_USER")
-        user = UserEntity(
-            userId = userId,
-            email = "test@example.com",
-            password = "password",
-            fullName = "Test User",
-            profilePicture = null,
-            currentLevel = null,
-            jlptGoal = null,
-            lastLogin = LocalDateTime.now(),
-            role = userRole,
-        )
+        user =
+            UserEntity(
+                userId = userId,
+                email = "test@example.com",
+                password = "password",
+                fullName = "Test User",
+                profilePicture = null,
+                currentLevel = null,
+                jlptGoal = null,
+                lastLogin = LocalDateTime.now(),
+                role = userRole,
+            )
 
         // Tạo thẻ mới với các giá trị ban đầu
-        newFlashcard = FlashcardEntity(
-            flashcardId = flashcardId,
-            user = user,
-            frontText = "テスト",
-            backText = "Test",
-            difficulty = 0.0,
-            stability = 0.0,
-            state = 0, // NEW
-            elapsedDays = 0.0,
-            scheduledDays = 0.0,
-            due = LocalDateTime.now(),
-            reps = 0,
-            lapses = 0,
-        )
+        newFlashcard =
+            FlashcardEntity(
+                flashcardId = flashcardId,
+                user = user,
+                frontText = "テスト",
+                backText = "Test",
+                difficulty = 0.0,
+                stability = 0.0,
+                state = 0, // NEW
+                elapsedDays = 0.0,
+                scheduledDays = 0.0,
+                due = LocalDateTime.now(),
+                reps = 0,
+                lapses = 0,
+            )
 
         // Mock getCurrentUserId - cách đúng để mock UserAuthUtil
         whenever(userAuthUtil.getCurrentUserId()).thenReturn(userId)
@@ -83,15 +85,16 @@ class FlashcardReviewNewCardTest {
         whenever(flashcardRepository.findById(flashcardId)).thenReturn(Optional.of(newFlashcard))
 
         // Khởi tạo service
-        flashcardService = FlashcardCrudService(
-            flashcardRepository,
-            reviewLogRepository,
-            userRepository,
-            vocabularyRepository,
-            fsrsService,
-            userAuthUtil,
-            userService,
-        )
+        flashcardService =
+            FlashcardCrudService(
+                flashcardRepository,
+                reviewLogRepository,
+                userRepository,
+                vocabularyRepository,
+                fsrsService,
+                userAuthUtil,
+                userService,
+            )
     }
 
     @Test
@@ -109,13 +112,14 @@ class FlashcardReviewNewCardTest {
     @DisplayName("UT-01: Case 1 - Rating = 1, D = 6.81, S = 0.4, I = 0.4")
     fun testProcessReviewWithRating1() {
         // Mock processReview
-        val updatedFlashcard = newFlashcard.copy(
-            difficulty = 6.81,
-            stability = 0.4,
-            scheduledDays = 0.4,
-            state = 1, // LEARNING
-            reps = 1,
-        )
+        val updatedFlashcard =
+            newFlashcard.copy(
+                difficulty = 6.81,
+                stability = 0.4,
+                scheduledDays = 0.4,
+                state = 1, // LEARNING
+                reps = 1,
+            )
         whenever(fsrsService.processReview(any(), eq(1))).thenReturn(updatedFlashcard)
 
         // Xử lý đánh giá với rating = 1
@@ -137,13 +141,14 @@ class FlashcardReviewNewCardTest {
     @DisplayName("UT-01: Case 2 - Rating = 2, D = 5.87, S = 0.6, I = 0.6")
     fun testProcessReviewWithRating2() {
         // Mock processReview
-        val updatedFlashcard = newFlashcard.copy(
-            difficulty = 5.87,
-            stability = 0.6,
-            scheduledDays = 0.6,
-            state = 1, // LEARNING
-            reps = 1,
-        )
+        val updatedFlashcard =
+            newFlashcard.copy(
+                difficulty = 5.87,
+                stability = 0.6,
+                scheduledDays = 0.6,
+                state = 1, // LEARNING
+                reps = 1,
+            )
         whenever(fsrsService.processReview(any(), eq(2))).thenReturn(updatedFlashcard)
 
         // Xử lý đánh giá với rating = 2
@@ -165,13 +170,14 @@ class FlashcardReviewNewCardTest {
     @DisplayName("UT-01: Case 3 - Rating = 3, D = 4.93, S = 2.40, I = 2.40")
     fun testProcessReviewWithRating3() {
         // Mock processReview
-        val updatedFlashcard = newFlashcard.copy(
-            difficulty = 4.93,
-            stability = 2.40,
-            scheduledDays = 2.40,
-            state = 2, // REVIEW
-            reps = 1,
-        )
+        val updatedFlashcard =
+            newFlashcard.copy(
+                difficulty = 4.93,
+                stability = 2.40,
+                scheduledDays = 2.40,
+                state = 2, // REVIEW
+                reps = 1,
+            )
         whenever(fsrsService.processReview(any(), eq(3))).thenReturn(updatedFlashcard)
 
         // Xử lý đánh giá với rating = 3
@@ -193,13 +199,14 @@ class FlashcardReviewNewCardTest {
     @DisplayName("UT-01: Case 4 - Rating = 4, D = 3.99, S = 5.80, I = 5.80")
     fun testProcessReviewWithRating4() {
         // Mock processReview
-        val updatedFlashcard = newFlashcard.copy(
-            difficulty = 3.99,
-            stability = 5.80,
-            scheduledDays = 5.80,
-            state = 2, // REVIEW
-            reps = 1,
-        )
+        val updatedFlashcard =
+            newFlashcard.copy(
+                difficulty = 3.99,
+                stability = 5.80,
+                scheduledDays = 5.80,
+                state = 2, // REVIEW
+                reps = 1,
+            )
         whenever(fsrsService.processReview(any(), eq(4))).thenReturn(updatedFlashcard)
 
         // Xử lý đánh giá với rating = 4

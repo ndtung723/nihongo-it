@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/v1/learning/furigana")
 @Tag(name = "Furigana", description = "API to generate furigana for Japanese text")
 class FuriganaController {
-
     private val tokenizer = Tokenizer()
 
     // Cache for frequently accessed readings
@@ -37,9 +36,7 @@ class FuriganaController {
     fun generateFurigana(
         @Parameter(description = "Japanese text to analyze", required = true)
         @RequestParam text: String,
-    ): List<FuriganaToken> {
-        return analyzeSentence(text)
-    }
+    ): List<FuriganaToken> = analyzeSentence(text)
 
     private fun analyzeSentence(sentence: String): List<FuriganaToken> {
         val tokens = tokenizer.tokenize(sentence)
@@ -74,15 +71,15 @@ class FuriganaController {
     }
 
     // Convert katakana to hiragana
-    private fun katakanaToHiragana(katakana: String): String {
-        return katakana.map { char ->
-            if (char in '\u30A1'..'\u30FA') { // Katakana range
-                (char.code - 0x60).toChar() // Convert to hiragana
-            } else {
-                char
-            }
-        }.joinToString("")
-    }
+    private fun katakanaToHiragana(katakana: String): String =
+        katakana
+            .map { char ->
+                if (char in '\u30A1'..'\u30FA') { // Katakana range
+                    (char.code - 0x60).toChar() // Convert to hiragana
+                } else {
+                    char
+                }
+            }.joinToString("")
 
     // Check if character is kanji
     private fun Char.isKanji(): Boolean = this in '\u4E00'..'\u9FFF'

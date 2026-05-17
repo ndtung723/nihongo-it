@@ -1,7 +1,5 @@
 package com.example.userservice.feign
 
-import com.example.userservice.config.FeignConfig
-import com.example.userservice.config.FeignEncoderConfig
 import com.example.userservice.config.FeignErrorDecoderConfig
 import com.example.userservice.feign.models.AnalyzeSpeechResponse
 import com.example.userservice.feign.models.TranslationResponse
@@ -13,11 +11,9 @@ import org.springframework.web.multipart.MultipartFile
 
 @FeignClient(
     name = "ai-service",
-    configuration = [FeignConfig::class, FeignEncoderConfig::class, FeignErrorDecoderConfig::class],
-
+    configuration = [FeignErrorDecoderConfig::class],
 )
 interface AiServiceClient {
-
     // Text-to-speech endpoints
     @PostMapping("/api/v1/ai/tts/generate")
     fun generateSpeech(
@@ -72,10 +68,14 @@ interface AiServiceClient {
 
     // Chat endpoints
     @GetMapping("/api/v1/ai/chat/ask-ai")
-    fun askAI(@RequestParam("message") prompt: String): String
+    fun askAI(
+        @RequestParam("message") prompt: String,
+    ): String
 
     @GetMapping("/api/v1/ai/chat/ask-ai-options")
-    fun getResponseOptions(@RequestParam("message") prompt: String): String
+    fun getResponseOptions(
+        @RequestParam("message") prompt: String,
+    ): String
 
     // Translation endpoints
     @PostMapping("/api/v1/ai/chat/translate")
@@ -119,7 +119,9 @@ interface AiServiceClient {
     ): MutableList<String>?
 
     @PostMapping("/api/v1/ai/chat/advisor")
-    fun getResponseAdvisor(@RequestParam("message") message: String): String?
+    fun getResponseAdvisor(
+        @RequestParam("message") message: String,
+    ): String?
 
     @PostMapping("/api/v1/ai/chat/map-output")
     fun getMapResponse(

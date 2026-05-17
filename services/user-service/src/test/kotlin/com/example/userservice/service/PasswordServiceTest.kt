@@ -29,7 +29,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class PasswordServiceTest {
-
     private lateinit var userRepository: UserRepository
     private lateinit var passwordEncoder: PasswordEncoder
     private lateinit var notificationService: NotificationService
@@ -40,17 +39,18 @@ class PasswordServiceTest {
 
     private val userId = UUID.randomUUID()
     private val userRole = RoleEntity(roleId = RoleEntity.ROLE_USER, roleName = "ROLE_USER")
-    private val testUser = UserEntity(
-        userId = userId,
-        email = "test@example.com",
-        password = "encoded_old_password",
-        fullName = "Test User",
-        profilePicture = null,
-        currentLevel = null,
-        jlptGoal = null,
-        lastLogin = LocalDateTime.now(),
-        role = userRole,
-    )
+    private val testUser =
+        UserEntity(
+            userId = userId,
+            email = "test@example.com",
+            password = "encoded_old_password",
+            fullName = "Test User",
+            profilePicture = null,
+            currentLevel = null,
+            jlptGoal = null,
+            lastLogin = LocalDateTime.now(),
+            role = userRole,
+        )
 
     @BeforeEach
     fun setup() {
@@ -61,15 +61,20 @@ class PasswordServiceTest {
         emailRateLimiter = mock()
         auditService = mock()
 
-        passwordService = PasswordService(
-            userRepository, passwordEncoder, notificationService, userAuthUtil, emailRateLimiter, auditService,
-        )
+        passwordService =
+            PasswordService(
+                userRepository,
+                passwordEncoder,
+                notificationService,
+                userAuthUtil,
+                emailRateLimiter,
+                auditService,
+            )
     }
 
     @Nested
     @DisplayName("changePassword()")
     inner class ChangePassword {
-
         @Test
         @DisplayName("thành công — cập nhật password mới")
         fun success() {
@@ -114,7 +119,6 @@ class PasswordServiceTest {
     @Nested
     @DisplayName("requestPasswordReset()")
     inner class RequestPasswordReset {
-
         @Test
         @DisplayName("email tồn tại — gửi email và lưu token")
         fun emailExists() {
@@ -144,15 +148,15 @@ class PasswordServiceTest {
     @Nested
     @DisplayName("resetPassword()")
     inner class ResetPassword {
-
         @Test
         @DisplayName("token hợp lệ — cập nhật password")
         fun validToken() {
             val resetToken = "valid_token"
-            val userWithToken = testUser.copy(
-                resetPasswordToken = resetToken,
-                resetPasswordExpires = LocalDateTime.now().plusMinutes(15),
-            )
+            val userWithToken =
+                testUser.copy(
+                    resetPasswordToken = resetToken,
+                    resetPasswordExpires = LocalDateTime.now().plusMinutes(15),
+                )
             val request = ResetPasswordDto(token = resetToken, password = "new_pass", confirmPassword = "new_pass")
             whenever(userRepository.findByResetPasswordToken(resetToken)).thenReturn(userWithToken)
             whenever(passwordEncoder.encode("new_pass")).thenReturn("encoded_new")
@@ -182,10 +186,11 @@ class PasswordServiceTest {
         @DisplayName("token đã hết hạn — ném BusinessException")
         fun expiredToken() {
             val resetToken = "expired_token"
-            val userWithExpiredToken = testUser.copy(
-                resetPasswordToken = resetToken,
-                resetPasswordExpires = LocalDateTime.now().minusMinutes(5),
-            )
+            val userWithExpiredToken =
+                testUser.copy(
+                    resetPasswordToken = resetToken,
+                    resetPasswordExpires = LocalDateTime.now().minusMinutes(5),
+                )
             whenever(userRepository.findByResetPasswordToken(resetToken)).thenReturn(userWithExpiredToken)
 
             assertThrows<BusinessException> {

@@ -11,7 +11,6 @@ data class LoginRequest(
     @field:Email(message = "Invalid email format")
     @field:Size(max = 255, message = "Email must not exceed 255 characters")
     val email: String,
-
     @JsonProperty(value = "password")
     @field:NotBlank(message = "Password is required")
     @field:Size(max = 100, message = "Password must not exceed 100 characters")

@@ -1,16 +1,10 @@
-﻿plugins {
-    kotlin("jvm") version "2.0.21"
-    kotlin("plugin.spring") version "2.0.21"
-    id("org.springframework.boot") version "3.4.3"
-    id("io.spring.dependency-management") version "1.1.7"
-    kotlin("plugin.jpa") version "2.0.21"
-
-    // OpenAPI
-    id("org.openapi.generator") version "6.6.0"
-
-    // jacoco
+plugins {
+    kotlin("jvm") version "2.3.0"
+    kotlin("plugin.spring") version "2.3.0"
+    id("org.springframework.boot") version "4.0.2"
+    kotlin("plugin.jpa") version "2.3.0"
     id("jacoco")
-    id("io.gitlab.arturbosch.detekt") version "1.23.7"
+    id("dev.detekt") version "2.0.0-alpha.2"
     id("org.jlleitschuh.gradle.ktlint") version "12.2.0"
 }
 
@@ -19,7 +13,7 @@ version = "0.0.1-SNAPSHOT"
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 
@@ -27,10 +21,11 @@ repositories {
     mavenCentral()
 }
 
-extra["springAiVersion"] = "1.0.0-M6"
-extra["springCloudVersion"] = "2024.0.1"
-
 dependencies {
+    implementation(platform("org.springframework.boot:spring-boot-dependencies:4.0.2"))
+    implementation(platform("org.springframework.cloud:spring-cloud-dependencies:2025.1.1"))
+    implementation(platform("org.springframework.ai:spring-ai-bom:1.0.0"))
+
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-validation")
@@ -40,37 +35,28 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
     implementation("org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j")
 
-    developmentOnly("org.springframework.boot:spring-boot-devtools")
+    developmentOnly("org.springframework.boot:spring-boot-devtools:4.0.2")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
-    implementation("org.springframework.ai:spring-ai-openai-spring-boot-starter")
+    implementation("org.springframework.ai:spring-ai-starter-model-openai")
 
     implementation("org.jetbrains.kotlin:kotlin-reflect")
+
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
+    implementation("org.springdoc:springdoc-openapi-starter-common:2.8.9")
+
+    implementation("com.atilika.kuromoji:kuromoji-ipadic:0.9.0")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.mockito")
     }
-
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
-    implementation("org.springdoc:springdoc-openapi-starter-common:2.7.0")
-
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.0")
     testImplementation("org.mockito:mockito-core:5.11.0")
     testImplementation("org.mockito:mockito-junit-jupiter:5.11.0")
-
-    implementation("com.atilika.kuromoji:kuromoji-ipadic:0.9.0")
-}
-
-dependencyManagement {
-    imports {
-        mavenBom("org.springframework.ai:spring-ai-bom:${property("springAiVersion")}")
-        mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
-    }
 }
 
 kotlin {
@@ -90,18 +76,10 @@ detekt {
 }
 
 ktlint {
-    version.set("0.50.0")
+    version.set("1.3.0")
     outputToConsole.set(true)
     filter {
         exclude("**/generated/**")
         include("**/kotlin/**")
-    }
-}
-
-configurations.matching { it.name.startsWith("detekt") }.all {
-    resolutionStrategy.eachDependency {
-        if (requested.group == "org.jetbrains.kotlin") {
-            useVersion("2.0.10")
-        }
     }
 }

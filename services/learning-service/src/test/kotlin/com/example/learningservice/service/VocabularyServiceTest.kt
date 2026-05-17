@@ -32,7 +32,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class VocabularyServiceTest {
-
     private lateinit var vocabularyRepository: VocabularyRepository
     private lateinit var userRepository: UserRepository
     private lateinit var topicRepository: TopicRepository
@@ -44,20 +43,22 @@ class VocabularyServiceTest {
     private val userId = UUID.randomUUID()
     private val vocabId = UUID.randomUUID()
 
-    private fun makeUser() = UserEntity(
-        userId = userId,
-        email = "user@test.com",
-        password = "encoded",
-        fullName = "Test User",
-        role = RoleEntity(RoleEntity.ROLE_USER, "ROLE_USER"),
-    )
+    private fun makeUser() =
+        UserEntity(
+            userId = userId,
+            email = "user@test.com",
+            password = "encoded",
+            fullName = "Test User",
+            role = RoleEntity(RoleEntity.ROLE_USER, "ROLE_USER"),
+        )
 
     private fun makeTopic(): TopicEntity {
-        val category = CategoryEntity(
-            categoryId = UUID.randomUUID(),
-            name = "Test Category",
-            meaning = "テスト",
-        )
+        val category =
+            CategoryEntity(
+                categoryId = UUID.randomUUID(),
+                name = "Test Category",
+                meaning = "テスト",
+            )
         return TopicEntity(
             topicId = UUID.randomUUID(),
             name = "Test Topic",
@@ -66,8 +67,8 @@ class VocabularyServiceTest {
         )
     }
 
-    private fun makeVocabulary(savedUsers: MutableSet<UserEntity> = mutableSetOf()): VocabularyEntity {
-        return VocabularyEntity(
+    private fun makeVocabulary(savedUsers: MutableSet<UserEntity> = mutableSetOf()): VocabularyEntity =
+        VocabularyEntity(
             vocabId = vocabId,
             term = "テスト",
             meaning = "test",
@@ -80,7 +81,6 @@ class VocabularyServiceTest {
             createdAt = Instant.now(),
             savedByUsers = savedUsers,
         )
-    }
 
     @BeforeEach
     fun setup() {
@@ -90,16 +90,20 @@ class VocabularyServiceTest {
         userAuthUtil = mock()
         flashcardCrudService = mock()
         flashcardRepository = mock()
-        service = VocabularyService(
-            vocabularyRepository, userRepository, topicRepository,
-            userAuthUtil, flashcardCrudService, flashcardRepository,
-        )
+        service =
+            VocabularyService(
+                vocabularyRepository,
+                userRepository,
+                topicRepository,
+                userAuthUtil,
+                flashcardCrudService,
+                flashcardRepository,
+            )
     }
 
     @Nested
     @DisplayName("saveVocabularyToNotebook()")
     inner class SaveVocabularyToNotebook {
-
         @Test
         @DisplayName("happy path → adds user to savedByUsers, saves, isSaved=true")
         fun happyPath_addsSavedUser() {
@@ -161,7 +165,6 @@ class VocabularyServiceTest {
     @Nested
     @DisplayName("removeVocabularyFromNotebook()")
     inner class RemoveVocabularyFromNotebook {
-
         @Test
         @DisplayName("happy path → removes user from savedByUsers, isSaved=false")
         fun happyPath_removesSavedUser() {
@@ -193,7 +196,6 @@ class VocabularyServiceTest {
     @Nested
     @DisplayName("filterVocabulary()")
     inner class FilterVocabulary {
-
         @Test
         @DisplayName("keyword filter → calls searchVocabulary")
         fun withKeyword_callsSearchVocabulary() {
@@ -240,7 +242,6 @@ class VocabularyServiceTest {
     @Nested
     @DisplayName("getVocabularyCount()")
     inner class GetVocabularyCount {
-
         @Test
         @DisplayName("delegates to repository.count()")
         fun delegatesToRepository() {

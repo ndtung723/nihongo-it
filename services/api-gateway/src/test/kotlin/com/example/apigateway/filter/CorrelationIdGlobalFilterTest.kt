@@ -17,7 +17,6 @@ import org.springframework.web.server.ServerWebExchange
 import reactor.core.publisher.Mono
 
 class CorrelationIdGlobalFilterTest {
-
     private lateinit var filter: CorrelationIdGlobalFilter
     private lateinit var chain: GatewayFilterChain
 
@@ -53,9 +52,11 @@ class CorrelationIdGlobalFilterTest {
     @DisplayName("existing correlation ID in request → reused verbatim")
     fun existingId_reused() {
         val existingId = "existing-correlation-id-123"
-        val request = MockServerHttpRequest.get("/api/v1/learning/vocabulary")
-            .header(CORRELATION_ID_HEADER, existingId)
-            .build()
+        val request =
+            MockServerHttpRequest
+                .get("/api/v1/learning/vocabulary")
+                .header(CORRELATION_ID_HEADER, existingId)
+                .build()
         val exchange = MockServerWebExchange.from(request)
 
         val captor = argumentCaptor<ServerWebExchange>()

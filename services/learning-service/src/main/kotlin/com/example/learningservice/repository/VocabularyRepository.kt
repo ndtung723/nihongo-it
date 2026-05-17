@@ -13,25 +13,37 @@ import java.util.UUID
 
 @Repository
 interface VocabularyRepository : JpaRepository<VocabularyEntity, UUID> {
-
     // Basic operations
     @Query("SELECT v FROM VocabularyEntity v WHERE v.term = :term")
-    fun findByTerm(@Param("term") term: String): Optional<VocabularyEntity>
+    fun findByTerm(
+        @Param("term") term: String,
+    ): Optional<VocabularyEntity>
 
     @Query("SELECT COUNT(v) > 0 FROM VocabularyEntity v WHERE v.term = :term")
-    fun existsByTerm(@Param("term") term: String): Boolean
+    fun existsByTerm(
+        @Param("term") term: String,
+    ): Boolean
 
     // Find by JLPT level
     @Query("SELECT v FROM VocabularyEntity v WHERE v.jlptLevel = :level")
-    fun findByJlptLevel(@Param("level") level: JlptLevel, pageable: Pageable): Page<VocabularyEntity>
+    fun findByJlptLevel(
+        @Param("level") level: JlptLevel,
+        pageable: Pageable,
+    ): Page<VocabularyEntity>
 
     // Find by topic ID
     @Query("SELECT v FROM VocabularyEntity v WHERE v.topic.topicId = :topicId")
-    fun findByTopicId(@Param("topicId") topicId: UUID, pageable: Pageable): Page<VocabularyEntity>
+    fun findByTopicId(
+        @Param("topicId") topicId: UUID,
+        pageable: Pageable,
+    ): Page<VocabularyEntity>
 
     // Find by topic name
     @Query("SELECT v FROM VocabularyEntity v WHERE v.topic.name = :topicName")
-    fun findByTopicName(@Param("topicName") topicName: String, pageable: Pageable): Page<VocabularyEntity>
+    fun findByTopicName(
+        @Param("topicName") topicName: String,
+        pageable: Pageable,
+    ): Page<VocabularyEntity>
 
     // Search by keyword in term, pronunciation, or meaning
     @Query(
@@ -42,11 +54,17 @@ interface VocabularyRepository : JpaRepository<VocabularyEntity, UUID> {
            OR LOWER(v.meaning) LIKE LOWER(CONCAT('%', :keyword, '%'))
     """,
     )
-    fun searchVocabulary(@Param("keyword") keyword: String, pageable: Pageable): Page<VocabularyEntity>
+    fun searchVocabulary(
+        @Param("keyword") keyword: String,
+        pageable: Pageable,
+    ): Page<VocabularyEntity>
 
     // Find saved vocabulary for a specific user
     @Query("SELECT v FROM VocabularyEntity v JOIN v.savedByUsers u WHERE u.userId = :userId")
-    fun findSavedByUser(@Param("userId") userId: UUID, pageable: Pageable): Page<VocabularyEntity>
+    fun findSavedByUser(
+        @Param("userId") userId: UUID,
+        pageable: Pageable,
+    ): Page<VocabularyEntity>
 
     // Find saved vocabulary with keyword search
     @Query(
@@ -68,8 +86,12 @@ interface VocabularyRepository : JpaRepository<VocabularyEntity, UUID> {
     ): Page<VocabularyEntity>
 
     // Find by topic ID
+    @Suppress("FunctionNaming", "ktlint:standard:function-naming")
     @Query("SELECT v FROM VocabularyEntity v WHERE v.topic.topicId = :topicId")
-    fun findByTopic_TopicId(@Param("topicId") topicId: UUID, pageable: Pageable): Page<VocabularyEntity>
+    fun findByTopic_TopicId(
+        @Param("topicId") topicId: UUID,
+        pageable: Pageable,
+    ): Page<VocabularyEntity>
 
     // Find by topic ID and keyword in term or meaning
     @Query(
@@ -87,7 +109,7 @@ interface VocabularyRepository : JpaRepository<VocabularyEntity, UUID> {
     ): Page<VocabularyEntity>
 
     // Find by topic ID and JLPT level
-    @Suppress("FunctionNaming")
+    @Suppress("FunctionNaming", "ktlint:standard:function-naming")
     @Query("SELECT v FROM VocabularyEntity v WHERE v.topic.topicId = :topicId AND v.jlptLevel = :level")
     fun findByTopic_TopicIdAndJlptLevel(
         @Param("topicId") topicId: UUID,

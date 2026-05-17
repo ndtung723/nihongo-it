@@ -71,14 +71,18 @@ class FlashcardCrudService(
 
     // Get flashcards with pagination
     @Transactional(readOnly = true)
-    fun getAllFlashcardsPaged(page: Int, size: Int): PagedFlashcardsResponseDto {
+    fun getAllFlashcardsPaged(
+        page: Int,
+        size: Int,
+    ): PagedFlashcardsResponseDto {
         val userId = userAuthUtil.getCurrentUserId()
         logger.debug("Getting flashcards page=$page size=$size for user: $userId")
         val pageable = PageRequest.of(page, size, Sort.by("createdAt").descending())
-        val flashcardPage = flashcardRepository.findByUser_UserId(
-            requireNotNull(userId) { "User not authenticated" },
-            pageable,
-        )
+        val flashcardPage =
+            flashcardRepository.findByUser_UserId(
+                requireNotNull(userId) { "User not authenticated" },
+                pageable,
+            )
 
         return PagedFlashcardsResponseDto(
             data = flashcardPage.content.map { toDTO(it) },
@@ -93,8 +97,9 @@ class FlashcardCrudService(
     @Transactional(readOnly = true)
     fun getFlashcardById(flashcardId: UUID): ServiceResult<GetFlashcardResponseDto> {
         val userId = userAuthUtil.getCurrentUserId()
-        val flashcard = flashcardRepository.findById(flashcardId).orElse(null)
-            ?: return ServiceResult.Failure("Flashcard not found with id: $flashcardId")
+        val flashcard =
+            flashcardRepository.findById(flashcardId).orElse(null)
+                ?: return ServiceResult.Failure("Flashcard not found with id: $flashcardId")
 
         if (flashcard.user.userId != userId) {
             return ServiceResult.Failure("User does not have access to this flashcard")
@@ -106,12 +111,17 @@ class FlashcardCrudService(
     // Process flashcard review
     @Transactional
     @Suppress("MagicNumber")
-    fun processReview(flashcardId: UUID, rating: Int): ReviewFlashcardResponseDto {
+    fun processReview(
+        flashcardId: UUID,
+        rating: Int,
+    ): ReviewFlashcardResponseDto {
         val userId = userAuthUtil.getCurrentUserId()
         logger.info("Processing review for flashcard: $flashcardId with rating: $rating")
 
-        val flashcard = flashcardRepository.findById(flashcardId)
-            .orElseThrow { EntityNotFoundException("Flashcard not found with id: $flashcardId") }
+        val flashcard =
+            flashcardRepository
+                .findById(flashcardId)
+                .orElseThrow { EntityNotFoundException("Flashcard not found with id: $flashcardId") }
 
         if (flashcard.user.userId != userId) {
             throw AccessDeniedException("User does not have access to this flashcard")
@@ -123,11 +133,15 @@ class FlashcardCrudService(
 
         // Calculate elapsed days since due date
         val now = LocalDateTime.now()
-        val elapsedDays = if (flashcard.due.isBefore(now)) {
-            ChronoUnit.DAYS.between(flashcard.due, now).toDouble().coerceAtLeast(0.0)
-        } else {
-            0.0
-        }
+        val elapsedDays =
+            if (flashcard.due.isBefore(now)) {
+                ChronoUnit.DAYS
+                    .between(flashcard.due, now)
+                    .toDouble()
+                    .coerceAtLeast(0.0)
+            } else {
+                0.0
+            }
 
         // Get current state before processing
         val currentState = flashcard.state
@@ -136,15 +150,16 @@ class FlashcardCrudService(
         val updatedFlashcard = fsrsService.processReview(flashcard, rating)
 
         // Create review log based on Go-FSRS structure
-        val reviewLog = ReviewLogEntity(
-            flashcard = updatedFlashcard,
-            userId = requireNotNull(userId) { "User not authenticated" },
-            rating = rating,
-            scheduledDays = updatedFlashcard.scheduledDays,
-            elapsedDays = elapsedDays,
-            reviewTimestamp = now,
-            state = currentState, // State before review
-        )
+        val reviewLog =
+            ReviewLogEntity(
+                flashcard = updatedFlashcard,
+                userId = requireNotNull(userId) { "User not authenticated" },
+                rating = rating,
+                scheduledDays = updatedFlashcard.scheduledDays,
+                elapsedDays = elapsedDays,
+                reviewTimestamp = now,
+                state = currentState, // State before review
+            )
 
         // Save review log
         reviewLogRepository.save(reviewLog)
@@ -163,23 +178,28 @@ class FlashcardCrudService(
         val userId = userAuthUtil.getCurrentUserId()
         logger.info("Creating new flashcard for user: $userId")
 
-        val user = userRepository.findById(requireNotNull(userId) { "User not authenticated" })
-            .orElseThrow { EntityNotFoundException("User not found with id: $userId") }
+        val user =
+            userRepository
+                .findById(requireNotNull(userId) { "User not authenticated" })
+                .orElseThrow { EntityNotFoundException("User not found with id: $userId") }
 
         // Check if there's a vocabulary reference
-        val vocabulary = if (request.vocabularyId != null) {
-            vocabularyRepository.findById(request.vocabularyId)
-                .orElse(null)
-        } else {
-            null
-        }
+        val vocabulary =
+            if (request.vocabularyId != null) {
+                vocabularyRepository
+                    .findById(request.vocabularyId)
+                    .orElse(null)
+            } else {
+                null
+            }
 
-        val flashcard = FlashcardEntity(
-            user = user,
-            vocabulary = vocabulary,
-            frontText = request.frontText,
-            backText = request.backText,
-        )
+        val flashcard =
+            FlashcardEntity(
+                user = user,
+                vocabulary = vocabulary,
+                frontText = request.frontText,
+                backText = request.backText,
+            )
 
         // Initialize with FSRS default values
         val savedFlashcard = fsrsService.initializeFlashcard(flashcard)
@@ -195,11 +215,15 @@ class FlashcardCrudService(
         val userId = userAuthUtil.getCurrentUserId()
         logger.info("Creating flashcard from vocabulary: $vocabId for user: $userId")
 
-        val user = userRepository.findById(requireNotNull(userId) { "User not authenticated" })
-            .orElseThrow { EntityNotFoundException("User not found with id: $userId") }
+        val user =
+            userRepository
+                .findById(requireNotNull(userId) { "User not authenticated" })
+                .orElseThrow { EntityNotFoundException("User not found with id: $userId") }
 
-        val vocabulary = vocabularyRepository.findById(vocabId)
-            .orElseThrow { EntityNotFoundException("Vocabulary item not found with id: $vocabId") }
+        val vocabulary =
+            vocabularyRepository
+                .findById(vocabId)
+                .orElseThrow { EntityNotFoundException("Vocabulary item not found with id: $vocabId") }
 
         // Check if flashcard already exists for this vocabulary and user
         val existingFlashcard = flashcardRepository.findByUser_UserIdAndVocabulary_VocabId(userId, vocabId)
@@ -211,12 +235,13 @@ class FlashcardCrudService(
         val frontText = buildFrontText(vocabulary)
         val backText = buildBackText(vocabulary)
 
-        val flashcard = FlashcardEntity(
-            user = user,
-            vocabulary = vocabulary,
-            frontText = frontText,
-            backText = backText,
-        )
+        val flashcard =
+            FlashcardEntity(
+                user = user,
+                vocabulary = vocabulary,
+                frontText = frontText,
+                backText = backText,
+            )
 
         // Initialize with FSRS default values
         val savedFlashcard = fsrsService.initializeFlashcard(flashcard)
@@ -268,12 +293,17 @@ class FlashcardCrudService(
 
     // Update flashcard
     @Transactional
-    fun updateFlashcard(flashcardId: UUID, request: UpdateFlashcardRequestDto): UpdateFlashcardResponseDto {
+    fun updateFlashcard(
+        flashcardId: UUID,
+        request: UpdateFlashcardRequestDto,
+    ): UpdateFlashcardResponseDto {
         val userId = userAuthUtil.getCurrentUserId()
         logger.info("Updating flashcard: $flashcardId")
 
-        val existingFlashcard = flashcardRepository.findById(flashcardId)
-            .orElseThrow { EntityNotFoundException("Flashcard not found with id: $flashcardId") }
+        val existingFlashcard =
+            flashcardRepository
+                .findById(flashcardId)
+                .orElseThrow { EntityNotFoundException("Flashcard not found with id: $flashcardId") }
 
         if (existingFlashcard.user.userId != userId) {
             throw AccessDeniedException("User does not have access to this flashcard")
@@ -295,8 +325,10 @@ class FlashcardCrudService(
         val userId = userAuthUtil.getCurrentUserId()
         logger.info("Deleting flashcard: $flashcardId")
 
-        val flashcard = flashcardRepository.findById(flashcardId)
-            .orElseThrow { EntityNotFoundException("Flashcard not found with id: $flashcardId") }
+        val flashcard =
+            flashcardRepository
+                .findById(flashcardId)
+                .orElseThrow { EntityNotFoundException("Flashcard not found with id: $flashcardId") }
 
         if (flashcard.user.userId != userId) {
             throw AccessDeniedException("User does not have access to this flashcard")
@@ -313,10 +345,11 @@ class FlashcardCrudService(
         val userId = userAuthUtil.getCurrentUserId()
         logger.debug("Getting flashcards for vocabulary: $vocabId and user: $userId")
 
-        val flashcards = flashcardRepository.findByUser_UserIdAndVocabulary_VocabId(
-            requireNotNull(userId) { "User not authenticated" },
-            vocabId,
-        )
+        val flashcards =
+            flashcardRepository.findByUser_UserIdAndVocabulary_VocabId(
+                requireNotNull(userId) { "User not authenticated" },
+                vocabId,
+            )
 
         return GetFlashcardsResponseDto(
             data = flashcards.map { toDTO(it) },
@@ -328,9 +361,7 @@ class FlashcardCrudService(
     /**
      * Get count of flashcards created after a specific time
      */
-    fun getFlashcardsCreatedCount(afterDate: LocalDateTime): Int {
-        return flashcardRepository.countByCreatedAtAfter(afterDate).toInt()
-    }
+    fun getFlashcardsCreatedCount(afterDate: LocalDateTime): Int = flashcardRepository.countByCreatedAtAfter(afterDate).toInt()
 
     /**
      * Get count of flashcards studied (reviewed) after a specific time

@@ -15,10 +15,10 @@ class SpeechAnalysisService(
     @Value("\${ai-service.speech-analysis.python-service-url}") private val pythonServiceUrl: String,
     @Value("\${INTERNAL_API_KEY:}") private val internalApiKey: String,
 ) {
-
     private val logger = LoggerFactory.getLogger(SpeechAnalysisService::class.java)
     private val webClient: WebClient by lazy {
-        WebClient.builder()
+        WebClient
+            .builder()
             .baseUrl(pythonServiceUrl)
             .defaultHeader("X-Internal-Key", internalApiKey)
             .build()
@@ -27,7 +27,11 @@ class SpeechAnalysisService(
     /**
      * Enhanced audio analysis that forwards to Python service
      */
-    fun analyzeEnhanced(audio: MultipartFile, referenceText: String, type: String): Map<String, Any> {
+    fun analyzeEnhanced(
+        audio: MultipartFile,
+        referenceText: String,
+        type: String,
+    ): Map<String, Any> {
         // Validate input
         if (referenceText.isBlank()) {
             logger.error("Empty reference text received")
@@ -35,11 +39,10 @@ class SpeechAnalysisService(
         }
 
         // Prepare audio file
-        val audioResource = object : ByteArrayResource(audio.bytes) {
-            override fun getFilename(): String {
-                return audio.originalFilename ?: "recording.mp3"
+        val audioResource =
+            object : ByteArrayResource(audio.bytes) {
+                override fun getFilename(): String = audio.originalFilename ?: "recording.mp3"
             }
-        }
 
         // Prepare multipart request body
         val bodyBuilder = MultipartBodyBuilder()
@@ -50,14 +53,16 @@ class SpeechAnalysisService(
         try {
             logger.info("Sending request to Python service at: /analyze-audio-enhanced")
 
-            val response = webClient.post()
-                .uri("/analyze-audio-enhanced")
-                .contentType(MediaType.MULTIPART_FORM_DATA)
-                .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
-                .retrieve()
-                .bodyToMono(Map::class.java)
-                .blockOptional()
-                .orElseThrow { RuntimeException("Không có phản hồi từ dịch vụ Python") } as Map<String, Any>
+            val response =
+                webClient
+                    .post()
+                    .uri("/analyze-audio-enhanced")
+                    .contentType(MediaType.MULTIPART_FORM_DATA)
+                    .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
+                    .retrieve()
+                    .bodyToMono(Map::class.java)
+                    .blockOptional()
+                    .orElseThrow { RuntimeException("Không có phản hồi từ dịch vụ Python") } as Map<String, Any>
 
             logger.info("Received enhanced analysis response from Python service")
 
@@ -73,25 +78,31 @@ class SpeechAnalysisService(
     /**
      * Summarize feedback from multiple attempts
      */
-    fun summarizeFeedback(feedbackList: List<*>, conversationText: String): Map<String, Any> {
+    fun summarizeFeedback(
+        feedbackList: List<*>,
+        conversationText: String,
+    ): Map<String, Any> {
         try {
             logger.info("Sending feedback summary request to Python service")
 
             // Create request body
-            val requestBody = mapOf(
-                "feedback_list" to feedbackList,
-                "conversation_text" to conversationText,
-            )
+            val requestBody =
+                mapOf(
+                    "feedback_list" to feedbackList,
+                    "conversation_text" to conversationText,
+                )
 
             // Send request to Python service
-            val response = webClient.post()
-                .uri("/summarize-feedback")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(BodyInserters.fromValue(requestBody))
-                .retrieve()
-                .bodyToMono(Map::class.java)
-                .blockOptional()
-                .orElseThrow { RuntimeException("Không có phản hồi từ dịch vụ Python") } as Map<String, Any>
+            val response =
+                webClient
+                    .post()
+                    .uri("/summarize-feedback")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(BodyInserters.fromValue(requestBody))
+                    .retrieve()
+                    .bodyToMono(Map::class.java)
+                    .blockOptional()
+                    .orElseThrow { RuntimeException("Không có phản hồi từ dịch vụ Python") } as Map<String, Any>
 
             logger.info("Received feedback summary response from Python service")
 

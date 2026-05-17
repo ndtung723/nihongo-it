@@ -17,7 +17,10 @@ annotation class ValidJlptProgression(
 )
 
 class JlptProgressionValidator : ConstraintValidator<ValidJlptProgression, UpdateProfileRequestDto> {
-    override fun isValid(value: UpdateProfileRequestDto?, context: ConstraintValidatorContext?): Boolean {
+    override fun isValid(
+        value: UpdateProfileRequestDto?,
+        context: ConstraintValidatorContext?,
+    ): Boolean {
         if (value == null) {
             return true // Let @NotNull handle null value validation
         }

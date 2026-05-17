@@ -42,11 +42,11 @@ Frontend (Vue.js :5173)
 ## Technology Stack
 
 **Backend**
-- Kotlin + Spring Boot 3.4
+- Kotlin 2.3.0 + Spring Boot 4.0.2 + Spring Cloud 2025.1.1
 - Spring Cloud Gateway + Netflix Eureka + Feign
-- Spring Security — JWT (access 2h, refresh 14d với rotation)
+- Spring Security 7 — JWT (access 2h, refresh 14d với rotation)
 - PostgreSQL 16 + Flyway migrations + HikariCP
-- Gradle Kotlin DSL với shared `common` module
+- Gradle 9.3.0 (Kotlin DSL) với shared `common` module
 
 **Frontend**
 - Vue 3 + TypeScript + Vite
@@ -105,7 +105,7 @@ nihongo-it/
 ### Prerequisites
 - Docker Desktop
 - Node.js 20+ (frontend)
-- JDK 21 (nếu build local)
+- JDK 25 (nếu build local)
 
 ### 1. Cấu hình environment
 

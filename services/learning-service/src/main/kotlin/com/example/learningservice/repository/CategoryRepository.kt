@@ -11,7 +11,10 @@ interface CategoryRepository : JpaRepository<CategoryEntity, UUID> {
 
     fun findByMeaningContainingIgnoreCase(meaning: String): List<CategoryEntity>
 
-    fun findByNameContainingIgnoreCaseOrMeaningContainingIgnoreCase(name: String, meaning: String): List<CategoryEntity>
+    fun findByNameContainingIgnoreCaseOrMeaningContainingIgnoreCase(
+        name: String,
+        meaning: String,
+    ): List<CategoryEntity>
 
     fun findAllByOrderByDisplayOrderAsc(): List<CategoryEntity>
 

@@ -24,12 +24,10 @@ data class ResetPasswordDto(
     @field:NotBlank(message = "Token is required")
     @Schema(description = "Password reset token received via email", required = true)
     val token: String,
-
     @field:NotBlank(message = "Password is required")
     @field:Size(min = 8, max = 100, message = "Password must be between 8 and 100 characters")
     @Schema(description = "New password", required = true)
     val password: String,
-
     @field:NotBlank(message = "Password confirmation is required")
     @Schema(description = "Confirmation of new password", required = true)
     val confirmPassword: String,

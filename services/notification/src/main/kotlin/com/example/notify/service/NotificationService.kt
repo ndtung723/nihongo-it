@@ -64,18 +64,19 @@ class NotificationService(
         logger.debug("Sending notification to user ${user.userId} - Type: $type, Title: $title")
 
         // Create notification record
-        val notification = NotificationEntity(
-            user = user,
-            title = title,
-            message = message,
-            type = type,
-            actionUrl = actionUrl,
-            sentAt = LocalDateTime.now(),
-            reviewCount = reviewCount,
-            reviewCategory = reviewCategory,
-            priorityLevel = priorityLevel,
-            notificationChannel = NotificationChannel.APP,
-        )
+        val notification =
+            NotificationEntity(
+                user = user,
+                title = title,
+                message = message,
+                type = type,
+                actionUrl = actionUrl,
+                sentAt = LocalDateTime.now(),
+                reviewCount = reviewCount,
+                reviewCategory = reviewCategory,
+                priorityLevel = priorityLevel,
+                notificationChannel = NotificationChannel.APP,
+            )
 
         // Save to database first (in-app notification)
         val savedNotification = notificationRepository.save(notification)
@@ -101,7 +102,13 @@ class NotificationService(
      * @param actionText Optional text for the action button (defaults to "Xem ngay")
      */
     @Async
-    fun sendEmailNotification(to: String, subject: String, content: String, actionUrl: String? = null, actionText: String = "Xem ngay") {
+    fun sendEmailNotification(
+        to: String,
+        subject: String,
+        content: String,
+        actionUrl: String? = null,
+        actionText: String = "Xem ngay",
+    ) {
         try {
             logger.debug("Sending email to $to - Subject: $subject")
 
@@ -128,12 +135,17 @@ class NotificationService(
     /**
      * Builds a styled HTML email template
      */
-    private fun buildHtmlEmailContent(content: String, actionUrl: String?, actionText: String): String {
+    private fun buildHtmlEmailContent(
+        content: String,
+        actionUrl: String?,
+        actionText: String,
+    ): String {
         val paragraphs = content.split("\n\n").filter { it.isNotEmpty() }
         val paragraphHtml = paragraphs.joinToString("") { "<p style=\"margin: 0 0 16px 0; line-height: 1.5;\">$it</p>" }
 
-        val buttonHtml = if (actionUrl != null) {
-            """
+        val buttonHtml =
+            if (actionUrl != null) {
+                """
             <div style="text-align: center; margin: 24px 0;">
                 <a href="$actionUrl" 
                    style="display: inline-block; background-color: #3B82F6; color: white; 
@@ -143,9 +155,9 @@ class NotificationService(
                 </a>
             </div>
             """
-        } else {
-            ""
-        }
+            } else {
+                ""
+            }
 
         return """
         <!DOCTYPE html>
@@ -183,7 +195,10 @@ class NotificationService(
      * @param resetToken The password reset token
      */
     @Async
-    fun sendPasswordResetEmail(email: String, resetToken: String) {
+    fun sendPasswordResetEmail(
+        email: String,
+        resetToken: String,
+    ) {
         val resetUrl = "$frontendUrl/account/reset-password?token=$resetToken"
 
         sendPasswordResetEmail(email, resetToken, resetUrl)
@@ -198,9 +213,14 @@ class NotificationService(
      */
     @Async
     @Suppress("UnusedParameter")
-    fun sendPasswordResetEmail(email: String, resetToken: String, resetUrl: String) {
+    fun sendPasswordResetEmail(
+        email: String,
+        resetToken: String,
+        resetUrl: String,
+    ) {
         val subject = "Password Change Request - Nihongo IT"
-        val content = """
+        val content =
+            """
             Hello,
             
             You have requested to change your password for your Nihongo IT account.
@@ -214,7 +234,7 @@ class NotificationService(
             
             Best regards,
             The Nihongo IT Team
-        """.trimIndent()
+            """.trimIndent()
 
         try {
             logger.debug("Sending password change email to $email")
@@ -241,51 +261,66 @@ class NotificationService(
      * @param type The notification type to search for
      * @return The latest notification of the specified type, or null if none found
      */
-    fun getLastNotificationByType(user: UserEntity, type: NotificationType): NotificationEntity? {
-        return notificationRepository.findFirstByUserAndTypeOrderBySentAtDesc(user, type)
-    }
+    fun getLastNotificationByType(
+        user: UserEntity,
+        type: NotificationType,
+    ): NotificationEntity? = notificationRepository.findFirstByUserAndTypeOrderBySentAtDesc(user, type)
 
     companion object {
         private const val MAX_PAGE_SIZE = 50
     }
 
-    fun listForUser(userId: UUID, page: Int, size: Int): Page<NotificationEntity> {
-        val pageable = PageRequest.of(
-            maxOf(0, page),
-            size.coerceIn(1, MAX_PAGE_SIZE),
-            Sort.by(Sort.Direction.DESC, "sentAt"),
-        )
+    fun listForUser(
+        userId: UUID,
+        page: Int,
+        size: Int,
+    ): Page<NotificationEntity> {
+        val pageable =
+            PageRequest.of(
+                maxOf(0, page),
+                size.coerceIn(1, MAX_PAGE_SIZE),
+                Sort.by(Sort.Direction.DESC, "sentAt"),
+            )
         return notificationRepository.findByUser_UserIdOrderBySentAtDesc(userId, pageable)
     }
 
-    fun countUnreadForUser(userId: UUID): Long =
-        notificationRepository.countByUser_UserIdAndIsReadFalse(userId)
+    fun countUnreadForUser(userId: UUID): Long = notificationRepository.countByUser_UserIdAndIsReadFalse(userId)
 
     @Transactional
-    fun markAsReadForUser(userId: UUID, notificationId: UUID): Boolean {
-        val notification = notificationRepository.findByNotificationIdAndUser_UserId(notificationId, userId)
-            ?: return false
+    fun markAsReadForUser(
+        userId: UUID,
+        notificationId: UUID,
+    ): Boolean {
+        val notification =
+            notificationRepository.findByNotificationIdAndUser_UserId(notificationId, userId)
+                ?: return false
         notificationRepository.save(notification.copy(isRead = true, readAt = LocalDateTime.now()))
         return true
     }
 
     @Transactional
-    fun markAllAsReadForUser(userId: UUID): Int =
-        notificationRepository.markAllReadByUserId(userId)
+    fun markAllAsReadForUser(userId: UUID): Int = notificationRepository.markAllReadByUserId(userId)
 
     @Transactional
-    fun deleteForUser(userId: UUID, notificationId: UUID): Boolean =
-        notificationRepository.deleteByIdAndUserId(notificationId, userId) > 0
+    fun deleteForUser(
+        userId: UUID,
+        notificationId: UUID,
+    ): Boolean = notificationRepository.deleteByIdAndUserId(notificationId, userId) > 0
 
     /**
      * Sends a flashcard review reminder email with special styling and card count information
      */
     @Async
-    fun sendFlashcardReminderEmail(to: String, cardCount: Int, actionUrl: String) {
+    fun sendFlashcardReminderEmail(
+        to: String,
+        cardCount: Int,
+        actionUrl: String,
+    ) {
         val subject = "Nhắc nhở: $cardCount thẻ ghi nhớ cần ôn tập"
 
         // Build more targeted content for flashcard reminders
-        val content = """
+        val content =
+            """
             Xin chào,
             
             Bạn có $cardCount thẻ ghi nhớ đang chờ được ôn tập.
@@ -294,7 +329,7 @@ class NotificationService(
             
             Chúc bạn học tập hiệu quả,
             Đội ngũ Nihongo IT
-        """.trimIndent()
+            """.trimIndent()
 
         // More specific action text for flashcards
         val actionText = "Ôn tập $cardCount thẻ ngay"

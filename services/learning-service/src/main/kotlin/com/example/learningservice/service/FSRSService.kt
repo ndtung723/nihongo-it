@@ -30,7 +30,9 @@ class FSRSService(
     /**
      * Rating enum similar to the Go implementation
      */
-    enum class Rating(val value: Int) {
+    enum class Rating(
+        val value: Int,
+    ) {
         AGAIN(1),
         HARD(2),
         GOOD(3),
@@ -38,20 +40,23 @@ class FSRSService(
         ;
 
         companion object {
-            fun fromInt(value: Int): Rating = when (value) {
-                1 -> AGAIN
-                2 -> HARD
-                3 -> GOOD
-                4 -> EASY
-                else -> throw IllegalArgumentException("Invalid rating: $value")
-            }
+            fun fromInt(value: Int): Rating =
+                when (value) {
+                    1 -> AGAIN
+                    2 -> HARD
+                    3 -> GOOD
+                    4 -> EASY
+                    else -> throw IllegalArgumentException("Invalid rating: $value")
+                }
         }
     }
 
     /**
      * State enum similar to the Go implementation
      */
-    enum class State(val value: Int) {
+    enum class State(
+        val value: Int,
+    ) {
         NEW(0),
         LEARNING(1),
         REVIEW(2),
@@ -81,7 +86,10 @@ class FSRSService(
      * Process a flashcard review
      */
     @Transactional
-    fun processReview(flashcard: FlashcardEntity, ratingValue: Int): FlashcardEntity {
+    fun processReview(
+        flashcard: FlashcardEntity,
+        ratingValue: Int,
+    ): FlashcardEntity {
         val rating = Rating.fromInt(ratingValue)
         val now = LocalDateTime.now()
         val isFirstReview = flashcard.reps == 0
@@ -91,12 +99,13 @@ class FSRSService(
 
         if (isFirstReview) {
             // Lần đầu review: chỉ khởi tạo S₀(G), D₀(G), tính I, cập nhật state, scheduledDays, due
-            flashcard.stability = when (rating) {
-                Rating.AGAIN -> w[0]
-                Rating.HARD -> w[1]
-                Rating.GOOD -> w[2]
-                Rating.EASY -> w[3]
-            }
+            flashcard.stability =
+                when (rating) {
+                    Rating.AGAIN -> w[0]
+                    Rating.HARD -> w[1]
+                    Rating.GOOD -> w[2]
+                    Rating.EASY -> w[3]
+                }
             flashcard.difficulty = w[4] - (rating.value - 3) * w[5]
             val interval = nextInterval(flashcard.stability ?: 1.0)
             flashcard.scheduledDays = interval
@@ -107,11 +116,12 @@ class FSRSService(
             // Không cập nhật lapses, elapsedDays, ...
         } else {
             // Các lần review tiếp theo: luôn dùng calculateSchedulingInfo cho mọi rating
-            val elapsedDays = if (flashcard.due.isBefore(now)) {
-                ChronoUnit.MILLIS.between(flashcard.due, now).toDouble() / (1000 * 60 * 60 * 24)
-            } else {
-                0.0
-            }
+            val elapsedDays =
+                if (flashcard.due.isBefore(now)) {
+                    ChronoUnit.MILLIS.between(flashcard.due, now).toDouble() / (1000 * 60 * 60 * 24)
+                } else {
+                    0.0
+                }
             val info = calculateSchedulingInfo(flashcard, rating, elapsedDays, now)
             flashcard.difficulty = info.difficulty
             flashcard.stability = info.stability
@@ -199,26 +209,32 @@ class FSRSService(
     /**
      * Calculate interval based on stability and state
      */
-    private fun calculateInterval(stability: Double, rating: Rating, state: State): Double {
+    @Suppress("UnusedParameter")
+    private fun calculateInterval(
+        stability: Double,
+        rating: Rating,
+        state: State,
+    ): Double {
         // Sử dụng công thức FSRS cho tất cả các trạng thái
         val interval = nextInterval(stability)
         logger.info("FSRS calculation - Base interval calculated from stability $stability: $interval days")
 
-        val finalInterval = when (rating) {
-            Rating.AGAIN -> 0.0 // Same day (handled separately in processReview)
-            Rating.HARD -> {
-                // Không sử dụng w15 ở đây, vì đã được áp dụng trong updateStability
-                max(1.0, interval)
-            }
-            Rating.GOOD -> {
-                logger.info("GOOD rating - Using normal interval: $interval days")
-                max(1.0, interval)
-            }
-            Rating.EASY -> {
-                // Không sử dụng w16 ở đây, vì đã được áp dụng trong updateStability
-                max(1.0, interval)
-            }
-        }.coerceAtMost(maximumInterval)
+        val finalInterval =
+            when (rating) {
+                Rating.AGAIN -> 0.0 // Same day (handled separately in processReview)
+                Rating.HARD -> {
+                    // Không sử dụng w15 ở đây, vì đã được áp dụng trong updateStability
+                    max(1.0, interval)
+                }
+                Rating.GOOD -> {
+                    logger.info("GOOD rating - Using normal interval: $interval days")
+                    max(1.0, interval)
+                }
+                Rating.EASY -> {
+                    // Không sử dụng w16 ở đây, vì đã được áp dụng trong updateStability
+                    max(1.0, interval)
+                }
+            }.coerceAtMost(maximumInterval)
 
         logger.info("Final interval after adjustments: $finalInterval days")
         return finalInterval
@@ -247,7 +263,10 @@ class FSRSService(
      * Updates the difficulty score based on the rating
      * D'(D,G) = w_7 * D_0(3) + (1-w_7) * (D - w_6 * (G-3))
      */
-    private fun updateDifficulty(oldDifficulty: Double, rating: Rating): Double {
+    private fun updateDifficulty(
+        oldDifficulty: Double,
+        rating: Rating,
+    ): Double {
         // Initial difficulty for "Good" (G=3): D_0(3) = w_4
         val initialDifficulty = w[4]
 
@@ -264,14 +283,20 @@ class FSRSService(
     /**
      * Updates the stability score based on rating, difficulty, and retrievability
      */
-    private fun updateStability(oldStability: Double, difficulty: Double, rating: Rating, retrievability: Double): Double {
-        return when (rating) {
+    private fun updateStability(
+        oldStability: Double,
+        difficulty: Double,
+        rating: Rating,
+        retrievability: Double,
+    ): Double =
+        when (rating) {
             Rating.AGAIN -> {
                 // Stability after forgetting (post-lapse stability):
                 // S_f'(D,S,R) = w_11 * D^(-w_12) * ((S+1)^w_13 - 1) * e^(w_14 * (1-R))
-                val forgettingStability = w[11] * Math.pow(difficulty, -w[12]) *
-                    (Math.pow(oldStability + 1, w[13]) - 1) *
-                    Math.exp(w[14] * (1 - retrievability))
+                val forgettingStability =
+                    w[11] * Math.pow(difficulty, -w[12]) *
+                        (Math.pow(oldStability + 1, w[13]) - 1) *
+                        Math.exp(w[14] * (1 - retrievability))
 
                 logger.info("AGAIN rating: Calculating post-lapse stability using formula S_f'")
                 logger.info("Formula components: w11=${w[11]}, D^(-w12)=${Math.pow(difficulty, -w[12])}")
@@ -312,13 +337,15 @@ class FSRSService(
                 newStability.coerceAtLeast(0.1) // Ensure minimum stability
             }
         }
-    }
 
     /**
      * Calculates the retrievability score based on spacing effect
      * R(t,S) = (1 + t/(9*S))^(-1)
      */
-    private fun calculateRetrievability(stability: Double, elapsedDays: Double): Double {
+    private fun calculateRetrievability(
+        stability: Double,
+        elapsedDays: Double,
+    ): Double {
         val safeStability = stability.coerceAtLeast(0.1) // Avoid division by zero
         return Math.pow(1.0 + elapsedDays / (9.0 * safeStability), -1.0)
     }
@@ -326,13 +353,15 @@ class FSRSService(
     /**
      * Determines the new state of the card based on current state and rating
      */
-    private fun determineState(oldState: State, rating: Rating): State {
-        return when {
+    private fun determineState(
+        oldState: State,
+        rating: Rating,
+    ): State =
+        when {
             rating == Rating.AGAIN -> State.RELEARNING // Any "Again" rating goes to relearning
             oldState == State.NEW || oldState == State.LEARNING || oldState == State.RELEARNING -> {
                 if (rating.value >= 3) State.REVIEW else State.LEARNING // Move to review if Good/Easy
             }
             else -> State.REVIEW // Stay in review
         }
-    }
 }

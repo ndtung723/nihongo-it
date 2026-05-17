@@ -24,7 +24,6 @@ import java.util.*
 class AdminController(
     private val adminService: AdminService,
 ) {
-
     @GetMapping("", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(
         summary = "Get all users with pagination",
@@ -38,11 +37,12 @@ class AdminController(
         @RequestParam(defaultValue = "email") sortBy: String,
         @RequestParam(defaultValue = "asc") sortDir: String,
     ): ResponseEntity<UserListResponse> {
-        val direction = if (sortDir.equals("desc", ignoreCase = true)) {
-            Sort.Direction.DESC
-        } else {
-            Sort.Direction.ASC
-        }
+        val direction =
+            if (sortDir.equals("desc", ignoreCase = true)) {
+                Sort.Direction.DESC
+            } else {
+                Sort.Direction.ASC
+            }
         val pageable = PageRequest.of(page, size, Sort.by(direction, sortBy))
         val result = adminService.getAllUsers(pageable, search)
         return ResponseEntity.ok(result)
@@ -54,7 +54,9 @@ class AdminController(
         description = "Retrieves a single user by their unique identifier",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    fun getUserById(@PathVariable userId: UUID): ResponseEntity<UserDto> {
+    fun getUserById(
+        @PathVariable userId: UUID,
+    ): ResponseEntity<UserDto> {
         val user = adminService.getUserById(userId)
         return ResponseEntity.ok(user)
     }
@@ -65,7 +67,9 @@ class AdminController(
         description = "Creates a new user account in the system",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    fun createUser(@RequestBody request: UserCreateRequest): ResponseEntity<UserDto> {
+    fun createUser(
+        @RequestBody request: UserCreateRequest,
+    ): ResponseEntity<UserDto> {
         val createdUser = adminService.createUser(request)
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser)
     }
@@ -90,7 +94,9 @@ class AdminController(
         description = "Deactivates a user account (soft delete)",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    fun deleteUser(@PathVariable userId: UUID): ResponseEntity<Void> {
+    fun deleteUser(
+        @PathVariable userId: UUID,
+    ): ResponseEntity<Void> {
         adminService.deactivateUser(userId)
         return ResponseEntity.noContent().build()
     }
@@ -101,7 +107,9 @@ class AdminController(
         description = "Activates a deactivated user account",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    fun activateUser(@PathVariable userId: UUID): ResponseEntity<Void> {
+    fun activateUser(
+        @PathVariable userId: UUID,
+    ): ResponseEntity<Void> {
         adminService.activateUser(userId)
         return ResponseEntity.noContent().build()
     }

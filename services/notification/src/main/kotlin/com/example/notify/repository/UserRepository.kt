@@ -8,5 +8,8 @@ import java.util.UUID
 @Repository
 interface UserRepository : JpaRepository<UserEntity, UUID> {
     // Find active users with reminders enabled
-    fun findByIsActiveAndReminderEnabled(isActive: Boolean, reminderEnabled: Boolean): List<UserEntity>
+    fun findByIsActiveAndReminderEnabled(
+        isActive: Boolean,
+        reminderEnabled: Boolean,
+    ): List<UserEntity>
 }

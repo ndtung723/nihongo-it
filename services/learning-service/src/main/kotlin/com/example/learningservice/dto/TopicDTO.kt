@@ -23,13 +23,11 @@ data class TopicDTO(
     val categoryName: String?,
     val vocabularyCount: Int? = null,
     val isActive: Boolean = true,
-
     @JsonProperty("createdAt")
     @JsonDeserialize(using = LocalDateTimeDeserializer::class)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
     @JsonSerialize(using = LocalDateTimeSerializer::class)
     val createdAt: LocalDateTime? = null,
-
     @JsonProperty("updatedAt")
     @JsonDeserialize(using = LocalDateTimeDeserializer::class)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
@@ -38,8 +36,8 @@ data class TopicDTO(
 )
 
 // Extension function to convert entity to DTO
-fun TopicEntity.toDTO(vocabularyCount: Int? = null): TopicDTO {
-    return TopicDTO(
+fun TopicEntity.toDTO(vocabularyCount: Int? = null): TopicDTO =
+    TopicDTO(
         topicId = this.topicId,
         name = this.name,
         meaning = this.meaning,
@@ -51,7 +49,6 @@ fun TopicEntity.toDTO(vocabularyCount: Int? = null): TopicDTO {
         createdAt = this.createdAt,
         updatedAt = this.updatedAt,
     )
-}
 
 // Data class for creating a new topic
 data class CreateTopicRequest(

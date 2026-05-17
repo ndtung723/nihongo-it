@@ -21,7 +21,6 @@ import java.util.*
 class ConversationController(
     private val conversationService: ConversationService,
 ) {
-
     @GetMapping("", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(
         summary = "Get all conversations with pagination",
@@ -40,11 +39,12 @@ class ConversationController(
         val direction = if (sortDir.equals("desc", ignoreCase = true)) Sort.Direction.DESC else Sort.Direction.ASC
         val pageable = PageRequest.of(safePage, safeSize, Sort.by(direction, sortBy))
 
-        val result = if (search != null && search.isNotBlank()) {
-            conversationService.searchConversations(search, pageable)
-        } else {
-            conversationService.getAllConversations(pageable)
-        }
+        val result =
+            if (search != null && search.isNotBlank()) {
+                conversationService.searchConversations(search, pageable)
+            } else {
+                conversationService.getAllConversations(pageable)
+            }
 
         return ResponseEntity.ok(result)
     }
@@ -55,9 +55,9 @@ class ConversationController(
         description = "Retrieves a single conversation by its unique identifier",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    fun getConversationById(@PathVariable conversationId: UUID): ResponseEntity<ConversationDTO> {
-        return ResponseEntity.ok(conversationService.getConversationById(conversationId))
-    }
+    fun getConversationById(
+        @PathVariable conversationId: UUID,
+    ): ResponseEntity<ConversationDTO> = ResponseEntity.ok(conversationService.getConversationById(conversationId))
 
     @GetMapping("/jlpt/{level}", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(

@@ -18,36 +18,42 @@ import reactor.core.publisher.Mono
 class GatewayJwtFilter(
     @Value("\${jwt.secret}") private val secret: String,
     @Value("\${jwt.secret-previous:}") private val previousSecret: String,
-) : GlobalFilter, Ordered {
+) : GlobalFilter,
+    Ordered {
     companion object {
         private const val FILTER_ORDER = -100
     }
 
     private val logger = LoggerFactory.getLogger(GatewayJwtFilter::class.java)
 
-    private val publicPaths = setOf(
-        "/api/v1/user/auth/login",
-        "/api/v1/user/auth/signup",
-        "/api/v1/user/auth/google-login",
-        "/api/v1/user/auth/forgot-password",
-        "/api/v1/user/auth/set-new-password",
-        "/api/v1/user/auth/reset-password",
-        "/api/v1/user/auth/verify-email",
-        "/api/v1/user/auth/refresh-token",
-        "/api/v1/user/auth/logout",
-    )
+    private val publicPaths =
+        setOf(
+            "/api/v1/user/auth/login",
+            "/api/v1/user/auth/signup",
+            "/api/v1/user/auth/google-login",
+            "/api/v1/user/auth/forgot-password",
+            "/api/v1/user/auth/set-new-password",
+            "/api/v1/user/auth/reset-password",
+            "/api/v1/user/auth/verify-email",
+            "/api/v1/user/auth/refresh-token",
+            "/api/v1/user/auth/logout",
+        )
 
-    private val publicPrefixes = listOf(
-        "/v3/api-docs",
-        "/swagger-ui",
-        "/api-docs",
-        "/actuator",
-        "/api/v1/ai/speech/",
-        // /api/v1/ai/tts/ intentionally removed — TTS costs money, requires auth
-    )
+    private val publicPrefixes =
+        listOf(
+            "/v3/api-docs",
+            "/swagger-ui",
+            "/api-docs",
+            "/actuator",
+            "/api/v1/ai/speech/",
+            // /api/v1/ai/tts/ intentionally removed — TTS costs money, requires auth
+        )
 
     @Suppress("ForbiddenVoid", "ReturnCount")
-    override fun filter(exchange: ServerWebExchange, chain: GatewayFilterChain): Mono<Void> {
+    override fun filter(
+        exchange: ServerWebExchange,
+        chain: GatewayFilterChain,
+    ): Mono<Void> {
         val request = exchange.request
         val path = request.path.value()
 
@@ -65,23 +71,29 @@ class GatewayJwtFilter(
 
         val token = authHeader.removePrefix("Bearer ").trim()
 
-        val ip = exchange.request.remoteAddress?.address?.hostAddress ?: "unknown"
+        val ip =
+            exchange.request.remoteAddress
+                ?.address
+                ?.hostAddress ?: "unknown"
         return try {
             val claims = extractClaims(token)
             val userId = claims["userId"] as? String ?: return unauthorized(exchange)
-            val roleId = when (val role = claims["role"]) {
-                is Int -> role
-                is Long -> role.toInt()
-                else -> 2
-            }
+            val roleId =
+                when (val role = claims["role"]) {
+                    is Int -> role
+                    is Long -> role.toInt()
+                    else -> 2
+                }
             val roleName = if (roleId == 1) "ADMIN" else "USER"
             val email = claims.subject.orEmpty()
 
-            val mutatedRequest = request.mutate()
-                .header("X-User-Id", userId)
-                .header("X-User-Role", roleName)
-                .header("X-User-Email", email)
-                .build()
+            val mutatedRequest =
+                request
+                    .mutate()
+                    .header("X-User-Id", userId)
+                    .header("X-User-Role", roleName)
+                    .header("X-User-Email", email)
+                    .build()
 
             logger.debug("JWT validated for userId=$userId role=$roleName path=$path")
             chain.filter(exchange.mutate().request(mutatedRequest).build())
@@ -94,11 +106,21 @@ class GatewayJwtFilter(
     private fun extractClaims(token: String): Claims {
         val key = Keys.hmacShaKeyFor(secret.toByteArray())
         return try {
-            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).body
+            Jwts
+                .parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .payload
         } catch (e: Exception) {
             if (previousSecret.isBlank()) throw e
             val prevKey = Keys.hmacShaKeyFor(previousSecret.toByteArray())
-            Jwts.parserBuilder().setSigningKey(prevKey).build().parseClaimsJws(token).body
+            Jwts
+                .parser()
+                .verifyWith(prevKey)
+                .build()
+                .parseSignedClaims(token)
+                .payload
         }
     }
 

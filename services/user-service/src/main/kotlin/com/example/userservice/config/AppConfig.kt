@@ -10,16 +10,12 @@ import org.springframework.web.client.RestTemplate
 
 @Configuration
 class AppConfig {
-
     @Bean
-    fun objectMapper(): ObjectMapper {
-        return jacksonObjectMapper()
+    fun objectMapper(): ObjectMapper =
+        jacksonObjectMapper()
             .registerModule(KotlinModule.Builder().build())
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-    }
 
     @Bean
-    fun restTemplate(): RestTemplate {
-        return RestTemplate()
-    }
+    fun restTemplate(): RestTemplate = RestTemplate()
 }

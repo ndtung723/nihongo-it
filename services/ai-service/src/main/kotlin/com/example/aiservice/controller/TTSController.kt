@@ -42,19 +42,22 @@ class TTSController(
 
         val speed = speedStr.toFloatOrNull()?.coerceIn(SPEED_MIN, SPEED_MAX) ?: SPEED_DEFAULT
 
-        val options = OpenAiAudioSpeechOptions.builder()
-            .voice(OpenAiAudioApi.SpeechRequest.Voice.NOVA) // NOVA has the best Japanese pronunciation
-            .responseFormat(OpenAiAudioApi.SpeechRequest.AudioResponseFormat.MP3)
-            .model("gpt-4o-mini-tts")
-            .speed(speed)
-            .build()
+        val options =
+            OpenAiAudioSpeechOptions
+                .builder()
+                .voice(OpenAiAudioApi.SpeechRequest.Voice.NOVA) // NOVA has the best Japanese pronunciation
+                .responseFormat(OpenAiAudioApi.SpeechRequest.AudioResponseFormat.MP3)
+                .model("gpt-4o-mini-tts")
+                .speed(speed)
+                .build()
 
         @Suppress("TooGenericExceptionThrown")
-        val response = try {
-            openAiAudioSpeechModel.call(SpeechPrompt(text, options))
-        } catch (e: Exception) {
-            throw RuntimeException("TTS generation failed: ${e.message}", e)
-        }
+        val response =
+            try {
+                openAiAudioSpeechModel.call(SpeechPrompt(text, options))
+            } catch (e: Exception) {
+                throw RuntimeException("TTS generation failed: ${e.message}", e)
+            }
 
         // Validate audio output
         require(response.result.output.isNotEmpty()) {
@@ -66,7 +69,8 @@ class TTSController(
             saveGeneratedAudio(text, response.result.output, validatedContentType)
         }
 
-        return ResponseEntity.ok()
+        return ResponseEntity
+            .ok()
             .contentType(MediaType("audio", "mpeg"))
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=speech.mp3")
             .header("X-Content-Language", language)
@@ -77,7 +81,11 @@ class TTSController(
     /**
      * Saves the generated audio to the appropriate directory based on content type
      */
-    private fun saveGeneratedAudio(text: String, audioData: ByteArray, contentType: String) {
+    private fun saveGeneratedAudio(
+        text: String,
+        audioData: ByteArray,
+        contentType: String,
+    ) {
         try {
             // Determine the appropriate directory based on content type
             val directoryPath = Paths.get("src", "main", "resources", contentType)
@@ -143,7 +151,8 @@ class TTSController(
 
         val audioData = Files.readAllBytes(audioFile)
 
-        return ResponseEntity.ok()
+        return ResponseEntity
+            .ok()
             .contentType(MediaType("audio", "mpeg"))
             .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"audio.mp3\"")
             .body(audioData)

@@ -21,16 +21,13 @@ import java.util.*
 class AdminTopicController(
     private val topicService: TopicService,
 ) {
-
     @GetMapping("", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(
         summary = "Get all topics",
         description = "Retrieves a list of all topics in the system",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    fun getAllTopics(): ResponseEntity<List<TopicDTO>> {
-        return ResponseEntity.ok(topicService.getAllTopics())
-    }
+    fun getAllTopics(): ResponseEntity<List<TopicDTO>> = ResponseEntity.ok(topicService.getAllTopics())
 
     @GetMapping("/category/{categoryId}", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(
@@ -38,9 +35,9 @@ class AdminTopicController(
         description = "Retrieves all topics belonging to a specific category",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    fun getTopicsByCategoryId(@PathVariable categoryId: UUID): ResponseEntity<List<TopicDTO>> {
-        return ResponseEntity.ok(topicService.getTopicsByCategoryId(categoryId))
-    }
+    fun getTopicsByCategoryId(
+        @PathVariable categoryId: UUID,
+    ): ResponseEntity<List<TopicDTO>> = ResponseEntity.ok(topicService.getTopicsByCategoryId(categoryId))
 
     @GetMapping("/{topicId}", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(
@@ -48,9 +45,9 @@ class AdminTopicController(
         description = "Retrieves a single topic by its unique identifier",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    fun getTopicById(@PathVariable topicId: UUID): ResponseEntity<TopicDTO> {
-        return ResponseEntity.ok(topicService.getTopicById(topicId))
-    }
+    fun getTopicById(
+        @PathVariable topicId: UUID,
+    ): ResponseEntity<TopicDTO> = ResponseEntity.ok(topicService.getTopicById(topicId))
 
     @PostMapping("", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(
@@ -58,7 +55,9 @@ class AdminTopicController(
         description = "Creates a new topic in the system",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    fun createTopic(@RequestBody request: CreateTopicRequest): ResponseEntity<TopicDTO> {
+    fun createTopic(
+        @RequestBody request: CreateTopicRequest,
+    ): ResponseEntity<TopicDTO> {
         val createdTopic = topicService.createTopic(request)
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTopic)
     }
@@ -83,7 +82,9 @@ class AdminTopicController(
         description = "Deletes a topic from the system",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    fun deleteTopic(@PathVariable topicId: UUID): ResponseEntity<Void> {
+    fun deleteTopic(
+        @PathVariable topicId: UUID,
+    ): ResponseEntity<Void> {
         topicService.deleteTopic(topicId)
         return ResponseEntity.noContent().build()
     }
@@ -94,7 +95,9 @@ class AdminTopicController(
         description = "Activates or deactivates a topic",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    fun toggleTopicStatus(@PathVariable topicId: UUID): ResponseEntity<TopicDTO> {
+    fun toggleTopicStatus(
+        @PathVariable topicId: UUID,
+    ): ResponseEntity<TopicDTO> {
         val updatedTopic = topicService.toggleTopicStatus(topicId)
         return ResponseEntity.ok(updatedTopic)
     }
@@ -108,7 +111,5 @@ class AdminTopicController(
     fun searchTopicsInCategory(
         @RequestParam categoryId: UUID,
         @RequestParam query: String,
-    ): ResponseEntity<List<TopicDTO>> {
-        return ResponseEntity.ok(topicService.searchTopicsInCategory(categoryId, query))
-    }
+    ): ResponseEntity<List<TopicDTO>> = ResponseEntity.ok(topicService.searchTopicsInCategory(categoryId, query))
 }

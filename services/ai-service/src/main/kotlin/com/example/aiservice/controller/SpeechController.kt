@@ -22,8 +22,8 @@ class SpeechController(
         @RequestParam("file") audio: MultipartFile,
         @RequestParam("reference_text") referenceText: String,
         @RequestParam("type", required = true) type: String,
-    ): ResponseEntity<Any> {
-        return try {
+    ): ResponseEntity<Any> =
+        try {
             val analysis = speechAnalysisService.analyzeEnhanced(audio, referenceText, type)
             logger.info("Enhanced analysis completed successfully")
             ResponseEntity.ok(analysis)
@@ -36,11 +36,12 @@ class SpeechController(
                 ),
             )
         }
-    }
 
     @PostMapping("/summarize-feedback")
-    fun summarizeFeedback(@RequestBody request: Map<String, Any>): ResponseEntity<Any> {
-        return try {
+    fun summarizeFeedback(
+        @RequestBody request: Map<String, Any>,
+    ): ResponseEntity<Any> =
+        try {
             val feedbackList = request["feedback_list"] as? List<*> ?: emptyList<Any>()
             val conversationText = (request["conversation_text"] as? String).orEmpty()
 
@@ -57,5 +58,4 @@ class SpeechController(
                 ),
             )
         }
-    }
 }

@@ -49,32 +49,35 @@ class AdminStatisticsController(
         val pageable = PageRequest.of(page, size, Sort.by(direction, sortBy))
         val usersPage = userService.getAllUsers(pageable, search)
 
-        val userStatsList = usersPage.content.map { user ->
-            val uid = requireNotNull(user.userId) { "User ID missing" }
-            val flashcardStats = flashcardStatisticsService.getUserFlashcardStatistics(uid)
-            val lastReview = flashcardStatisticsService.getLastReviewDate(uid)
-            val lastActive = lastReview?.format(dateTimeFormatter)
-                ?: user.updatedAt.atZone(ZoneOffset.UTC).format(dateTimeFormatter)
+        val userStatsList =
+            usersPage.content.map { user ->
+                val uid = requireNotNull(user.userId) { "User ID missing" }
+                val flashcardStats = flashcardStatisticsService.getUserFlashcardStatistics(uid)
+                val lastReview = flashcardStatisticsService.getLastReviewDate(uid)
+                val lastActive =
+                    lastReview?.format(dateTimeFormatter)
+                        ?: user.updatedAt.atZone(ZoneOffset.UTC).format(dateTimeFormatter)
 
-            mapOf(
-                "userId" to user.userId,
-                "userName" to user.fullName,
-                "email" to user.email,
-                "summary" to flashcardStats.summary,
-                "cardsByState" to flashcardStats.cardsByState,
-                "lastActive" to lastActive,
-                "progress" to calculateUserProgress(flashcardStats),
-            )
-        }
+                mapOf(
+                    "userId" to user.userId,
+                    "userName" to user.fullName,
+                    "email" to user.email,
+                    "summary" to flashcardStats.summary,
+                    "cardsByState" to flashcardStats.cardsByState,
+                    "lastActive" to lastActive,
+                    "progress" to calculateUserProgress(flashcardStats),
+                )
+            }
 
         return ResponseEntity.ok(
             mapOf(
-                "data" to mapOf(
-                    "users" to userStatsList,
-                    "totalItems" to usersPage.totalElements,
-                    "totalPages" to usersPage.totalPages,
-                    "currentPage" to usersPage.number,
-                ),
+                "data" to
+                    mapOf(
+                        "users" to userStatsList,
+                        "totalItems" to usersPage.totalElements,
+                        "totalPages" to usersPage.totalPages,
+                        "currentPage" to usersPage.number,
+                    ),
             ),
         )
     }
@@ -85,44 +88,49 @@ class AdminStatisticsController(
         description = "Retrieves detailed statistics for a specific user",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    fun getUserStatisticsById(@PathVariable userId: UUID): ResponseEntity<Any> {
+    fun getUserStatisticsById(
+        @PathVariable userId: UUID,
+    ): ResponseEntity<Any> {
         logger.info("Fetching detailed statistics for user: $userId")
 
         val user = userService.getUserById(userId)
         val flashcardStats = flashcardStatisticsService.getUserFlashcardStatistics(userId)
         val lastReview = flashcardStatisticsService.getLastReviewDate(userId)
         val reviewHistory = flashcardStatisticsService.getUserReviewHistory(userId, 30)
-        val lastActive = lastReview?.format(dateTimeFormatter)
-            ?: user.updatedAt.atZone(ZoneOffset.UTC).format(dateTimeFormatter)
+        val lastActive =
+            lastReview?.format(dateTimeFormatter)
+                ?: user.updatedAt.atZone(ZoneOffset.UTC).format(dateTimeFormatter)
 
-        val userStats = mapOf(
-            "userId" to user.userId,
-            "userName" to user.fullName,
-            "email" to user.email,
-            "profileInfo" to mapOf(
-                "currentLevel" to user.currentLevel,
-                "jlptGoal" to user.jlptGoal,
-                "createdAt" to user.createdAt.atZone(ZoneOffset.UTC).format(dateTimeFormatter),
-                "lastLogin" to user.lastLogin?.format(dateTimeFormatter),
-                "isActive" to user.isActive,
-                "isEmailVerified" to user.isEmailVerified,
-                "streakCount" to user.streakCount,
-                "points" to user.points,
-                "reminderEnabled" to user.reminderEnabled,
-                "reminderTime" to user.reminderTime?.toString(),
-                "minCardThreshold" to user.minCardThreshold,
-            ),
-            "summary" to flashcardStats.summary,
-            "cardsByState" to flashcardStats.cardsByState,
-            "cardsByJlptLevel" to flashcardStats.cardsByJlptLevel,
-            "dailyReviews" to flashcardStats.dailyReviews,
-            "retentionRateByDay" to flashcardStats.retentionRateByDay,
-            "memoryStrengthDistribution" to flashcardStats.memoryStrengthDistribution,
-            "cardsDueByDay" to flashcardStats.cardsDueByDay,
-            "lastActive" to lastActive,
-            "progress" to calculateUserProgress(flashcardStats),
-            "reviewHistory" to reviewHistory,
-        )
+        val userStats =
+            mapOf(
+                "userId" to user.userId,
+                "userName" to user.fullName,
+                "email" to user.email,
+                "profileInfo" to
+                    mapOf(
+                        "currentLevel" to user.currentLevel,
+                        "jlptGoal" to user.jlptGoal,
+                        "createdAt" to user.createdAt.atZone(ZoneOffset.UTC).format(dateTimeFormatter),
+                        "lastLogin" to user.lastLogin?.format(dateTimeFormatter),
+                        "isActive" to user.isActive,
+                        "isEmailVerified" to user.isEmailVerified,
+                        "streakCount" to user.streakCount,
+                        "points" to user.points,
+                        "reminderEnabled" to user.reminderEnabled,
+                        "reminderTime" to user.reminderTime?.toString(),
+                        "minCardThreshold" to user.minCardThreshold,
+                    ),
+                "summary" to flashcardStats.summary,
+                "cardsByState" to flashcardStats.cardsByState,
+                "cardsByJlptLevel" to flashcardStats.cardsByJlptLevel,
+                "dailyReviews" to flashcardStats.dailyReviews,
+                "retentionRateByDay" to flashcardStats.retentionRateByDay,
+                "memoryStrengthDistribution" to flashcardStats.memoryStrengthDistribution,
+                "cardsDueByDay" to flashcardStats.cardsDueByDay,
+                "lastActive" to lastActive,
+                "progress" to calculateUserProgress(flashcardStats),
+                "reviewHistory" to reviewHistory,
+            )
 
         return ResponseEntity.ok(mapOf("data" to userStats))
     }
@@ -137,7 +145,10 @@ class AdminStatisticsController(
     fun getStatisticsOverview(): ResponseEntity<Any> {
         logger.info("Fetching statistics overview for admin dashboard")
 
-        val thirtyDaysAgo = java.time.LocalDateTime.now().minusDays(30)
+        val thirtyDaysAgo =
+            java.time.LocalDateTime
+                .now()
+                .minusDays(30)
 
         val totalUsers = userService.getUserCount()
         val activeUsers = userService.getActiveUserCount(thirtyDaysAgo)
@@ -147,53 +158,60 @@ class AdminStatisticsController(
         val usersByLevel = userService.getUserCountByCurrentLevel()
         val usersByJlptGoal = userService.getUserCountByJlptGoal()
 
-        val topPerformingUsers = userService.getTopPerformingUsers(5)
-            .map { user ->
-                val uid = requireNotNull(user.userId) { "User ID missing" }
-                val flashcardStats = flashcardStatisticsService.getUserFlashcardStatistics(uid)
-                val lastReview = flashcardStatisticsService.getLastReviewDate(uid)
-                val lastActive = lastReview?.format(dateTimeFormatter)
-                    ?: user.updatedAt.atZone(ZoneOffset.UTC).format(dateTimeFormatter)
+        val topPerformingUsers =
+            userService
+                .getTopPerformingUsers(5)
+                .map { user ->
+                    val uid = requireNotNull(user.userId) { "User ID missing" }
+                    val flashcardStats = flashcardStatisticsService.getUserFlashcardStatistics(uid)
+                    val lastReview = flashcardStatisticsService.getLastReviewDate(uid)
+                    val lastActive =
+                        lastReview?.format(dateTimeFormatter)
+                            ?: user.updatedAt.atZone(ZoneOffset.UTC).format(dateTimeFormatter)
 
-                mapOf(
-                    "userId" to user.userId,
-                    "userName" to user.fullName,
-                    "email" to user.email,
-                    "summary" to flashcardStats.summary,
-                    "lastActive" to lastActive,
-                    "progress" to calculateUserProgress(flashcardStats),
-                )
-            }
+                    mapOf(
+                        "userId" to user.userId,
+                        "userName" to user.fullName,
+                        "email" to user.email,
+                        "summary" to flashcardStats.summary,
+                        "lastActive" to lastActive,
+                        "progress" to calculateUserProgress(flashcardStats),
+                    )
+                }
 
-        val mostActiveUsers = userService.getMostActiveUsers(5)
-            .map { user ->
-                val uid = requireNotNull(user.userId) { "User ID missing" }
-                val flashcardStats = flashcardStatisticsService.getUserFlashcardStatistics(uid)
-                val lastReview = flashcardStatisticsService.getLastReviewDate(uid)
-                val lastActive = lastReview?.format(dateTimeFormatter)
-                    ?: user.updatedAt.atZone(ZoneOffset.UTC).format(dateTimeFormatter)
+        val mostActiveUsers =
+            userService
+                .getMostActiveUsers(5)
+                .map { user ->
+                    val uid = requireNotNull(user.userId) { "User ID missing" }
+                    val flashcardStats = flashcardStatisticsService.getUserFlashcardStatistics(uid)
+                    val lastReview = flashcardStatisticsService.getLastReviewDate(uid)
+                    val lastActive =
+                        lastReview?.format(dateTimeFormatter)
+                            ?: user.updatedAt.atZone(ZoneOffset.UTC).format(dateTimeFormatter)
 
-                mapOf(
-                    "userId" to user.userId,
-                    "userName" to user.fullName,
-                    "email" to user.email,
-                    "summary" to flashcardStats.summary,
-                    "lastActive" to lastActive,
-                    "progress" to calculateUserProgress(flashcardStats),
-                )
-            }
+                    mapOf(
+                        "userId" to user.userId,
+                        "userName" to user.fullName,
+                        "email" to user.email,
+                        "summary" to flashcardStats.summary,
+                        "lastActive" to lastActive,
+                        "progress" to calculateUserProgress(flashcardStats),
+                    )
+                }
 
-        val overview = mapOf(
-            "totalUsers" to totalUsers,
-            "activeUsers" to activeUsers,
-            "totalFlashcards" to totalFlashcards,
-            "averageCardsPerUser" to averageCardsPerUser,
-            "averageRetentionRate" to averageRetentionRate,
-            "usersByLevel" to usersByLevel,
-            "usersByJlptGoal" to usersByJlptGoal,
-            "topPerformingUsers" to topPerformingUsers,
-            "mostActiveUsers" to mostActiveUsers,
-        )
+        val overview =
+            mapOf(
+                "totalUsers" to totalUsers,
+                "activeUsers" to activeUsers,
+                "totalFlashcards" to totalFlashcards,
+                "averageCardsPerUser" to averageCardsPerUser,
+                "averageRetentionRate" to averageRetentionRate,
+                "usersByLevel" to usersByLevel,
+                "usersByJlptGoal" to usersByJlptGoal,
+                "topPerformingUsers" to topPerformingUsers,
+                "mostActiveUsers" to mostActiveUsers,
+            )
 
         return ResponseEntity.ok(mapOf("data" to overview))
     }

@@ -50,7 +50,6 @@ class AuthController(
     @Value("\${jwt.refresh-expiration}") private val refreshExpiration: Long,
     @Value("\${app.cookie.secure:false}") private val cookieSecure: Boolean,
 ) {
-
     @PostMapping("/login", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(summary = "Authenticate user", description = "Authenticates a user with email and password, returns JWT token on success")
     @ApiResponses(
@@ -68,10 +67,11 @@ class AuthController(
         httpRequest: HttpServletRequest,
         httpResponse: HttpServletResponse,
     ): LoginResponseDto {
-        val result = authService.login(
-            request,
-            httpRequest.getHeader("X-Forwarded-For") ?: httpRequest.remoteAddr,
-        )
+        val result =
+            authService.login(
+                request,
+                httpRequest.getHeader("X-Forwarded-For") ?: httpRequest.remoteAddr,
+            )
         result.refreshToken?.let { setRefreshTokenCookie(httpResponse, it) }
         return result.copy(refreshToken = null)
     }
@@ -88,19 +88,25 @@ class AuthController(
             ApiResponse(responseCode = "400", description = "Invalid request data or email already in use"),
         ],
     )
-    fun register(@Valid @RequestBody request: SignupRequest): SignupResponseDto =
-        authService.register(request)
+    fun register(
+        @Valid @RequestBody request: SignupRequest,
+    ): SignupResponseDto = authService.register(request)
 
     @GetMapping("/verify-email", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(summary = "Verify email address", description = "Confirms the user's email using the token sent during registration")
-    fun verifyEmail(@RequestParam token: String): Map<String, String> {
+    fun verifyEmail(
+        @RequestParam token: String,
+    ): Map<String, String> {
         authService.verifyEmail(token)
         return mapOf("message" to "Email verified successfully")
     }
 
     @GetMapping("/current", produces = [MediaType.APPLICATION_JSON_VALUE])
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    @Operation(summary = "Get current user information", description = "Retrieves detailed information about the currently authenticated user")
+    @Operation(
+        summary = "Get current user information",
+        description = "Retrieves detailed information about the currently authenticated user",
+    )
     @ApiResponses(
         value = [
             ApiResponse(
@@ -112,8 +118,7 @@ class AuthController(
             ApiResponse(responseCode = "404", description = "User not found"),
         ],
     )
-    fun getCurrentUser(): GetCurrentUserResponseDto =
-        authService.getCurrentUser()
+    fun getCurrentUser(): GetCurrentUserResponseDto = authService.getCurrentUser()
 
     @PostMapping("/google-login", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(summary = "Google OAuth login", description = "Authenticates a user with Google OAuth, returns JWT token on success")
@@ -134,8 +139,10 @@ class AuthController(
         httpResponse: HttpServletResponse,
     ): LoginResponseDto {
         val cookieToken = getCookieValue(httpRequest, "refresh_token")
-        val effectiveToken = cookieToken ?: request?.refreshToken
-            ?: throw com.example.common.exception.UnauthorizedException("Refresh token is required")
+        val effectiveToken =
+            cookieToken ?: request?.refreshToken
+                ?: throw com.example.common.exception
+                    .UnauthorizedException("Refresh token is required")
         val result = authService.refreshToken(RefreshTokenRequest(refreshToken = effectiveToken))
         result.refreshToken?.let { setRefreshTokenCookie(httpResponse, it) }
         return result.copy(refreshToken = null)
@@ -177,13 +184,18 @@ class AuthController(
             ApiResponse(responseCode = "400", description = "Invalid current password"),
         ],
     )
-    fun changePassword(@Valid @RequestBody request: ChangePasswordRequestDto): PasswordResetResponseDto =
-        passwordService.changePassword(request)
+    fun changePassword(
+        @Valid @RequestBody request: ChangePasswordRequestDto,
+    ): PasswordResetResponseDto = passwordService.changePassword(request)
 
     @PostMapping("/forgot-password", produces = [MediaType.APPLICATION_JSON_VALUE])
-    @Operation(summary = "Request password reset", description = "Initiates the password reset process by sending an email with reset instructions")
-    fun requestPasswordReset(@Valid @RequestBody request: PasswordResetRequestDto): PasswordResetResponseDto =
-        passwordService.requestPasswordReset(request)
+    @Operation(
+        summary = "Request password reset",
+        description = "Initiates the password reset process by sending an email with reset instructions",
+    )
+    fun requestPasswordReset(
+        @Valid @RequestBody request: PasswordResetRequestDto,
+    ): PasswordResetResponseDto = passwordService.requestPasswordReset(request)
 
     @PostMapping("/set-new-password", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(summary = "Reset password with token", description = "Resets the user's password using the token sent via email")
@@ -197,41 +209,55 @@ class AuthController(
             ApiResponse(responseCode = "400", description = "Invalid or expired token, or passwords don't match"),
         ],
     )
-    fun resetPassword(@Valid @RequestBody request: ResetPasswordDto): PasswordResetResponseDto =
-        passwordService.resetPassword(request)
+    fun resetPassword(
+        @Valid @RequestBody request: ResetPasswordDto,
+    ): PasswordResetResponseDto = passwordService.resetPassword(request)
 
     @PostMapping("/update-profile", produces = [MediaType.APPLICATION_JSON_VALUE])
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @Operation(summary = "Update user profile", description = "Updates the user's profile information (fullName, currentLevel, jlptGoal)")
-    fun updateProfile(@Valid @RequestBody request: UpdateProfileRequestDto): Map<String, String> {
-        val userId = userAuthUtil.getCurrentUserId()
-            ?: throw com.example.common.exception.BusinessException("Cannot extract userId: Invalid token")
+    fun updateProfile(
+        @Valid @RequestBody request: UpdateProfileRequestDto,
+    ): Map<String, String> {
+        val userId =
+            userAuthUtil.getCurrentUserId()
+                ?: throw com.example.common.exception
+                    .BusinessException("Cannot extract userId: Invalid token")
         userService.updateProfile(userId, request)
         return mapOf("message" to "Profile updated successfully")
     }
 
-    private fun setRefreshTokenCookie(response: HttpServletResponse, token: String) {
-        val cookie = ResponseCookie.from("refresh_token", token)
-            .httpOnly(true)
-            .secure(cookieSecure)
-            .path("/api/v1/user/auth")
-            .maxAge(Duration.ofSeconds(refreshExpiration / 1000))
-            .sameSite("Lax")
-            .build()
+    private fun setRefreshTokenCookie(
+        response: HttpServletResponse,
+        token: String,
+    ) {
+        val cookie =
+            ResponseCookie
+                .from("refresh_token", token)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .path("/api/v1/user/auth")
+                .maxAge(Duration.ofSeconds(refreshExpiration / 1000))
+                .sameSite("Lax")
+                .build()
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString())
     }
 
     private fun clearRefreshTokenCookie(response: HttpServletResponse) {
-        val cookie = ResponseCookie.from("refresh_token", "")
-            .httpOnly(true)
-            .secure(cookieSecure)
-            .path("/api/v1/user/auth")
-            .maxAge(0)
-            .sameSite("Lax")
-            .build()
+        val cookie =
+            ResponseCookie
+                .from("refresh_token", "")
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .path("/api/v1/user/auth")
+                .maxAge(0)
+                .sameSite("Lax")
+                .build()
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString())
     }
 
-    private fun getCookieValue(request: HttpServletRequest, name: String): String? =
-        request.cookies?.firstOrNull { it.name == name }?.value
+    private fun getCookieValue(
+        request: HttpServletRequest,
+        name: String,
+    ): String? = request.cookies?.firstOrNull { it.name == name }?.value
 }

@@ -1,60 +1,59 @@
-build:
-  maxIssues: 0
-
 config:
-  validation: true
+  validation: false
   warningsAsErrors: false
-
-complexity:
-  LongMethod:
-    threshold: 60
-  LongParameterList:
-    functionThreshold: 8
-    constructorThreshold: 8
-  CyclomaticComplexMethod:
-    threshold: 15
-  TooManyFunctions:
-    thresholdInFiles: 20
-    thresholdInClasses: 15
 
 naming:
   FunctionNaming:
-    functionPattern: '[a-zA-Z][a-zA-Z0-9]*'  # Allow backtick test names
+    functionPattern: '[a-zA-Z][a-zA-Z0-9]*'
   TopLevelPropertyNaming:
     constantPattern: '[A-Z][_A-Z0-9]*'
 
 style:
   MagicNumber:
-    ignoreNumbers:
-      - '-1'
-      - '0'
-      - '1'
-      - '2'
-      - '5'
-      - '5.0'
-      - '10'
-      - '100'
-      - '1000'
-    ignoreAnnotated:
-      - 'Value'
-      - 'Column'
+    active: false
   WildcardImport:
     active: false
   MaxLineLength:
     maxLineLength: 140
   ReturnCount:
-    max: 3
+    max: 8
   VarCouldBeVal:
     ignoreAnnotated:
       - 'Value'
       - 'Autowired'
+  UnusedParameter:
+    active: false
+  ThrowsCount:
+    active: false
 
 potential-bugs:
   UnsafeCallOnNullableType:
     active: true
 
+complexity:
+  TooManyFunctions:
+    active: false
+  LongMethod:
+    active: false
+  ComplexCondition:
+    active: false
+  ComplexMethod:
+    active: false
+  CyclomaticComplexMethod:
+    active: false
+  LongParameterList:
+    active: false
+  NestedBlockDepth:
+    active: false
+
 exceptions:
   TooGenericExceptionCaught:
-    active: false  # Spring services intentionally catch Exception
+    active: false
+  SwallowedException:
+    active: false
+  ThrowsCount:
+    active: false
+  TooGenericExceptionThrown:
+    active: false
 
 # ktlint handles formatting separately

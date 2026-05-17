@@ -5,8 +5,9 @@ import io.micrometer.core.instrument.MeterRegistry
 import org.springframework.stereotype.Component
 
 @Component
-class AppMetrics(registry: MeterRegistry) {
-
+class AppMetrics(
+    registry: MeterRegistry,
+) {
     val flashcardReviews: Counter = registry.counter("nihongoit.flashcard.reviews")
     val ttsGenerated: Counter = registry.counter("nihongoit.tts.generated")
     val openAiCalls: Counter = registry.counter("nihongoit.openai.calls")

@@ -16,7 +16,6 @@ import java.util.UUID
 class UserAuthUtil(
     private val jwtTokenUtil: JwtTokenUtil,
 ) {
-
     private val logger = LoggerFactory.getLogger(UserAuthUtil::class.java)
 
     // Get token from Authorization header
@@ -34,44 +33,41 @@ class UserAuthUtil(
     /**
      * Extract email from token
      */
-    fun getEmailFromToken(token: String): String? {
-        return try {
+    fun getEmailFromToken(token: String): String? =
+        try {
             jwtTokenUtil.extractEmail(token)
         } catch (e: Exception) {
             logger.error("Failed to extract email from token: ${e.message}")
             null
         }
-    }
 
     /**
      * Extract full name from token
      */
-    fun getFullNameFromToken(token: String): String? {
-        return try {
+    fun getFullNameFromToken(token: String): String? =
+        try {
             jwtTokenUtil.extractClaim(token) { claims -> claims["fullName"] as? String }
         } catch (e: Exception) {
             logger.error("Failed to extract fullName from token: ${e.message}")
             null
         }
-    }
 
     /**
      * Extract profile picture from token
      */
-    fun getProfilePictureFromToken(token: String): String? {
-        return try {
+    fun getProfilePictureFromToken(token: String): String? =
+        try {
             jwtTokenUtil.extractClaim(token) { claims -> claims["profilePicture"] as? String }
         } catch (e: Exception) {
             logger.error("Failed to extract profilePicture from token: ${e.message}")
             null
         }
-    }
 
     /**
      * Extract current level from token
      */
-    fun getCurrentLevelFromToken(token: String): JlptLevel? {
-        return try {
+    fun getCurrentLevelFromToken(token: String): JlptLevel? =
+        try {
             jwtTokenUtil.extractClaim(token) { claims ->
                 (claims["currentLevel"] as? String)?.let { JlptLevel.valueOf(it) }
             }
@@ -79,13 +75,12 @@ class UserAuthUtil(
             logger.error("Failed to extract currentLevel from token: ${e.message}")
             null
         }
-    }
 
     /**
      * Extract JLPT goal from token
      */
-    fun getJlptGoalFromToken(token: String): JlptLevel? {
-        return try {
+    fun getJlptGoalFromToken(token: String): JlptLevel? =
+        try {
             jwtTokenUtil.extractClaim(token) { claims ->
                 (claims["jlptGoal"] as? String)?.let { JlptLevel.valueOf(it) }
             }
@@ -93,13 +88,12 @@ class UserAuthUtil(
             logger.error("Failed to extract jlptGoal from token: ${e.message}")
             null
         }
-    }
 
     /**
      * Extract last login from token
      */
-    fun getLastLoginFromToken(token: String): LocalDateTime? {
-        return try {
+    fun getLastLoginFromToken(token: String): LocalDateTime? =
+        try {
             jwtTokenUtil.extractClaim(token) { claims ->
                 (claims["lastLogin"] as? String)?.let { LocalDateTime.parse(it) }
             }
@@ -107,32 +101,29 @@ class UserAuthUtil(
             logger.error("Failed to extract lastLogin from token: ${e.message}")
             null
         }
-    }
 
     /**
      * Extract id from token
      */
-    fun getIdFromToken(token: String): UUID? {
-        return try {
+    fun getIdFromToken(token: String): UUID? =
+        try {
             val userId = jwtTokenUtil.extractClaim(token) { claims -> claims["userId"] as String }
             UUID.fromString(userId)
         } catch (e: Exception) {
             logger.error("Failed to extract userId from token: ${e.message}", e)
             null
         }
-    }
 
     /**
      * Extract roleId from token
      */
-    fun getRoleIdFromToken(token: String): Int? {
-        return try {
+    fun getRoleIdFromToken(token: String): Int? =
+        try {
             jwtTokenUtil.extractRoleId(token)
         } catch (e: Exception) {
             logger.error("Failed to extract roleId from token: ${e.message}")
             null
         }
-    }
 
     /**
      * Create a UserEntity from token (if we need the entire user information)
@@ -255,8 +246,9 @@ class UserAuthUtil(
 
         // If token extraction failed, try from security context
         try {
-            val authentication = SecurityContextHolder.getContext().authentication
-                ?: throw RuntimeException("User not authenticated")
+            val authentication =
+                SecurityContextHolder.getContext().authentication
+                    ?: throw RuntimeException("User not authenticated")
 
             val principal = authentication.principal
             if (principal is CustomUserDetails) {
@@ -264,10 +256,11 @@ class UserAuthUtil(
             }
 
             // Try to get from authorities
-            val userIdString = authentication.authorities
-                .find { it.authority.startsWith("USER_ID:") }
-                ?.authority
-                ?.substring("USER_ID:".length)
+            val userIdString =
+                authentication.authorities
+                    .find { it.authority?.startsWith("USER_ID:") == true }
+                    ?.authority
+                    ?.substring("USER_ID:".length)
 
             return userIdString?.let { UUID.fromString(it) }
                 ?: throw RuntimeException("User ID not found in authentication")
@@ -283,7 +276,8 @@ class UserAuthUtil(
      */
     fun isAuthenticated(): Boolean {
         val authentication = SecurityContextHolder.getContext().authentication
-        return authentication != null && authentication.isAuthenticated &&
+        return authentication != null &&
+            authentication.isAuthenticated &&
             authentication.principal != "anonymousUser"
     }
 }

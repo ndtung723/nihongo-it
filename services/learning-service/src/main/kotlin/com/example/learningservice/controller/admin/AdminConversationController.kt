@@ -24,7 +24,6 @@ import java.util.*
 class AdminConversationController(
     private val conversationService: ConversationService,
 ) {
-
     @GetMapping("", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(
         summary = "Get all conversations with pagination",
@@ -41,11 +40,12 @@ class AdminConversationController(
         val direction = if (sortDir.equals("desc", ignoreCase = true)) Sort.Direction.DESC else Sort.Direction.ASC
         val pageable = PageRequest.of(page, size, Sort.by(direction, sortBy))
 
-        val result = if (search != null && search.isNotBlank()) {
-            conversationService.searchConversations(search, pageable)
-        } else {
-            conversationService.getAllConversations(pageable)
-        }
+        val result =
+            if (search != null && search.isNotBlank()) {
+                conversationService.searchConversations(search, pageable)
+            } else {
+                conversationService.getAllConversations(pageable)
+            }
 
         return ResponseEntity.ok(result)
     }
@@ -71,9 +71,9 @@ class AdminConversationController(
         description = "Retrieves a single conversation by its unique identifier",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    fun getConversationById(@PathVariable conversationId: UUID): ResponseEntity<ConversationDTO> {
-        return ResponseEntity.ok(conversationService.getConversationById(conversationId))
-    }
+    fun getConversationById(
+        @PathVariable conversationId: UUID,
+    ): ResponseEntity<ConversationDTO> = ResponseEntity.ok(conversationService.getConversationById(conversationId))
 
     @PostMapping("", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(
@@ -81,7 +81,9 @@ class AdminConversationController(
         description = "Creates a new conversation in the system",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    fun createConversation(@RequestBody request: CreateConversationRequest): ResponseEntity<ConversationDTO> {
+    fun createConversation(
+        @RequestBody request: CreateConversationRequest,
+    ): ResponseEntity<ConversationDTO> {
         val createdConversation = conversationService.createConversation(request)
         return ResponseEntity.status(HttpStatus.CREATED).body(createdConversation)
     }
@@ -106,7 +108,9 @@ class AdminConversationController(
         description = "Deletes a conversation from the system",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    fun deleteConversation(@PathVariable conversationId: UUID): ResponseEntity<Void> {
+    fun deleteConversation(
+        @PathVariable conversationId: UUID,
+    ): ResponseEntity<Void> {
         conversationService.deleteConversation(conversationId)
         return ResponseEntity.noContent().build()
     }

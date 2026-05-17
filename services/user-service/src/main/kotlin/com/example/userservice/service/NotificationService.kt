@@ -36,10 +36,14 @@ class NotificationService(
     }
 
     @Async
-    fun sendVerificationEmail(email: String, token: String) {
+    fun sendVerificationEmail(
+        email: String,
+        token: String,
+    ) {
         val verifyUrl = "$frontendUrl/verify-email?token=$token"
         val subject = "Verify your Nihongo IT account"
-        val content = """
+        val content =
+            """
             Hello,
 
             Thank you for registering with Nihongo IT!
@@ -53,7 +57,7 @@ class NotificationService(
 
             Best regards,
             The Nihongo IT Team
-        """.trimIndent()
+            """.trimIndent()
 
         try {
             val message = SimpleMailMessage()
@@ -69,7 +73,10 @@ class NotificationService(
     }
 
     @Async
-    fun sendPasswordResetEmail(email: String, resetToken: String) {
+    fun sendPasswordResetEmail(
+        email: String,
+        resetToken: String,
+    ) {
         val resetUrl = "$frontendUrl/account/reset-password?token=$resetToken"
 
         sendPasswordResetEmail(email, resetToken, resetUrl)
@@ -83,9 +90,14 @@ class NotificationService(
      * @param resetUrl The password change URL with token
      */
     @Async
-    fun sendPasswordResetEmail(email: String, resetToken: String, resetUrl: String) {
+    fun sendPasswordResetEmail(
+        email: String,
+        resetToken: String,
+        resetUrl: String,
+    ) {
         val subject = "Password Change Request - Nihongo IT"
-        val content = """
+        val content =
+            """
             Hello,
 
             You have requested to change your password for your Nihongo IT account.
@@ -99,7 +111,7 @@ class NotificationService(
 
             Best regards,
             The Nihongo IT Team
-        """.trimIndent()
+            """.trimIndent()
 
         try {
             logger.debug("Sending password change email to $email")

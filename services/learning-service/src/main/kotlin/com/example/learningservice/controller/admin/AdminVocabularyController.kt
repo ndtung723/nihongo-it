@@ -27,7 +27,6 @@ import java.util.*
 class AdminVocabularyController(
     private val vocabularyService: VocabularyService,
 ) {
-
     @GetMapping("", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(
         summary = "Get all vocabulary with pagination",
@@ -39,11 +38,12 @@ class AdminVocabularyController(
         @RequestParam(defaultValue = "20") size: Int,
         @RequestParam(required = false) jlptLevel: String?,
     ): ResponseEntity<PagedVocabularyResponseDto> {
-        val filter = VocabularyFilterRequestDto(
-            page = page,
-            size = size,
-            jlptLevel = jlptLevel?.let { JlptLevel.valueOf(it) },
-        )
+        val filter =
+            VocabularyFilterRequestDto(
+                page = page,
+                size = size,
+                jlptLevel = jlptLevel?.let { JlptLevel.valueOf(it) },
+            )
         return ResponseEntity.ok(vocabularyService.filterVocabulary(filter))
     }
 
@@ -59,11 +59,12 @@ class AdminVocabularyController(
         @RequestParam(defaultValue = "20") size: Int,
     ): ResponseEntity<PagedVocabularyResponseDto> {
         // Implementation needed
-        val filter = VocabularyFilterRequestDto(
-            topicId = topicId,
-            page = page,
-            size = size,
-        )
+        val filter =
+            VocabularyFilterRequestDto(
+                topicId = topicId,
+                page = page,
+                size = size,
+            )
         return ResponseEntity.ok(vocabularyService.filterVocabularyByTopicId(filter))
     }
 
@@ -73,9 +74,9 @@ class AdminVocabularyController(
         description = "Retrieves a single vocabulary item by its unique identifier",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    fun getVocabularyById(@PathVariable vocabId: UUID): ResponseEntity<GetVocabularyResponseDto> {
-        return ResponseEntity.ok(vocabularyService.getVocabularybyId(vocabId))
-    }
+    fun getVocabularyById(
+        @PathVariable vocabId: UUID,
+    ): ResponseEntity<GetVocabularyResponseDto> = ResponseEntity.ok(vocabularyService.getVocabularybyId(vocabId))
 
     @PostMapping("", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(
@@ -83,7 +84,9 @@ class AdminVocabularyController(
         description = "Creates a new vocabulary item in the system",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    fun createVocabulary(@Valid @RequestBody request: CreateVocabularyRequestDto): ResponseEntity<CreateVocabularyResponseDto> {
+    fun createVocabulary(
+        @Valid @RequestBody request: CreateVocabularyRequestDto,
+    ): ResponseEntity<CreateVocabularyResponseDto> {
         val createdVocabulary = vocabularyService.createVocabulary(request)
         return ResponseEntity.status(HttpStatus.CREATED).body(createdVocabulary)
     }
@@ -108,7 +111,9 @@ class AdminVocabularyController(
         description = "Deletes a vocabulary item from the system",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    fun deleteVocabulary(@PathVariable vocabId: UUID): ResponseEntity<Void> {
+    fun deleteVocabulary(
+        @PathVariable vocabId: UUID,
+    ): ResponseEntity<Void> {
         vocabularyService.deleteVocabulary(vocabId)
         return ResponseEntity.noContent().build()
     }
@@ -126,13 +131,14 @@ class AdminVocabularyController(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
     ): ResponseEntity<PagedVocabularyResponseDto> {
-        val filter = VocabularyFilterRequestDto(
-            keyword = query,
-            topicId = topicId,
-            jlptLevel = jlptLevel?.let { JlptLevel.valueOf(it) },
-            page = page,
-            size = size,
-        )
+        val filter =
+            VocabularyFilterRequestDto(
+                keyword = query,
+                topicId = topicId,
+                jlptLevel = jlptLevel?.let { JlptLevel.valueOf(it) },
+                page = page,
+                size = size,
+            )
         return ResponseEntity.ok(vocabularyService.filterVocabulary(filter))
     }
 }

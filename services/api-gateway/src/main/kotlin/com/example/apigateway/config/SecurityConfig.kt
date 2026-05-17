@@ -22,16 +22,14 @@ class SecurityConfig {
     private lateinit var allowedOrigins: String
 
     @Bean
-    fun springSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
-        return http
+    fun springSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain =
+        http
             .csrf { it.disable() }
             .cors { it.disable() } // handled by corsWebFilter bean
             .authorizeExchange {
                 it.pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 it.pathMatchers("/**").permitAll() // JWT validation handled by GatewayJwtFilter
-            }
-            .build()
-    }
+            }.build()
 
     @Bean
     fun corsWebFilter(): CorsWebFilter {

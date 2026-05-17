@@ -8,7 +8,6 @@ data class RoleEntity(
     @Id
     @Column(name = "role_id")
     val roleId: Int,
-
     @Column(name = "role_name", length = 20)
     val roleName: String,
 ) {

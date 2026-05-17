@@ -21,16 +21,13 @@ import java.util.*
 class AdminCategoryController(
     private val categoryService: CategoryService,
 ) {
-
     @GetMapping("", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(
         summary = "Get all categories",
         description = "Retrieves a list of all categories in the system",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    fun getAllCategories(): ResponseEntity<List<CategoryDTO>> {
-        return ResponseEntity.ok(categoryService.getAllCategories())
-    }
+    fun getAllCategories(): ResponseEntity<List<CategoryDTO>> = ResponseEntity.ok(categoryService.getAllCategories())
 
     @GetMapping("/{categoryId}", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(
@@ -38,9 +35,9 @@ class AdminCategoryController(
         description = "Retrieves a single category by its unique identifier",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    fun getCategoryById(@PathVariable categoryId: UUID): ResponseEntity<CategoryDTO> {
-        return ResponseEntity.ok(categoryService.getCategoryById(categoryId))
-    }
+    fun getCategoryById(
+        @PathVariable categoryId: UUID,
+    ): ResponseEntity<CategoryDTO> = ResponseEntity.ok(categoryService.getCategoryById(categoryId))
 
     @PostMapping("", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(
@@ -48,7 +45,9 @@ class AdminCategoryController(
         description = "Creates a new category in the system",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    fun createCategory(@RequestBody request: CreateCategoryRequest): ResponseEntity<CategoryDTO> {
+    fun createCategory(
+        @RequestBody request: CreateCategoryRequest,
+    ): ResponseEntity<CategoryDTO> {
         val createdCategory = categoryService.createCategory(request)
         return ResponseEntity.status(HttpStatus.CREATED).body(createdCategory)
     }
@@ -73,7 +72,9 @@ class AdminCategoryController(
         description = "Deletes a category from the system",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    fun deleteCategory(@PathVariable categoryId: UUID): ResponseEntity<Void> {
+    fun deleteCategory(
+        @PathVariable categoryId: UUID,
+    ): ResponseEntity<Void> {
         categoryService.deleteCategory(categoryId)
         return ResponseEntity.noContent().build()
     }
@@ -84,7 +85,9 @@ class AdminCategoryController(
         description = "Activates or deactivates a category",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    fun toggleCategoryStatus(@PathVariable categoryId: UUID): ResponseEntity<CategoryDTO> {
+    fun toggleCategoryStatus(
+        @PathVariable categoryId: UUID,
+    ): ResponseEntity<CategoryDTO> {
         val updatedCategory = categoryService.toggleCategoryStatus(categoryId)
         return ResponseEntity.ok(updatedCategory)
     }
@@ -98,7 +101,5 @@ class AdminCategoryController(
     fun searchCategories(
         @RequestParam(required = false) query: String?,
         @RequestParam(required = false) meaningQuery: String?,
-    ): ResponseEntity<List<CategoryDTO>> {
-        return ResponseEntity.ok(categoryService.searchCategoriesWithMeaning(query, meaningQuery))
-    }
+    ): ResponseEntity<List<CategoryDTO>> = ResponseEntity.ok(categoryService.searchCategoriesWithMeaning(query, meaningQuery))
 }

@@ -16,7 +16,6 @@ import org.springframework.mock.web.MockHttpServletResponse
 import org.springframework.security.core.context.SecurityContextHolder
 
 class GatewayHeaderAuthFilterTest {
-
     private lateinit var filter: GatewayHeaderAuthFilter
     private lateinit var chain: FilterChain
 
@@ -35,21 +34,21 @@ class GatewayHeaderAuthFilterTest {
     @Nested
     @DisplayName("valid gateway headers")
     inner class ValidHeaders {
-
         @Test
         @DisplayName("USER role → ROLE_USER authority + userId as principal name")
         fun userRole_setsCorrectAuthority() {
-            val request = MockHttpServletRequest().apply {
-                addHeader("X-User-Id", "user-123")
-                addHeader("X-User-Role", "USER")
-            }
+            val request =
+                MockHttpServletRequest().apply {
+                    addHeader("X-User-Id", "user-123")
+                    addHeader("X-User-Role", "USER")
+                }
             val response = MockHttpServletResponse()
 
             filter.doFilter(request, response, chain)
 
             val auth = SecurityContextHolder.getContext().authentication
             assertNotNull(auth)
-            assertEquals("user-123", auth.name)
+            assertEquals("user-123", auth!!.name)
             assertEquals(listOf("ROLE_USER"), auth.authorities.map { it.authority })
             verify(chain).doFilter(request, response)
         }
@@ -57,27 +56,29 @@ class GatewayHeaderAuthFilterTest {
         @Test
         @DisplayName("ADMIN role → ROLE_ADMIN authority")
         fun adminRole_setsCorrectAuthority() {
-            val request = MockHttpServletRequest().apply {
-                addHeader("X-User-Id", "admin-456")
-                addHeader("X-User-Role", "ADMIN")
-            }
+            val request =
+                MockHttpServletRequest().apply {
+                    addHeader("X-User-Id", "admin-456")
+                    addHeader("X-User-Role", "ADMIN")
+                }
             val response = MockHttpServletResponse()
 
             filter.doFilter(request, response, chain)
 
             val auth = SecurityContextHolder.getContext().authentication
             assertNotNull(auth)
-            assertEquals(listOf("ROLE_ADMIN"), auth.authorities.map { it.authority })
+            assertEquals(listOf("ROLE_ADMIN"), auth!!.authorities.map { it.authority })
         }
 
         @Test
         @DisplayName("UUID-formatted userId → stored verbatim as principal name")
         fun uuidUserId_storedVerbatim() {
             val userId = "550e8400-e29b-41d4-a716-446655440000"
-            val request = MockHttpServletRequest().apply {
-                addHeader("X-User-Id", userId)
-                addHeader("X-User-Role", "USER")
-            }
+            val request =
+                MockHttpServletRequest().apply {
+                    addHeader("X-User-Id", userId)
+                    addHeader("X-User-Role", "USER")
+                }
             val response = MockHttpServletResponse()
 
             filter.doFilter(request, response, chain)
@@ -89,13 +90,13 @@ class GatewayHeaderAuthFilterTest {
     @Nested
     @DisplayName("missing or blank headers")
     inner class MissingHeaders {
-
         @Test
         @DisplayName("missing X-User-Id → no authentication set, chain continues")
         fun missingUserId_noAuth() {
-            val request = MockHttpServletRequest().apply {
-                addHeader("X-User-Role", "USER")
-            }
+            val request =
+                MockHttpServletRequest().apply {
+                    addHeader("X-User-Role", "USER")
+                }
             val response = MockHttpServletResponse()
 
             filter.doFilter(request, response, chain)
@@ -107,9 +108,10 @@ class GatewayHeaderAuthFilterTest {
         @Test
         @DisplayName("missing X-User-Role → no authentication set, chain continues")
         fun missingRole_noAuth() {
-            val request = MockHttpServletRequest().apply {
-                addHeader("X-User-Id", "user-123")
-            }
+            val request =
+                MockHttpServletRequest().apply {
+                    addHeader("X-User-Id", "user-123")
+                }
             val response = MockHttpServletResponse()
 
             filter.doFilter(request, response, chain)
@@ -121,10 +123,11 @@ class GatewayHeaderAuthFilterTest {
         @Test
         @DisplayName("blank X-User-Id → no authentication set")
         fun blankUserId_noAuth() {
-            val request = MockHttpServletRequest().apply {
-                addHeader("X-User-Id", "   ")
-                addHeader("X-User-Role", "USER")
-            }
+            val request =
+                MockHttpServletRequest().apply {
+                    addHeader("X-User-Id", "   ")
+                    addHeader("X-User-Role", "USER")
+                }
             val response = MockHttpServletResponse()
 
             filter.doFilter(request, response, chain)

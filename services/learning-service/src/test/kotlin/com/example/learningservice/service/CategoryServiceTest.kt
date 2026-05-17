@@ -30,7 +30,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class CategoryServiceTest {
-
     private lateinit var categoryRepository: CategoryRepository
     private lateinit var topicRepository: TopicRepository
     private lateinit var userRepository: UserRepository
@@ -40,25 +39,27 @@ class CategoryServiceTest {
     private val userId = UUID.randomUUID()
     private val categoryId = UUID.randomUUID()
 
-    private fun makeCategory(isActive: Boolean = true) = CategoryEntity(
-        categoryId = categoryId,
-        name = "Test Category",
-        meaning = "テスト",
-        displayOrder = 1,
-        isActive = isActive,
-        createdAt = LocalDateTime.now(),
-        updatedAt = LocalDateTime.now(),
-    )
+    private fun makeCategory(isActive: Boolean = true) =
+        CategoryEntity(
+            categoryId = categoryId,
+            name = "Test Category",
+            meaning = "テスト",
+            displayOrder = 1,
+            isActive = isActive,
+            createdAt = LocalDateTime.now(),
+            updatedAt = LocalDateTime.now(),
+        )
 
-    private fun makeUser() = UserEntity(
-        userId = userId,
-        email = "admin@test.com",
-        password = "encoded",
-        fullName = "Admin",
-        role = RoleEntity(RoleEntity.ROLE_ADMIN, "ROLE_ADMIN"),
-        createdAt = Instant.now(),
-        updatedAt = Instant.now(),
-    )
+    private fun makeUser() =
+        UserEntity(
+            userId = userId,
+            email = "admin@test.com",
+            password = "encoded",
+            fullName = "Admin",
+            role = RoleEntity(RoleEntity.ROLE_ADMIN, "ROLE_ADMIN"),
+            createdAt = Instant.now(),
+            updatedAt = Instant.now(),
+        )
 
     @BeforeEach
     fun setup() {
@@ -72,7 +73,6 @@ class CategoryServiceTest {
     @Nested
     @DisplayName("toggleCategoryStatus()")
     inner class ToggleCategoryStatus {
-
         @Test
         @DisplayName("active category → flips to inactive")
         fun activeCategory_becomesInactive() {
@@ -131,7 +131,6 @@ class CategoryServiceTest {
     @Nested
     @DisplayName("createCategory()")
     inner class CreateCategory {
-
         @Test
         @DisplayName("duplicate name → throws BusinessException, repository.save never called")
         fun duplicateName_throwsBusinessException() {
@@ -178,7 +177,6 @@ class CategoryServiceTest {
     @Nested
     @DisplayName("getCategoryById()")
     inner class GetCategoryById {
-
         @Test
         @DisplayName("existing ID → returns DTO")
         fun existingId_returnsDto() {
@@ -205,7 +203,6 @@ class CategoryServiceTest {
     @Nested
     @DisplayName("updateCategory()")
     inner class UpdateCategory {
-
         @Test
         @DisplayName("renaming to existing name → throws BusinessException")
         fun renameToDuplicateName_throwsBusinessException() {

@@ -13,8 +13,14 @@ import java.util.UUID
 @Repository
 interface NotificationRepository : JpaRepository<NotificationEntity, UUID> {
     fun findByUserOrderBySentAtDesc(user: UserEntity): List<NotificationEntity>
+
     fun findByUserAndIsReadFalseOrderBySentAtDesc(user: UserEntity): List<NotificationEntity>
-    fun findByUserAndSentAtAfterOrderBySentAtDesc(user: UserEntity, afterDate: LocalDateTime): List<NotificationEntity>
+
+    fun findByUserAndSentAtAfterOrderBySentAtDesc(
+        user: UserEntity,
+        afterDate: LocalDateTime,
+    ): List<NotificationEntity>
+
     fun countByUserAndIsReadFalse(user: UserEntity): Long
 
     @Modifying
@@ -22,5 +28,8 @@ interface NotificationRepository : JpaRepository<NotificationEntity, UUID> {
     fun deleteByCreatedAtBefore(beforeDate: LocalDateTime): Int
 
     // Find the most recent notification by user and type
-    fun findFirstByUserAndTypeOrderBySentAtDesc(user: UserEntity, type: NotificationType): NotificationEntity?
+    fun findFirstByUserAndTypeOrderBySentAtDesc(
+        user: UserEntity,
+        type: NotificationType,
+    ): NotificationEntity?
 }

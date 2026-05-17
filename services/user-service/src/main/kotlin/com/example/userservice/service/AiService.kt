@@ -9,8 +9,9 @@ import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 
 @Service
-class AiService(private val aiServiceClient: AiServiceClient) {
-
+class AiService(
+    private val aiServiceClient: AiServiceClient,
+) {
     private val logger = LoggerFactory.getLogger(AiService::class.java)
 
     fun generateSpeech(
@@ -28,7 +29,10 @@ class AiService(private val aiServiceClient: AiServiceClient) {
         }
     }
 
-    fun checkAudioExists(text: String, contentType: String = "vocabulary"): ResponseEntity<Map<String, Boolean>> {
+    fun checkAudioExists(
+        text: String,
+        contentType: String = "vocabulary",
+    ): ResponseEntity<Map<String, Boolean>> {
         try {
             return aiServiceClient.checkAudioExists(text, contentType)
         } catch (e: FeignException) {
@@ -37,7 +41,10 @@ class AiService(private val aiServiceClient: AiServiceClient) {
         }
     }
 
-    fun getAudio(text: String, contentType: String = "vocabulary"): ResponseEntity<ByteArray> {
+    fun getAudio(
+        text: String,
+        contentType: String = "vocabulary",
+    ): ResponseEntity<ByteArray> {
         try {
             return aiServiceClient.getAudio(text, contentType)
         } catch (e: FeignException) {
@@ -46,7 +53,11 @@ class AiService(private val aiServiceClient: AiServiceClient) {
         }
     }
 
-    fun analyzeSpeech(audio: MultipartFile, text: String, userId: String? = null): ResponseEntity<AnalyzeSpeechResponse> {
+    fun analyzeSpeech(
+        audio: MultipartFile,
+        text: String,
+        userId: String? = null,
+    ): ResponseEntity<AnalyzeSpeechResponse> {
         try {
             return aiServiceClient.analyzeSpeech(audio, text, userId)
         } catch (e: FeignException) {
@@ -55,7 +66,10 @@ class AiService(private val aiServiceClient: AiServiceClient) {
         }
     }
 
-    fun analyzeSample(sentence: String, sampleId: String): ResponseEntity<AnalyzeSpeechResponse> {
+    fun analyzeSample(
+        sentence: String,
+        sampleId: String,
+    ): ResponseEntity<AnalyzeSpeechResponse> {
         try {
             return aiServiceClient.analyzeSample(sentence, sampleId)
         } catch (e: FeignException) {
@@ -64,7 +78,10 @@ class AiService(private val aiServiceClient: AiServiceClient) {
         }
     }
 
-    fun getSampleAudio(sampleId: String, format: String = "wav"): ResponseEntity<ByteArray> {
+    fun getSampleAudio(
+        sampleId: String,
+        format: String = "wav",
+    ): ResponseEntity<ByteArray> {
         try {
             return aiServiceClient.getSampleAudio(sampleId, format)
         } catch (e: FeignException) {
@@ -73,7 +90,11 @@ class AiService(private val aiServiceClient: AiServiceClient) {
         }
     }
 
-    fun analyzeAudioEnhanced(audio: MultipartFile, referenceText: String, sampleId: String? = null): ResponseEntity<Any> {
+    fun analyzeAudioEnhanced(
+        audio: MultipartFile,
+        referenceText: String,
+        sampleId: String? = null,
+    ): ResponseEntity<Any> {
         try {
             return aiServiceClient.analyzeAudioEnhanced(audio, referenceText, sampleId)
         } catch (e: FeignException) {
@@ -109,7 +130,10 @@ class AiService(private val aiServiceClient: AiServiceClient) {
         }
     }
 
-    fun translate(text: String, direction: String): TranslationResponse {
+    fun translate(
+        text: String,
+        direction: String,
+    ): TranslationResponse {
         try {
             return aiServiceClient.translate(text, direction)
         } catch (e: FeignException) {
@@ -118,7 +142,10 @@ class AiService(private val aiServiceClient: AiServiceClient) {
         }
     }
 
-    fun translateEconomy(text: String, direction: String): TranslationResponse {
+    fun translateEconomy(
+        text: String,
+        direction: String,
+    ): TranslationResponse {
         try {
             return aiServiceClient.translateEconomy(text, direction)
         } catch (e: FeignException) {
@@ -127,7 +154,10 @@ class AiService(private val aiServiceClient: AiServiceClient) {
         }
     }
 
-    fun getVocabularyList(category: String, level: String = "N5"): List<VocabularyInfo> {
+    fun getVocabularyList(
+        category: String,
+        level: String = "N5",
+    ): List<VocabularyInfo> {
         try {
             return aiServiceClient.getVocabularyList(category, level)
         } catch (e: FeignException) {
@@ -151,7 +181,10 @@ class AiService(private val aiServiceClient: AiServiceClient) {
         }
     }
 
-    fun vocabularyChat(vocabWord: String, userMessage: String): String {
+    fun vocabularyChat(
+        vocabWord: String,
+        userMessage: String,
+    ): String {
         try {
             return aiServiceClient.vocabularyChat(vocabWord, userMessage)
         } catch (e: FeignException) {
@@ -160,7 +193,10 @@ class AiService(private val aiServiceClient: AiServiceClient) {
         }
     }
 
-    fun getListResponse(category: String, year: String): MutableList<String>? {
+    fun getListResponse(
+        category: String,
+        year: String,
+    ): MutableList<String>? {
         try {
             return aiServiceClient.getListResponse(category, year)
         } catch (e: FeignException) {
@@ -178,7 +214,10 @@ class AiService(private val aiServiceClient: AiServiceClient) {
         }
     }
 
-    fun getMapResponse(category: String, year: String): Map<String, Any>? {
+    fun getMapResponse(
+        category: String,
+        year: String,
+    ): Map<String, Any>? {
         try {
             return aiServiceClient.getMapResponse(category, year)
         } catch (e: FeignException) {

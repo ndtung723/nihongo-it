@@ -8,18 +8,27 @@ import org.springframework.web.server.ServerWebExchange
 import reactor.core.publisher.Mono
 
 @Component
-class SecurityHeadersFilter : GlobalFilter, Ordered {
+class SecurityHeadersFilter :
+    GlobalFilter,
+    Ordered {
     companion object {
         // Runs last so its beforeCommit fires closest to response flush
         private const val FILTER_ORDER = 100
     }
 
     @Suppress("ForbiddenVoid")
-    override fun filter(exchange: ServerWebExchange, chain: GatewayFilterChain): Mono<Void> {
+    override fun filter(
+        exchange: ServerWebExchange,
+        chain: GatewayFilterChain,
+    ): Mono<Void> {
         exchange.response.beforeCommit {
             val headers = exchange.response.headers
-            fun addIfAbsent(name: String, value: String) {
-                if (!headers.containsKey(name)) headers.set(name, value)
+
+            fun addIfAbsent(
+                name: String,
+                value: String,
+            ) {
+                if (!headers.containsHeader(name)) headers.set(name, value)
             }
             addIfAbsent("X-Content-Type-Options", "nosniff")
             addIfAbsent("X-Frame-Options", "DENY")

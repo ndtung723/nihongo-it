@@ -12,7 +12,6 @@ import java.io.IOException
 
 @Component
 class JwtAuthenticationEntryPoint : AuthenticationEntryPoint {
-
     @Throws(IOException::class)
     override fun commence(
         request: HttpServletRequest,
@@ -22,9 +21,10 @@ class JwtAuthenticationEntryPoint : AuthenticationEntryPoint {
         response.contentType = MediaType.APPLICATION_JSON_VALUE
         response.status = HttpServletResponse.SC_UNAUTHORIZED
 
-        val body = ErrorResponseDto(
-            message = authException.message ?: "Invalid authentication token",
-        )
+        val body =
+            ErrorResponseDto(
+                message = authException.message ?: "Invalid authentication token",
+            )
 
         ObjectMapper().writeValue(response.outputStream, body)
     }

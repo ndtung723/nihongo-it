@@ -18,8 +18,7 @@ class UserAuthUtil(
 ) {
     private val logger = LoggerFactory.getLogger(UserAuthUtil::class.java)
 
-    private fun currentRequest() =
-        (RequestContextHolder.getRequestAttributes() as? ServletRequestAttributes)?.request
+    private fun currentRequest() = (RequestContextHolder.getRequestAttributes() as? ServletRequestAttributes)?.request
 
     /**
      * Primary: read X-User-Id header injected by API Gateway.
@@ -73,18 +72,27 @@ class UserAuthUtil(
         return if (authHeader?.startsWith("Bearer ") == true) authHeader.substring(7) else null
     }
 
-    fun getEmailFromToken(token: String): String? = try {
-        jwtTokenUtil.extractEmail(token)
-    } catch (e: Exception) { null }
+    fun getEmailFromToken(token: String): String? =
+        try {
+            jwtTokenUtil.extractEmail(token)
+        } catch (e: Exception) {
+            null
+        }
 
-    fun getIdFromToken(token: String): UUID? = try {
-        val userId = jwtTokenUtil.extractClaim(token) { claims -> claims["userId"] as String }
-        UUID.fromString(userId)
-    } catch (e: Exception) { null }
+    fun getIdFromToken(token: String): UUID? =
+        try {
+            val userId = jwtTokenUtil.extractClaim(token) { claims -> claims["userId"] as String }
+            UUID.fromString(userId)
+        } catch (e: Exception) {
+            null
+        }
 
-    fun getRoleIdFromToken(token: String): Int? = try {
-        jwtTokenUtil.extractRoleId(token)
-    } catch (e: Exception) { null }
+    fun getRoleIdFromToken(token: String): Int? =
+        try {
+            jwtTokenUtil.extractRoleId(token)
+        } catch (e: Exception) {
+            null
+        }
 
     fun getCurrentUser(): UserEntity? {
         val userId = getCurrentUserId() ?: return null
@@ -99,9 +107,12 @@ class UserAuthUtil(
         )
     }
 
-    fun getFullNameFromToken(token: String): String? = try {
-        jwtTokenUtil.extractClaim(token) { claims -> claims["fullName"] as? String }
-    } catch (e: Exception) { null }
+    fun getFullNameFromToken(token: String): String? =
+        try {
+            jwtTokenUtil.extractClaim(token) { claims -> claims["fullName"] as? String }
+        } catch (e: Exception) {
+            null
+        }
 
     fun getCurrentLevel(): JlptLevel? {
         val token = getTokenFromRequest() ?: return null
@@ -109,7 +120,9 @@ class UserAuthUtil(
             jwtTokenUtil.extractClaim(token) { claims ->
                 (claims["currentLevel"] as? String)?.let { JlptLevel.valueOf(it) }
             }
-        } catch (e: Exception) { null }
+        } catch (e: Exception) {
+            null
+        }
     }
 
     fun getCurrentGoal(): JlptLevel? {
@@ -118,7 +131,9 @@ class UserAuthUtil(
             jwtTokenUtil.extractClaim(token) { claims ->
                 (claims["jlptGoal"] as? String)?.let { JlptLevel.valueOf(it) }
             }
-        } catch (e: Exception) { null }
+        } catch (e: Exception) {
+            null
+        }
     }
 
     fun getCurrentLastLogin(): LocalDateTime? {
@@ -127,7 +142,9 @@ class UserAuthUtil(
             jwtTokenUtil.extractClaim(token) { claims ->
                 (claims["lastLogin"] as? String)?.let { LocalDateTime.parse(it) }
             }
-        } catch (e: Exception) { null }
+        } catch (e: Exception) {
+            null
+        }
     }
 }
 

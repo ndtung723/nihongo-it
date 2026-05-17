@@ -18,14 +18,15 @@ import org.springframework.web.bind.annotation.*
 class FeedbackController(
     private val feedbackService: FeedbackService,
 ) {
-
     @PostMapping("", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(
         summary = "Save user feedback",
         description = "Saves feedback from a user's practice session",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    fun saveFeedback(@RequestBody feedbackDTO: FeedbackDTO): ResponseEntity<FeedbackDTO> {
+    fun saveFeedback(
+        @RequestBody feedbackDTO: FeedbackDTO,
+    ): ResponseEntity<FeedbackDTO> {
         val savedFeedback = feedbackService.saveFeedback(feedbackDTO)
         return ResponseEntity.status(HttpStatus.CREATED).body(savedFeedback)
     }

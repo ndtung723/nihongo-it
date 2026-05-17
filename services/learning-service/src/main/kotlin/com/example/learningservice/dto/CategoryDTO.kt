@@ -19,13 +19,11 @@ data class CategoryDTO(
     val displayOrder: Int = 0,
     val topicCount: Int? = null,
     val isActive: Boolean = true,
-
     @JsonProperty("createdAt")
     @JsonDeserialize(using = LocalDateTimeDeserializer::class)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
     @JsonSerialize(using = LocalDateTimeSerializer::class)
     val createdAt: LocalDateTime? = null,
-
     @JsonProperty("updatedAt")
     @JsonDeserialize(using = LocalDateTimeDeserializer::class)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
@@ -34,8 +32,8 @@ data class CategoryDTO(
 )
 
 // Extension function to convert entity to DTO
-fun CategoryEntity.toDTO(topicCount: Int? = null): CategoryDTO {
-    return CategoryDTO(
+fun CategoryEntity.toDTO(topicCount: Int? = null): CategoryDTO =
+    CategoryDTO(
         categoryId = this.categoryId,
         name = this.name,
         meaning = this.meaning,
@@ -45,7 +43,6 @@ fun CategoryEntity.toDTO(topicCount: Int? = null): CategoryDTO {
         createdAt = this.createdAt,
         updatedAt = this.updatedAt,
     )
-}
 
 // Data class for creating a new category
 data class CreateCategoryRequest(

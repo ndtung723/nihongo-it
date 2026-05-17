@@ -19,28 +19,22 @@ import java.util.UUID
 data class ConversationLineDTO(
     @JsonProperty("lineId")
     val lineId: UUID? = null,
-
     @JsonProperty("speaker")
     val speaker: String,
-
     @JsonProperty("japaneseText")
     val japaneseText: String,
-
     @JsonProperty("vietnameseTranslation")
     val vietnameseTranslation: String? = null,
-
     @JsonProperty("notes")
     val notes: String? = null,
-
     @JsonProperty("importantVocab")
     val importantVocab: String? = null,
-
     @JsonProperty("orderIndex")
     val orderIndex: Int = 0,
 ) {
     companion object {
-        fun fromEntity(entity: ConversationLineEntity): ConversationLineDTO {
-            return ConversationLineDTO(
+        fun fromEntity(entity: ConversationLineEntity): ConversationLineDTO =
+            ConversationLineDTO(
                 lineId = entity.lineId,
                 speaker = entity.speaker,
                 japaneseText = entity.japaneseText,
@@ -49,7 +43,6 @@ data class ConversationLineDTO(
                 importantVocab = entity.importantVocab,
                 orderIndex = entity.orderIndex,
             )
-        }
     }
 }
 
@@ -60,28 +53,21 @@ data class ConversationLineDTO(
 data class ConversationDTO(
     @JsonProperty("conversationId")
     val conversationId: UUID? = null,
-
     @JsonProperty("title")
     val title: String,
-
     @JsonProperty("description")
     val description: String? = null,
-
     @JsonProperty("jlptLevel")
     val jlptLevel: String? = null,
-
     @JsonProperty("unit")
     val unit: Int? = null,
-
     @JsonProperty("lines")
     val lines: List<ConversationLineDTO> = emptyList(),
-
     @JsonProperty("createdAt")
     @JsonDeserialize(using = LocalDateTimeDeserializer::class)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
     @JsonSerialize(using = LocalDateTimeSerializer::class)
     val createdAt: LocalDateTime? = null,
-
     @JsonProperty("updatedAt")
     @JsonDeserialize(using = LocalDateTimeDeserializer::class)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
@@ -89,8 +75,8 @@ data class ConversationDTO(
     val updatedAt: LocalDateTime? = null,
 ) {
     companion object {
-        fun fromEntity(entity: ConversationEntity): ConversationDTO {
-            return ConversationDTO(
+        fun fromEntity(entity: ConversationEntity): ConversationDTO =
+            ConversationDTO(
                 conversationId = entity.convId,
                 title = entity.title,
                 description = entity.description,
@@ -100,7 +86,6 @@ data class ConversationDTO(
                 createdAt = entity.createdAt,
                 updatedAt = entity.updatedAt,
             )
-        }
     }
 }
 
@@ -111,16 +96,12 @@ data class ConversationDTO(
 data class CreateConversationRequest(
     @JsonProperty("title")
     val title: String,
-
     @JsonProperty("description")
     val description: String? = null,
-
     @JsonProperty("jlptLevel")
     val jlptLevel: String? = null,
-
     @JsonProperty("unit")
     val unit: Int? = null,
-
     @JsonProperty("lines")
     val lines: List<CreateConversationLineRequest> = emptyList(),
 )
@@ -132,19 +113,14 @@ data class CreateConversationRequest(
 data class CreateConversationLineRequest(
     @JsonProperty("speaker")
     val speaker: String,
-
     @JsonProperty("japaneseText")
     val japaneseText: String,
-
     @JsonProperty("vietnameseTranslation")
     val vietnameseTranslation: String? = null,
-
     @JsonProperty("notes")
     val notes: String? = null,
-
     @JsonProperty("importantVocab")
     val importantVocab: String? = null,
-
     @JsonProperty("orderIndex")
     val orderIndex: Int = 0,
 )
@@ -156,16 +132,12 @@ data class CreateConversationLineRequest(
 data class UpdateConversationRequest(
     @JsonProperty("title")
     val title: String? = null,
-
     @JsonProperty("description")
     val description: String? = null,
-
     @JsonProperty("jlptLevel")
     val jlptLevel: String? = null,
-
     @JsonProperty("unit")
     val unit: Int? = null,
-
     @JsonProperty("lines")
     val lines: List<UpdateConversationLineRequest>? = null,
 )
@@ -177,22 +149,16 @@ data class UpdateConversationRequest(
 data class UpdateConversationLineRequest(
     @JsonProperty("lineId")
     val lineId: UUID? = null,
-
     @JsonProperty("speaker")
     val speaker: String,
-
     @JsonProperty("japaneseText")
     val japaneseText: String,
-
     @JsonProperty("vietnameseTranslation")
     val vietnameseTranslation: String? = null,
-
     @JsonProperty("notes")
     val notes: String? = null,
-
     @JsonProperty("importantVocab")
     val importantVocab: String? = null,
-
     @JsonProperty("orderIndex")
     val orderIndex: Int,
 )
@@ -204,16 +170,12 @@ data class UpdateConversationLineRequest(
 data class PagedResponse<T>(
     @JsonProperty("content")
     val content: List<T>,
-
     @JsonProperty("totalPages")
     val totalPages: Int,
-
     @JsonProperty("totalElements")
     val totalElements: Long,
-
     @JsonProperty("currentPage")
     val currentPage: Int,
-
     @JsonProperty("size")
     val size: Int,
 )

@@ -28,11 +28,13 @@ class PasswordService(
     private val logger = LoggerFactory.getLogger(PasswordService::class.java)
 
     fun changePassword(request: ChangePasswordRequestDto): PasswordResetResponseDto {
-        val email = userAuthUtil.getCurrentEmail()
-            ?: throw UnauthorizedException("Authentication required. Please log in again.")
+        val email =
+            userAuthUtil.getCurrentEmail()
+                ?: throw UnauthorizedException("Authentication required. Please log in again.")
 
-        val user = userRepository.findByEmail(email)
-            ?: throw BusinessException("User not found")
+        val user =
+            userRepository.findByEmail(email)
+                ?: throw BusinessException("User not found")
 
         if (!passwordEncoder.matches(request.currentPassword, user.password)) {
             throw BusinessException("Current password is incorrect")
@@ -40,7 +42,7 @@ class PasswordService(
 
         userRepository.save(
             user.copy(
-                password = passwordEncoder.encode(request.newPassword),
+                password = passwordEncoder.encode(request.newPassword)!!,
                 updatedAt = LocalDateTime.now(),
             ),
         )
@@ -76,8 +78,9 @@ class PasswordService(
             throw BusinessException("Passwords do not match")
         }
 
-        val user = userRepository.findByResetPasswordToken(request.token)
-            ?: throw BusinessException("Invalid or expired reset token")
+        val user =
+            userRepository.findByResetPasswordToken(request.token)
+                ?: throw BusinessException("Invalid or expired reset token")
 
         val expires = user.resetPasswordExpires
         if (expires == null || expires.isBefore(LocalDateTime.now())) {
@@ -86,7 +89,7 @@ class PasswordService(
 
         userRepository.save(
             user.copy(
-                password = passwordEncoder.encode(request.password),
+                password = passwordEncoder.encode(request.password)!!,
                 resetPasswordToken = null,
                 resetPasswordExpires = null,
                 updatedAt = LocalDateTime.now(),

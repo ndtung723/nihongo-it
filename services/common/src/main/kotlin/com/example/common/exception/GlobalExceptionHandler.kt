@@ -8,6 +8,8 @@ import io.jsonwebtoken.MalformedJwtException
 import io.jsonwebtoken.UnsupportedJwtException
 import io.jsonwebtoken.security.SignatureException
 import org.slf4j.LoggerFactory
+import org.springframework.core.Ordered
+import org.springframework.core.annotation.Order
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
@@ -24,18 +26,19 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.servlet.resource.NoResourceFoundException
 
 @RestControllerAdvice
+@Order(Ordered.HIGHEST_PRECEDENCE)
 class GlobalExceptionHandler {
-
     private val logger = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidationExceptions(ex: MethodArgumentNotValidException): ResponseEntity<*> {
-        val errors = ex.bindingResult.allErrors.map { error ->
-            FieldErrorDto(
-                field = (error as FieldError).field,
-                message = error.defaultMessage.orEmpty(),
-            )
-        }
+        val errors =
+            ex.bindingResult.allErrors.map { error ->
+                FieldErrorDto(
+                    field = (error as FieldError).field,
+                    message = error.defaultMessage.orEmpty(),
+                )
+            }
         logger.warn("Validation failed: $errors")
         return ResponseEntity(
             ErrorResponseDto(errors = errors),
@@ -138,11 +141,12 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(AuthenticationException::class)
     fun handleAuthenticationException(ex: AuthenticationException): ResponseEntity<*> {
-        val message = when (ex) {
-            is BadCredentialsException -> "Invalid username or password"
-            is InsufficientAuthenticationException -> "Authentication required"
-            else -> "Authentication failed"
-        }
+        val message =
+            when (ex) {
+                is BadCredentialsException -> "Invalid username or password"
+                is InsufficientAuthenticationException -> "Authentication required"
+                else -> "Authentication failed"
+            }
         logger.warn("Authentication exception: ${ex.message}")
         return ResponseEntity(
             ErrorResponseDto(message = message),

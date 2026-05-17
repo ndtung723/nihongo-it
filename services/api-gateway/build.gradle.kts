@@ -1,9 +1,8 @@
 ﻿plugins {
-    kotlin("jvm") version "2.0.21"
-    kotlin("plugin.spring") version "2.0.21"
-    id("org.springframework.boot") version "3.4.3"
-    id("io.spring.dependency-management") version "1.1.7"
-    id("io.gitlab.arturbosch.detekt") version "1.23.7"
+    kotlin("jvm") version "2.3.0"
+    kotlin("plugin.spring") version "2.3.0"
+    id("org.springframework.boot") version "4.0.2"
+    id("dev.detekt") version "2.0.0-alpha.2"
     id("org.jlleitschuh.gradle.ktlint") version "12.2.0"
 }
 
@@ -12,7 +11,7 @@ version = "0.0.1-SNAPSHOT"
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 
@@ -20,51 +19,37 @@ repositories {
     mavenCentral()
 }
 
-extra["springCloudVersion"] = "2024.0.1"
-
 dependencies {
+    implementation(platform("org.springframework.boot:spring-boot-dependencies:4.0.2"))
+    implementation(platform("org.springframework.cloud:spring-cloud-dependencies:2025.1.1"))
+
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
-    implementation("org.springframework.cloud:spring-cloud-starter-gateway")
+    implementation("org.springframework.cloud:spring-cloud-starter-gateway-server-webflux")
     implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
     implementation("org.springframework.cloud:spring-cloud-starter-loadbalancer")
 
-    implementation("io.jsonwebtoken:jjwt-api:0.11.5")
-    implementation("io.jsonwebtoken:jjwt-impl:0.11.5")
-    implementation("io.jsonwebtoken:jjwt-jackson:0.11.5")
+    implementation("io.jsonwebtoken:jjwt-api:0.12.6")
+    implementation("io.jsonwebtoken:jjwt-impl:0.12.6")
+    implementation("io.jsonwebtoken:jjwt-jackson:0.12.6")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
 
-    // Resilience4j for circuit breaking and fault tolerance
-//    implementation("io.github.resilience4j:resilience4j-spring-boot3:2.1.0")
-//    implementation("io.github.resilience4j:resilience4j-circuitbreaker:2.1.0")
-//    implementation("io.github.resilience/4j:resilience4j-timelimiter:2.1.0")
-
-    // Documentation
-    implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.7.0")
+    implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.9")
     implementation("com.bucket4j:bucket4j-core:8.10.1")
-    implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("io.micrometer:micrometer-registry-prometheus")
 
-    // Dev tools
-    developmentOnly("org.springframework.boot:spring-boot-devtools")
+    developmentOnly("org.springframework.boot:spring-boot-devtools:4.0.2")
 
-    // Test
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.mockito")
     }
     testImplementation("io.projectreactor:reactor-test")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.0")
     testImplementation("org.mockito:mockito-core:5.11.0")
-}
-
-dependencyManagement {
-    imports {
-        mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
-    }
 }
 
 kotlin {
@@ -84,18 +69,10 @@ detekt {
 }
 
 ktlint {
-    version.set("0.50.0")
+    version.set("1.3.0")
     outputToConsole.set(true)
     filter {
         exclude("**/generated/**")
         include("**/kotlin/**")
-    }
-}
-
-configurations.matching { it.name.startsWith("detekt") }.all {
-    resolutionStrategy.eachDependency {
-        if (requested.group == "org.jetbrains.kotlin") {
-            useVersion("2.0.10")
-        }
     }
 }

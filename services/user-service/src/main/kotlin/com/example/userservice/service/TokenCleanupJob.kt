@@ -8,7 +8,9 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 @Component
-class TokenCleanupJob(private val refreshTokenRepository: RefreshTokenRepository) {
+class TokenCleanupJob(
+    private val refreshTokenRepository: RefreshTokenRepository,
+) {
     private val logger = LoggerFactory.getLogger(TokenCleanupJob::class.java)
 
     @Scheduled(fixedDelay = 3_600_000)

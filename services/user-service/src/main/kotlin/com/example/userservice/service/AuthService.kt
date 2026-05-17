@@ -46,13 +46,17 @@ class AuthService(
     @Value("\${jwt.refresh-expiration}")
     private val refreshExpiration: Long = 1209600000L
 
-    fun login(request: LoginRequest, ip: String = "unknown"): LoginResponseDto {
-        val user = userRepository.findByEmail(request.email)
-            ?: run {
-                securityEventLogger.loginFailure(request.email, ip, "user_not_found")
-                auditService.log(AuditAction.LOGIN_FAILURE, ip = ip, details = "user_not_found email=${request.email}")
-                throw UnauthorizedException("Invalid email or password")
-            }
+    fun login(
+        request: LoginRequest,
+        ip: String = "unknown",
+    ): LoginResponseDto {
+        val user =
+            userRepository.findByEmail(request.email)
+                ?: run {
+                    securityEventLogger.loginFailure(request.email, ip, "user_not_found")
+                    auditService.log(AuditAction.LOGIN_FAILURE, ip = ip, details = "user_not_found email=${request.email}")
+                    throw UnauthorizedException("Invalid email or password")
+                }
 
         if (!passwordEncoder.matches(request.password, user.password)) {
             securityEventLogger.loginFailure(request.email, ip, "bad_credentials")
@@ -79,18 +83,19 @@ class AuthService(
         val role = roleRepository.findByRoleId(RoleEntity.ROLE_USER) ?: throw BusinessException("Role not found")
 
         val verificationToken = UUID.randomUUID().toString()
-        val user = UserEntity(
-            email = request.email,
-            password = passwordEncoder.encode(request.password),
-            fullName = request.fullName,
-            profilePicture = request.profilePicture,
-            currentLevel = request.currentLevel,
-            jlptGoal = request.jlptGoal,
-            lastLogin = LocalDateTime.now(),
-            role = role,
-            verificationToken = verificationToken,
-            isEmailVerified = false,
-        )
+        val user =
+            UserEntity(
+                email = request.email,
+                password = passwordEncoder.encode(request.password)!!,
+                fullName = request.fullName,
+                profilePicture = request.profilePicture,
+                currentLevel = request.currentLevel,
+                jlptGoal = request.jlptGoal,
+                lastLogin = LocalDateTime.now(),
+                role = role,
+                verificationToken = verificationToken,
+                isEmailVerified = false,
+            )
         userRepository.save(user)
         notificationService.sendVerificationEmail(request.email, verificationToken)
 
@@ -99,8 +104,9 @@ class AuthService(
     }
 
     fun verifyEmail(token: String) {
-        val user = userRepository.findByVerificationToken(token)
-            ?: throw BusinessException("Invalid or expired verification token")
+        val user =
+            userRepository.findByVerificationToken(token)
+                ?: throw BusinessException("Invalid or expired verification token")
 
         userRepository.save(
             user.copy(
@@ -112,22 +118,26 @@ class AuthService(
     }
 
     fun getCurrentUser(): GetCurrentUserResponseDto {
-        val userId = userAuthUtil.getCurrentUserId()
-            ?: throw BusinessException("Cannot extract userId: Invalid token")
+        val userId =
+            userAuthUtil.getCurrentUserId()
+                ?: throw BusinessException("Cannot extract userId: Invalid token")
 
-        val user = userRepository.findById(userId)
-            .orElseThrow { BusinessException("User not found") }
+        val user =
+            userRepository
+                .findById(userId)
+                .orElseThrow { BusinessException("User not found") }
 
-        val userInfo = UserDto(
-            userId = requireNotNull(user.userId) { "User ID missing" },
-            email = user.email,
-            fullName = user.fullName,
-            roleId = user.role.roleId,
-            profilePicture = user.profilePicture,
-            currentLevel = user.currentLevel,
-            jlptGoal = user.jlptGoal,
-            lastLogin = user.lastLogin,
-        )
+        val userInfo =
+            UserDto(
+                userId = requireNotNull(user.userId) { "User ID missing" },
+                email = user.email,
+                fullName = user.fullName,
+                roleId = user.role.roleId,
+                profilePicture = user.profilePicture,
+                currentLevel = user.currentLevel,
+                jlptGoal = user.jlptGoal,
+                lastLogin = user.lastLogin,
+            )
 
         return GetCurrentUserResponseDto(userInfo = userInfo)
     }
@@ -138,8 +148,9 @@ class AuthService(
     }
 
     fun refreshToken(request: RefreshTokenRequest): LoginResponseDto {
-        val stored = refreshTokenRepository.findByToken(request.refreshToken)
-            ?: throw UnauthorizedException("Invalid refresh token")
+        val stored =
+            refreshTokenRepository.findByToken(request.refreshToken)
+                ?: throw UnauthorizedException("Invalid refresh token")
 
         if (stored.isRevoked) {
             // A previously rotated token is being reused — indicates token theft.
@@ -154,17 +165,19 @@ class AuthService(
             throw UnauthorizedException("Refresh token expired")
         }
 
-        val user = userRepository.findById(stored.userId).orElse(null)
-            ?: throw UnauthorizedException("User not found")
+        val user =
+            userRepository.findById(stored.userId).orElse(null)
+                ?: throw UnauthorizedException("User not found")
 
         // Mark the old token as revoked (kept for theft detection) rather than deleting it
         refreshTokenRepository.save(stored.copy(isRevoked = true, revokedAt = LocalDateTime.now()))
 
         val newAccessToken = jwtTokenUtil.generateToken(user)
-        val newRefreshToken = createRefreshToken(
-            requireNotNull(user.userId) { "User ID missing after refresh" },
-            stored.familyId,
-        )
+        val newRefreshToken =
+            createRefreshToken(
+                requireNotNull(user.userId) { "User ID missing after refresh" },
+                stored.familyId,
+            )
 
         return LoginResponseDto(token = newAccessToken, refreshToken = newRefreshToken)
     }
@@ -175,13 +188,17 @@ class AuthService(
     }
 
     fun logoutAll() {
-        val userId = userAuthUtil.getCurrentUserId()
-            ?: throw UnauthorizedException("Authentication required")
+        val userId =
+            userAuthUtil.getCurrentUserId()
+                ?: throw UnauthorizedException("Authentication required")
         refreshTokenRepository.deleteByUserId(userId)
         auditService.log(AuditAction.LOGOUT_ALL, userId = userId, actorId = userId)
     }
 
-    fun createRefreshToken(userId: UUID, familyId: UUID = UUID.randomUUID()): String {
+    fun createRefreshToken(
+        userId: UUID,
+        familyId: UUID = UUID.randomUUID(),
+    ): String {
         val token = UUID.randomUUID().toString()
         val expiresAt = LocalDateTime.now().plusSeconds(refreshExpiration / 1000)
         refreshTokenRepository.save(

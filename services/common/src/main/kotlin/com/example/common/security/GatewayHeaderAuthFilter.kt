@@ -16,7 +16,6 @@ import org.springframework.web.filter.OncePerRequestFilter
  */
 @Component
 class GatewayHeaderAuthFilter : OncePerRequestFilter() {
-
     private val logger = LoggerFactory.getLogger(GatewayHeaderAuthFilter::class.java)
 
     override fun doFilterInternal(

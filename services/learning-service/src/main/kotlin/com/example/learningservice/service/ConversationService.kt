@@ -20,7 +20,6 @@ class ConversationService(
     private val conversationRepository: ConversationRepository,
     private val conversationLineRepository: ConversationLineRepository,
 ) {
-
     fun getAllConversations(pageable: Pageable): PagedResponse<ConversationDTO> {
         val page = conversationRepository.findAll(pageable)
         val content = page.content.map { ConversationDTO.fromEntity(it) }
@@ -34,7 +33,10 @@ class ConversationService(
         )
     }
 
-    fun searchConversations(query: String, pageable: Pageable): PagedResponse<ConversationDTO> {
+    fun searchConversations(
+        query: String,
+        pageable: Pageable,
+    ): PagedResponse<ConversationDTO> {
         val page = conversationRepository.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(query, query, pageable)
         val content = page.content.map { ConversationDTO.fromEntity(it) }
 
@@ -47,7 +49,10 @@ class ConversationService(
         )
     }
 
-    fun getConversationsByJlptLevel(level: String, pageable: Pageable): PagedResponse<ConversationDTO> {
+    fun getConversationsByJlptLevel(
+        level: String,
+        pageable: Pageable,
+    ): PagedResponse<ConversationDTO> {
         val page = conversationRepository.findByJlptLevel(level, pageable)
         val content = page.content.map { ConversationDTO.fromEntity(it) }
 
@@ -61,38 +66,42 @@ class ConversationService(
     }
 
     fun getConversationById(conversationId: UUID): ConversationDTO {
-        val conversation = conversationRepository.findById(conversationId)
-            .orElseThrow { BusinessException("Conversation not found with id: $conversationId") }
+        val conversation =
+            conversationRepository
+                .findById(conversationId)
+                .orElseThrow { BusinessException("Conversation not found with id: $conversationId") }
 
         return ConversationDTO.fromEntity(conversation)
     }
 
     @Transactional
     fun createConversation(request: CreateConversationRequest): ConversationDTO {
-        val conversation = ConversationEntity(
-            title = request.title,
-            description = request.description,
-            jlptLevel = request.jlptLevel,
-            unit = request.unit,
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now(),
-        )
+        val conversation =
+            ConversationEntity(
+                title = request.title,
+                description = request.description,
+                jlptLevel = request.jlptLevel,
+                unit = request.unit,
+                createdAt = LocalDateTime.now(),
+                updatedAt = LocalDateTime.now(),
+            )
 
         val savedConversation = conversationRepository.save(conversation)
 
         // Save conversation lines
         if (request.lines.isNotEmpty()) {
-            val conversationLines = request.lines.map { lineRequest ->
-                ConversationLineEntity(
-                    conversation = savedConversation,
-                    speaker = lineRequest.speaker,
-                    japaneseText = lineRequest.japaneseText,
-                    vietnameseTranslation = lineRequest.vietnameseTranslation,
-                    notes = lineRequest.notes,
-                    importantVocab = lineRequest.importantVocab,
-                    orderIndex = lineRequest.orderIndex,
-                )
-            }
+            val conversationLines =
+                request.lines.map { lineRequest ->
+                    ConversationLineEntity(
+                        conversation = savedConversation,
+                        speaker = lineRequest.speaker,
+                        japaneseText = lineRequest.japaneseText,
+                        vietnameseTranslation = lineRequest.vietnameseTranslation,
+                        notes = lineRequest.notes,
+                        importantVocab = lineRequest.importantVocab,
+                        orderIndex = lineRequest.orderIndex,
+                    )
+                }
 
             conversationLineRepository.saveAll(conversationLines)
         }
@@ -101,9 +110,14 @@ class ConversationService(
     }
 
     @Transactional
-    fun updateConversation(conversationId: UUID, request: UpdateConversationRequest): ConversationDTO {
-        val conversation = conversationRepository.findById(conversationId)
-            .orElseThrow { BusinessException("Conversation not found with id: $conversationId") }
+    fun updateConversation(
+        conversationId: UUID,
+        request: UpdateConversationRequest,
+    ): ConversationDTO {
+        val conversation =
+            conversationRepository
+                .findById(conversationId)
+                .orElseThrow { BusinessException("Conversation not found with id: $conversationId") }
 
         // Update conversation properties
         conversation.apply {
@@ -122,17 +136,18 @@ class ConversationService(
             conversationLineRepository.deleteByConversationId(conversationId)
 
             // Create new lines
-            val conversationLines = request.lines.map { lineRequest ->
-                ConversationLineEntity(
-                    conversation = conversation,
-                    speaker = lineRequest.speaker,
-                    japaneseText = lineRequest.japaneseText,
-                    vietnameseTranslation = lineRequest.vietnameseTranslation,
-                    notes = lineRequest.notes,
-                    importantVocab = lineRequest.importantVocab,
-                    orderIndex = lineRequest.orderIndex,
-                )
-            }
+            val conversationLines =
+                request.lines.map { lineRequest ->
+                    ConversationLineEntity(
+                        conversation = conversation,
+                        speaker = lineRequest.speaker,
+                        japaneseText = lineRequest.japaneseText,
+                        vietnameseTranslation = lineRequest.vietnameseTranslation,
+                        notes = lineRequest.notes,
+                        importantVocab = lineRequest.importantVocab,
+                        orderIndex = lineRequest.orderIndex,
+                    )
+                }
 
             conversationLineRepository.saveAll(conversationLines)
         }

@@ -14,23 +14,36 @@ import java.util.UUID
 
 @Repository
 interface NotificationRepository : JpaRepository<NotificationEntity, UUID> {
+    fun findFirstByUserAndTypeOrderBySentAtDesc(
+        user: UserEntity,
+        type: NotificationType,
+    ): NotificationEntity?
 
-    fun findFirstByUserAndTypeOrderBySentAtDesc(user: UserEntity, type: NotificationType): NotificationEntity?
+    @Suppress("FunctionNaming", "ktlint:standard:function-naming")
+    fun findByUser_UserIdOrderBySentAtDesc(
+        userId: UUID,
+        pageable: Pageable,
+    ): Page<NotificationEntity>
 
-    @Suppress("FunctionNaming")
-    fun findByUser_UserIdOrderBySentAtDesc(userId: UUID, pageable: Pageable): Page<NotificationEntity>
-
-    @Suppress("FunctionNaming")
+    @Suppress("FunctionNaming", "ktlint:standard:function-naming")
     fun countByUser_UserIdAndIsReadFalse(userId: UUID): Long
 
-    @Suppress("FunctionNaming")
-    fun findByNotificationIdAndUser_UserId(notificationId: UUID, userId: UUID): NotificationEntity?
+    @Suppress("FunctionNaming", "ktlint:standard:function-naming")
+    fun findByNotificationIdAndUser_UserId(
+        notificationId: UUID,
+        userId: UUID,
+    ): NotificationEntity?
 
     @Modifying
     @Query("UPDATE NotificationEntity n SET n.isRead = true WHERE n.user.userId = :userId AND n.isRead = false")
-    fun markAllReadByUserId(@Param("userId") userId: UUID): Int
+    fun markAllReadByUserId(
+        @Param("userId") userId: UUID,
+    ): Int
 
     @Modifying
     @Query("DELETE FROM NotificationEntity n WHERE n.notificationId = :id AND n.user.userId = :userId")
-    fun deleteByIdAndUserId(@Param("id") id: UUID, @Param("userId") userId: UUID): Int
+    fun deleteByIdAndUserId(
+        @Param("id") id: UUID,
+        @Param("userId") userId: UUID,
+    ): Int
 }

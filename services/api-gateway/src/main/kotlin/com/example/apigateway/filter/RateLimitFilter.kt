@@ -15,12 +15,21 @@ import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 
-private data class RateLimitRule(val pathPrefix: String, val capacity: Long, val refillPeriod: Duration)
+private data class RateLimitRule(
+    val pathPrefix: String,
+    val capacity: Long,
+    val refillPeriod: Duration,
+)
 
-private data class BucketEntry(val bucket: Bucket, @Volatile var lastAccess: Instant = Instant.now())
+private data class BucketEntry(
+    val bucket: Bucket,
+    @Volatile var lastAccess: Instant = Instant.now(),
+)
 
 @Component
-class RateLimitFilter : GlobalFilter, Ordered {
+class RateLimitFilter :
+    GlobalFilter,
+    Ordered {
     companion object {
         private const val FILTER_ORDER = -50
         private const val STALE_BUCKET_MINUTES = 30L
@@ -29,20 +38,24 @@ class RateLimitFilter : GlobalFilter, Ordered {
     private val logger = LoggerFactory.getLogger(RateLimitFilter::class.java)
 
     @Suppress("MagicNumber")
-    private val rules = listOf(
-        RateLimitRule("/api/v1/user/auth/login", 5, Duration.ofMinutes(1)),
-        RateLimitRule("/api/v1/user/auth/signup", 3, Duration.ofHours(1)),
-        RateLimitRule("/api/v1/user/auth/forgot-password", 3, Duration.ofMinutes(5)),
-        RateLimitRule("/api/v1/user/auth/set-new-password", 5, Duration.ofHours(1)),
-        RateLimitRule("/api/v1/user/auth/refresh-token", 10, Duration.ofMinutes(1)),
-        RateLimitRule("/api/v1/ai/speech/", 10, Duration.ofMinutes(1)),
-        RateLimitRule("/api/v1/ai/", 30, Duration.ofMinutes(1)),
-    )
+    private val rules =
+        listOf(
+            RateLimitRule("/api/v1/user/auth/login", 5, Duration.ofMinutes(1)),
+            RateLimitRule("/api/v1/user/auth/signup", 3, Duration.ofHours(1)),
+            RateLimitRule("/api/v1/user/auth/forgot-password", 3, Duration.ofMinutes(5)),
+            RateLimitRule("/api/v1/user/auth/set-new-password", 5, Duration.ofHours(1)),
+            RateLimitRule("/api/v1/user/auth/refresh-token", 10, Duration.ofMinutes(1)),
+            RateLimitRule("/api/v1/ai/speech/", 10, Duration.ofMinutes(1)),
+            RateLimitRule("/api/v1/ai/", 30, Duration.ofMinutes(1)),
+        )
 
     private val buckets = ConcurrentHashMap<String, BucketEntry>()
 
     @Suppress("ForbiddenVoid")
-    override fun filter(exchange: ServerWebExchange, chain: GatewayFilterChain): Mono<Void> {
+    override fun filter(
+        exchange: ServerWebExchange,
+        chain: GatewayFilterChain,
+    ): Mono<Void> {
         val path = exchange.request.path.value()
         val rule = rules.firstOrNull { path.startsWith(it.pathPrefix) } ?: return chain.filter(exchange)
 
@@ -58,21 +71,37 @@ class RateLimitFilter : GlobalFilter, Ordered {
         }
     }
 
-    private fun buildKey(exchange: ServerWebExchange, rule: RateLimitRule): String {
+    private fun buildKey(
+        exchange: ServerWebExchange,
+        rule: RateLimitRule,
+    ): String {
         val userId = exchange.request.headers.getFirst("X-User-Id")
-        val ip = exchange.request.remoteAddress?.address?.hostAddress ?: "unknown"
+        val ip =
+            exchange.request.remoteAddress
+                ?.address
+                ?.hostAddress ?: "unknown"
         return "${rule.pathPrefix}:${userId ?: ip}"
     }
 
     private fun newEntry(rule: RateLimitRule): BucketEntry {
-        val bucket = Bucket.builder()
-            .addLimit(Bandwidth.builder().capacity(rule.capacity).refillGreedy(rule.capacity, rule.refillPeriod).build())
-            .build()
+        val bucket =
+            Bucket
+                .builder()
+                .addLimit(
+                    Bandwidth
+                        .builder()
+                        .capacity(rule.capacity)
+                        .refillGreedy(rule.capacity, rule.refillPeriod)
+                        .build(),
+                ).build()
         return BucketEntry(bucket)
     }
 
     @Suppress("ForbiddenVoid")
-    private fun tooManyRequests(exchange: ServerWebExchange, refillPeriod: Duration): Mono<Void> {
+    private fun tooManyRequests(
+        exchange: ServerWebExchange,
+        refillPeriod: Duration,
+    ): Mono<Void> {
         val response = exchange.response
         response.statusCode = HttpStatus.TOO_MANY_REQUESTS
         response.headers.add("Content-Type", "application/json")

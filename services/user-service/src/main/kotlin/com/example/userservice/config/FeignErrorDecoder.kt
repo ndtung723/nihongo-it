@@ -12,19 +12,20 @@ import java.nio.charset.StandardCharsets
 
 @Configuration
 class FeignErrorDecoderConfig {
-
     @Bean
-    fun feignErrorDecoder(objectMapper: ObjectMapper): ErrorDecoder {
-        return CustomErrorDecoder(objectMapper)
-    }
+    fun feignErrorDecoder(objectMapper: ObjectMapper): ErrorDecoder = CustomErrorDecoder(objectMapper)
 }
 
-class CustomErrorDecoder(private val objectMapper: ObjectMapper) : ErrorDecoder {
-
+class CustomErrorDecoder(
+    private val objectMapper: ObjectMapper,
+) : ErrorDecoder {
     private val logger = LoggerFactory.getLogger(CustomErrorDecoder::class.java)
     private val defaultDecoder = ErrorDecoder.Default()
 
-    override fun decode(methodKey: String, response: Response): Exception {
+    override fun decode(
+        methodKey: String,
+        response: Response,
+    ): Exception {
         try {
             // Đọc body response
             val responseBody = getResponseBody(response)
@@ -66,8 +67,8 @@ class CustomErrorDecoder(private val objectMapper: ObjectMapper) : ErrorDecoder 
         }
     }
 
-    private fun getResponseBody(response: Response): String {
-        return try {
+    private fun getResponseBody(response: Response): String =
+        try {
             if (response.body() != null) {
                 val bodyBytes = response.body().asInputStream().readBytes()
                 String(bodyBytes, StandardCharsets.UTF_8)
@@ -78,7 +79,6 @@ class CustomErrorDecoder(private val objectMapper: ObjectMapper) : ErrorDecoder 
             logger.warn("Could not read response body: ${e.message}")
             ""
         }
-    }
 
     private fun extractErrorMessage(jsonNode: JsonNode): String {
         // Kiểm tra định dạng response của api-service

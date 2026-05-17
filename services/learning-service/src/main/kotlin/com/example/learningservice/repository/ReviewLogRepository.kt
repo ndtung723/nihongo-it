@@ -11,10 +11,15 @@ import java.util.*
 @Repository
 @Suppress("TooManyFunctions")
 interface ReviewLogRepository : JpaRepository<ReviewLogEntity, UUID> {
-    fun findByUserIdAndReviewTimestampAfter(userId: UUID, after: LocalDateTime): List<ReviewLogEntity>
+    fun findByUserIdAndReviewTimestampAfter(
+        userId: UUID,
+        after: LocalDateTime,
+    ): List<ReviewLogEntity>
 
     @Query("SELECT COUNT(DISTINCT r.flashcard.id) FROM ReviewLogEntity r WHERE r.reviewTimestamp > :after")
-    fun countDistinctFlashcardIdByReviewTimestampAfter(@Param("after") after: LocalDateTime): Long
+    fun countDistinctFlashcardIdByReviewTimestampAfter(
+        @Param("after") after: LocalDateTime,
+    ): Long
 
     @Query(
         """
@@ -45,7 +50,10 @@ interface ReviewLogRepository : JpaRepository<ReviewLogEntity, UUID> {
     fun findFirstByUserIdOrderByReviewTimestampDesc(userId: UUID): ReviewLogEntity?
 
     // Count reviews by user ID and date range
-    fun countByUserIdAndReviewTimestampAfter(userId: UUID, startDate: LocalDateTime): Int
+    fun countByUserIdAndReviewTimestampAfter(
+        userId: UUID,
+        startDate: LocalDateTime,
+    ): Int
 
     // Find reviews after a specific date
     fun findByReviewTimestampAfter(startDate: LocalDateTime): List<ReviewLogEntity>
