@@ -2,14 +2,16 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Migrate the existing Vue 3 + Vuetify + Pinia frontend to two independent Next.js 15 apps (`frontend-user/` and `frontend-admin/`) using Tailwind + shadcn/ui in place of Vuetify/SCSS, while preserving every existing feature and the JWT auth flow (httpOnly refresh cookie + in-memory access token).
+**Goal:** Migrate the existing Vue 3 + Vuetify + Pinia frontend to two independent Next.js 16 apps (`frontend-user/` and `frontend-admin/`) using Tailwind + shadcn/ui in place of Vuetify/SCSS, while preserving every existing feature and the JWT auth flow (httpOnly refresh cookie + in-memory access token).
+
+**Status:** Phase 1 ✅ complete (2026-05-17) · Phase 2 ✅ complete (2026-05-17) · Phase 3 ⏳ in progress.
 
 **Architecture:**
 - Two standalone Next.js **16.2.6** apps (App Router, TypeScript, React 19.2). No monorepo — each app owns its own `package.json`, types, and api client (duplicated, like `sample_project/`).
 - shadcn/ui + Radix primitives + Tailwind CSS 4 for UI. Each shadcn component is copy-pasted into `src/components/ui/` so we own the source.
 - Zustand for global state (closest to Pinia composition API). Server Components for static lists, Client Components for interactive views.
 - Axios instance with request/response interceptors mirroring current `src/utils/api.ts` (Bearer token attach, 401 → refresh → retry).
-- **Proxy-based** route protection (`proxy.ts`, NOT `proxy.ts` — renamed in Next.js 16) replacing `router.beforeEach` + `requireAuth/requireAdmin` guards.
+- **Proxy-based** route protection (`proxy.ts`, NOT `middleware.ts` — renamed in Next.js 16) replacing `router.beforeEach` + `requireAuth/requireAdmin` guards.
 - Backend API unchanged — both Next.js apps hit the same `http://localhost:8080` gateway.
 
 ### Next.js 16 breaking changes that affect this plan
@@ -18,7 +20,7 @@ Discovered during Phase 1 scaffolding. **Every subsequent task must follow these
 
 | Change | Implication |
 |---|---|
-| `proxy.ts` → `proxy.ts` | File at app root is `proxy.ts`. Function exported as `proxy`, not `middleware`. Runtime is Node.js (not Edge). |
+| `middleware.ts` → `proxy.ts` | File at app root is `proxy.ts`. Function exported as `proxy`, not `middleware`. Runtime is Node.js (not Edge). |
 | Turbopack is default | No `--turbopack` flag needed in scripts. `next dev` and `next build` already use it. |
 | `next lint` removed | Use ESLint CLI directly (`eslint .`). Scaffold's `package.json` reflects this. |
 | Async Request APIs are MANDATORY | `cookies()`, `headers()`, `draftMode()`, `params`, `searchParams` ALL return Promises. Must `await` them. Use `PageProps<'/route'>`, `LayoutProps<'/route'>`, `RouteContext<'/route'>` type helpers (generate via `npx next typegen`). |
@@ -27,11 +29,40 @@ Discovered during Phase 1 scaffolding. **Every subsequent task must follow these
 | ESLint Flat Config default | Scaffold uses `eslint.config.mjs` already. |
 | Node.js 20.9+ required | Project uses Node 24, fine. |
 
+### React 19 + React Compiler lint rules (Phase 2 discoveries)
+
+Next.js 16 ships with new React Compiler-aware lint rules that flag patterns common in older React code. Affect every component/hook from Phase 2 onwards:
+
+| Rule | What it flags | How we handle it |
+|---|---|---|
+| `react-hooks/use-memo` | `useCallback`/`useMemo` with non-literal dep array (e.g. `}, deps)`) | Caller-provided dep arrays don't pass. Force callers to memoize inputs themselves. Our `useAsyncData` now takes a stable `fetcher` (caller wraps with `useCallback`) instead of accepting `deps: unknown[]`. |
+| `react-hooks/set-state-in-effect` | `setState()` called inside `useEffect` body | For fetch-on-mount hooks (like `useAsyncData`), suppress with `// eslint-disable-next-line react-hooks/set-state-in-effect` immediately above the offending line, with a comment explaining intent. |
+| Disable comment placement | Must be on the same logical line as the offending call, NOT on the `useEffect(...)` wrapper | When suppressing, place the comment right above `void run()`, not above `useEffect(() => {`. |
+
+### shadcn / sonner setup quirks (Phase 2)
+
+| Discovery | Action |
+|---|---|
+| `shadcn add` registry no longer has `toast` — only `sonner` | Add `sonner` directly. Plan's Task 1.3 was updated to use `sonner` (already correct in current plan). |
+| Generated `src/components/ui/sonner.tsx` imports from `next-themes` | Must install `next-themes` (shadcn auto-installs it) AND wrap root in `<ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>`. Otherwise `useTheme()` throws. |
+| `shadcn add calendar` generates a `table: "..."` key in classNames that `react-day-picker@10` doesn't accept | Delete the `table:` line from the generated `calendar.tsx`. |
+
+### Zustand vs Pinia API differences (Phase 2)
+
+| Pinia (Vue) | Zustand (React) | Note |
+|---|---|---|
+| Composition API `defineStore(name, () => { ... })` with `computed()` getters | `create<State>((set, get) => ({ ... }))` — no built-in computed | For derived values, export named **selector functions** (`selectIsAuthenticated`, `selectIsAdmin`) and call as `useAuthStore(selectIsAuthenticated)`. This also gives subscribers granular re-render control. |
+| `storeToRefs(store)` for destructured reactivity | Pass selector to hook: `const user = useAuthStore(s => s.user)` | Avoid `const { user } = useAuthStore()` — re-renders on any state change. |
+| `$reset()` built-in | None | If needed, expose an explicit `reset` action that calls `set(initialState)`. |
+| `$onAction` for side effects | None | Subscribe with `useAuthStore.subscribe(...)` outside React. |
+
+**Logout pattern lesson:** Local cleanup must always succeed regardless of server response. Use `try { post } catch {} finally cleanup` — never re-throw a logout failure to the caller, or the UI can get stuck in a stale auth state when offline.
+
 **Tech Stack (decisions locked):**
 | Concern | Vue (current) | Next.js (target) | Reason |
 |---|---|---|---|
-| Framework | Vue 3 + Vite | Next.js 15 + App Router | Modern standard, layouts, middleware |
-| Language | TypeScript 5.8 | TypeScript 5.6 + React 19 | Latest stable |
+| Framework | Vue 3 + Vite | Next.js **16.2.6** + App Router | Modern standard, layouts, proxy |
+| Language | TypeScript 5.8 | TypeScript 5 + React 19.2 | Latest stable |
 | UI library | Vuetify 3 | shadcn/ui + Radix UI | Full control, Tailwind-native |
 | Styling | SCSS + Vuetify theme | Tailwind CSS 4 | User explicitly requested |
 | State | Pinia | Zustand | Closest API to Pinia composition |
@@ -239,9 +270,15 @@ Manual smoke test checklist updated per phase. **Never merge a phase to main wit
 
 ---
 
-# Phase 1: Scaffold Both Next.js Apps
+# Phase 1: Scaffold Both Next.js Apps ✅ COMPLETED 2026-05-17
 
 **Goal:** Create the two app skeletons with Tailwind, shadcn/ui, ESLint, Prettier, and a working `hello world` page.
+
+**Outcome:**
+- Branch `feature/nextjs-migration` created
+- `frontend-user/` (port 3000) and `frontend-admin/` (port 3001) scaffolded with Next.js 16.2.6, React 19.2, Tailwind 4
+- shadcn/ui initialized with Radix base; 19 components in user app, 24 in admin (extras: table, sheet, command, popover, calendar)
+- 3 commits: `0ea983f` (user scaffold), `e457a6b` (admin scaffold), `a2df9b3` (shadcn components)
 
 **Files:**
 - Create: `frontend-user/` (entire scaffolded directory)
@@ -249,7 +286,7 @@ Manual smoke test checklist updated per phase. **Never merge a phase to main wit
 
 ### Task 1.1: Scaffold `frontend-user/`
 
-- [ ] **Step 1: Run create-next-app**
+- [x] **Step 1: Run create-next-app**
 
 ```bash
 cd D:/workspace/nihongo-it
@@ -387,11 +424,22 @@ git commit -m "feat(ui): add shadcn base components to both apps"
 
 ---
 
-# Phase 2: Shared Foundation (per-app)
+# Phase 2: Shared Foundation (per-app) ✅ COMPLETED 2026-05-17
 
-**Goal:** Each app has working axios + token store + auth middleware + root layout. Done in parallel for both apps (same code, duplicated).
+**Goal:** Each app has working axios + token store + auth proxy + root layout. Done in parallel for both apps (same code, duplicated).
 
-**Apply every task in this phase to BOTH `frontend-user/` and `frontend-admin/`.** The diffs between them are minimal — admin's middleware requires ADMIN role, user's does not.
+**Apply every task in this phase to BOTH `frontend-user/` and `frontend-admin/`.** The diffs between them are minimal — admin's proxy requires ADMIN role, user's does not.
+
+**Outcome:**
+- 7 type files ported from Vue to both apps
+- `lib/tokenStore.ts`, `lib/jwt.ts`, `lib/api.ts` (single-flight refresh + 5xx exp-backoff retry)
+- Root layout + `Providers` with `ThemeProvider` + `Toaster` + `ConfirmProvider`
+- 5 hooks: `useAppToast`, `useDebounce`, `useAsyncData`, `useConfirm` (provider+hook), `usePagination`
+- Vitest setup; 11 passing tests (tokenStore × 4, auth.store × 7)
+- `proxy.ts` per app — user has 7 public paths, admin has only `/login`
+- Zustand auth store with login/logout/initialize/register/loginWithGoogle/changePassword/updateProfile
+- Verification on both apps: type-check ✓ · lint ✓ · 11/11 tests ✓ · build ✓
+- 1 commit: `4955fef` (55 files changed, +5871 −196)
 
 ### Task 2.1: Port type definitions
 
@@ -678,14 +726,22 @@ export function useDebounce<T>(value: T, delay = 400): T {
 }
 ```
 
-- [ ] **Step 3: Write `useAsyncData.ts`**
+- [x] **Step 3: Write `useAsyncData.ts`** — **REVISED in Phase 2:** React Compiler's `react-hooks/use-memo` rule forbids non-literal dep arrays. The hook no longer accepts `deps`; the caller must memoize the fetcher.
 
 ```typescript
 // src/hooks/useAsyncData.ts
 import { useCallback, useEffect, useState } from 'react'
 import { extractApiError } from '@/types/common.types'
 
-export function useAsyncData<T>(fetcher: () => Promise<T>, deps: unknown[] = []) {
+/**
+ * Fetch data on mount and on `fetcher` reference change.
+ * The caller is responsible for memoizing `fetcher` (via `useCallback`).
+ *
+ * Example:
+ *   const fetcher = useCallback(() => api.get(`/items/${id}`), [id])
+ *   const { data, loading, error, refresh } = useAsyncData(fetcher)
+ */
+export function useAsyncData<T>(fetcher: () => Promise<T>) {
   const [data, setData] = useState<T | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -700,10 +756,12 @@ export function useAsyncData<T>(fetcher: () => Promise<T>, deps: unknown[] = [])
     } finally {
       setLoading(false)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps)
+  }, [fetcher])
 
   useEffect(() => {
+    // Intentional fetch-on-mount: React Compiler's set-state-in-effect rule flags
+    // this pattern, but invoking the fetcher here is the whole point of the hook.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void run()
   }, [run])
 
