@@ -343,3 +343,5 @@ setup-env.sh
 local-config.properties
 
 services/*/detekt-baseline.xml
+
+sample_project
