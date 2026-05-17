@@ -18,7 +18,6 @@ class FlashcardAdminService(
     /**
      * Get average retention rate across all users
      */
-    @Suppress("MagicNumber")
     fun getAverageRetentionRate(): Double {
         val thirtyDaysAgo = LocalDateTime.now().minusDays(30)
         val recentReviews = reviewLogRepository.findByReviewTimestampAfter(thirtyDaysAgo)

@@ -49,7 +49,6 @@ class GatewayJwtFilter(
             // /api/v1/ai/tts/ intentionally removed — TTS costs money, requires auth
         )
 
-    @Suppress("ForbiddenVoid", "ReturnCount")
     override fun filter(
         exchange: ServerWebExchange,
         chain: GatewayFilterChain,
@@ -124,7 +123,6 @@ class GatewayJwtFilter(
         }
     }
 
-    @Suppress("ForbiddenVoid")
     private fun unauthorized(exchange: ServerWebExchange): Mono<Void> {
         val response = exchange.response
         response.statusCode = HttpStatus.UNAUTHORIZED

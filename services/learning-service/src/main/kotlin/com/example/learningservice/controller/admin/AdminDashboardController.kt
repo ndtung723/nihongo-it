@@ -39,7 +39,6 @@ class AdminDashboardController(
         description = "Retrieves various statistics for the admin dashboard",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    @Suppress("LongMethod")
     fun getDashboardStats(): ResponseEntity<Any> {
         logger.info("Fetching dashboard statistics")
 

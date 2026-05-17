@@ -2,7 +2,6 @@ package com.example.learningservice.config
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 
-@Suppress("MagicNumber")
 @ConfigurationProperties(prefix = "app.fsrs")
 data class FsrsProperties(
     val weights: List<Double> =

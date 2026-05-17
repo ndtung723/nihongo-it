@@ -33,7 +33,6 @@ import java.time.temporal.ChronoUnit
 import java.util.*
 
 @Service
-@Suppress("TooManyFunctions")
 class FlashcardCrudService(
     private val flashcardRepository: FlashcardRepository,
     private val reviewLogRepository: ReviewLogRepository,
@@ -110,7 +109,6 @@ class FlashcardCrudService(
 
     // Process flashcard review
     @Transactional
-    @Suppress("MagicNumber")
     fun processReview(
         flashcardId: UUID,
         rating: Int,

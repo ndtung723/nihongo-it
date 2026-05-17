@@ -37,7 +37,6 @@ class VocabularyService(
     private val logger = LoggerFactory.getLogger(VocabularyService::class.java)
 
     @Transactional
-    @Suppress("ThrowsCount")
     fun createVocabulary(request: CreateVocabularyRequestDto): CreateVocabularyResponseDto {
         val currentUserId =
             userAuthUtil.getCurrentUserId()
@@ -104,7 +103,6 @@ class VocabularyService(
     }
 
     @Transactional
-    @Suppress("ThrowsCount")
     fun updateVocabulary(
         vocabId: UUID,
         request: UpdateVocabularyRequestDto,
@@ -157,7 +155,7 @@ class VocabularyService(
             when {
                 // Kết hợp tìm kiếm theo cả topicId và jlptLevel nếu cả hai đều được cung cấp
                 filter.topicId != null && filter.jlptLevel != null -> {
-                    vocabularyRepository.findByTopic_TopicIdAndJlptLevel(filter.topicId, filter.jlptLevel, pageable)
+                    vocabularyRepository.findVocabsByTopicIdAndJlptLevel(filter.topicId, filter.jlptLevel, pageable)
                 }
                 // Tìm kiếm theo keyword
                 keyword != null -> {
@@ -169,7 +167,7 @@ class VocabularyService(
                 }
                 // Tìm kiếm theo topicId
                 filter.topicId != null -> {
-                    vocabularyRepository.findByTopic_TopicId(filter.topicId, pageable)
+                    vocabularyRepository.findVocabsByTopicId(filter.topicId, pageable)
                 }
                 // Tìm kiếm theo topicName
                 topicName != null -> {
@@ -325,7 +323,7 @@ class VocabularyService(
             if (keyword != null) {
                 vocabularyRepository.findByTopicIdAndKeyword(filter.topicId, keyword, pageable)
             } else {
-                vocabularyRepository.findByTopic_TopicId(filter.topicId, pageable)
+                vocabularyRepository.findVocabsByTopicId(filter.topicId, pageable)
             }
 
         val content =

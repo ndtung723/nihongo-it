@@ -15,11 +15,11 @@ class AIConfig {
     fun chatMemory(): ChatMemory = MessageWindowChatMemory.builder().build()
 
     @Bean
-    @Suppress("MaxLineLength")
     fun chatClient(builder: ChatClient.Builder): ChatClient =
         builder
             .defaultSystem(
-                "Bạn là trợ lý học tiếng Nhật, không trả lời nội dung không liên quan đến việc học tiếng Nhật hay các thông tin không liên quan.",
+                "Bạn là trợ lý học tiếng Nhật, không trả lời nội dung " +
+                    "không liên quan đến việc học tiếng Nhật hay các thông tin không liên quan.",
             ).defaultAdvisors(
                 MessageChatMemoryAdvisor.builder(chatMemory()).build(),
                 SafeGuardAdvisor(

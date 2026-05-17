@@ -279,7 +279,6 @@ class UserService(
      * Get all users with pagination
      */
     @Transactional(readOnly = true)
-    @Suppress("LongMethod", "CyclomaticComplexMethod")
     fun getAllUsers(
         pageable: Pageable,
         search: String? = null,

@@ -70,7 +70,6 @@ class SpeechAnalysisService(
             return response
         } catch (e: Exception) {
             logger.error("Error in enhanced analysis: ${e.message}")
-            @Suppress("TooGenericExceptionThrown")
             throw RuntimeException("Lỗi khi thực hiện phân tích nâng cao: ${e.message}", e)
         }
     }
@@ -109,7 +108,6 @@ class SpeechAnalysisService(
             return response
         } catch (e: Exception) {
             logger.error("Error in feedback summary: ${e.message}")
-            @Suppress("TooGenericExceptionThrown")
             throw RuntimeException("Lỗi khi tổng hợp phản hồi: ${e.message}", e)
         }
     }

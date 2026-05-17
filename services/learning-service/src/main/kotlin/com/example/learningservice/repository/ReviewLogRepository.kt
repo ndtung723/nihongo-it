@@ -1,4 +1,4 @@
-﻿package com.example.learningservice.repository
+package com.example.learningservice.repository
 
 import com.example.learningservice.entity.ReviewLogEntity
 import org.springframework.data.jpa.repository.JpaRepository
@@ -9,7 +9,6 @@ import java.time.LocalDateTime
 import java.util.*
 
 @Repository
-@Suppress("TooManyFunctions")
 interface ReviewLogRepository : JpaRepository<ReviewLogEntity, UUID> {
     fun findByUserIdAndReviewTimestampAfter(
         userId: UUID,

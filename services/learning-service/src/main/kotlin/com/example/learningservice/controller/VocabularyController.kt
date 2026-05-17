@@ -285,7 +285,7 @@ class VocabularyController(
         @RequestParam(defaultValue = "20") size: Int,
         @Parameter(description = "Sort option")
         @RequestParam(defaultValue = "date_desc")
-        @Suppress("UnusedParameter") sort: String?,
+        sort: String?,
     ): PagedVocabularyResponseDto {
         // Validate page and size parameters to prevent invalid values
         val validPage = if (page < 0) 0 else page

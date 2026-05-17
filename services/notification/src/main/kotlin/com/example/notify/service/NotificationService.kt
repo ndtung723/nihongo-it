@@ -50,7 +50,6 @@ class NotificationService(
      * Send a notification to a user through their preferred channels
      */
     @Transactional
-    @Suppress("LongParameterList")
     fun sendNotification(
         user: UserEntity,
         title: String,
@@ -212,7 +211,6 @@ class NotificationService(
      * @param resetUrl The password change URL with token
      */
     @Async
-    @Suppress("UnusedParameter")
     fun sendPasswordResetEmail(
         email: String,
         resetToken: String,

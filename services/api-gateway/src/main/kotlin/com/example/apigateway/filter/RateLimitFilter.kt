@@ -37,7 +37,6 @@ class RateLimitFilter :
 
     private val logger = LoggerFactory.getLogger(RateLimitFilter::class.java)
 
-    @Suppress("MagicNumber")
     private val rules =
         listOf(
             RateLimitRule("/api/v1/user/auth/login", 5, Duration.ofMinutes(1)),
@@ -51,7 +50,6 @@ class RateLimitFilter :
 
     private val buckets = ConcurrentHashMap<String, BucketEntry>()
 
-    @Suppress("ForbiddenVoid")
     override fun filter(
         exchange: ServerWebExchange,
         chain: GatewayFilterChain,
@@ -97,7 +95,6 @@ class RateLimitFilter :
         return BucketEntry(bucket)
     }
 
-    @Suppress("ForbiddenVoid")
     private fun tooManyRequests(
         exchange: ServerWebExchange,
         refillPeriod: Duration,

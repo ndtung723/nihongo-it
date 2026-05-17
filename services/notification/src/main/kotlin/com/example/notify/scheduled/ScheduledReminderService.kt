@@ -74,7 +74,6 @@ class ScheduledReminderService(
      * Process reminders for a single user with detailed logging
      * @return true if a notification was sent, false otherwise
      */
-    @Suppress("ReturnCount")
     private fun processUserReminderWithLogging(
         user: UserEntity,
         now: LocalDateTime,

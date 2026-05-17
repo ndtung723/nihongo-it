@@ -21,7 +21,6 @@ class CorrelationIdGlobalFilter :
 
     private val logger = LoggerFactory.getLogger(CorrelationIdGlobalFilter::class.java)
 
-    @Suppress("ForbiddenVoid")
     override fun filter(
         exchange: ServerWebExchange,
         chain: GatewayFilterChain,

@@ -18,7 +18,6 @@ import reactor.core.publisher.Flux
 
 @RestController
 @RequestMapping("/api/v1/ai/chat")
-@Suppress("TooManyFunctions")
 class ChatController(
     private val chatService: ChatService,
     private val chatClient: ChatClient,
@@ -40,7 +39,6 @@ class ChatController(
      * This endpoint requires authentication
      */
     @PostMapping("/translate")
-    @Suppress("SwallowedException")
     fun translate(
         @RequestBody text: String,
         @RequestParam direction: String, // "vn-to-jp" or "jp-to-vn"
@@ -85,7 +83,6 @@ class ChatController(
      * This endpoint requires authentication
      */
     @PostMapping("/translate/economy")
-    @Suppress("SwallowedException")
     fun translateEconomy(
         @RequestBody text: String,
         @RequestParam direction: String, // "vn-to-jp" or "jp-to-vn"
@@ -126,28 +123,21 @@ class ChatController(
     }
 
     @PostMapping("/vocabulary/list")
-    @Suppress("MaxLineLength")
     fun getListVocabulary(
         @RequestParam category: String,
         @RequestParam(required = false, defaultValue = "N5") level: String,
     ): List<VocabularyInfo>? {
-        val vocabularyList =
-            chatClient
-                .prompt()
-                .user { u ->
-                    u
-                        .text(
-                            "Vui lòng cung cấp 2 từ vựng tiếng Nhật thuộc chủ đề {category} ở cấp độ JLPT {level}. Bao gồm từ, cách đọc, ý nghĩa và câu ví dụ.",
-                        ).param("category", category)
-                        .param("level", level)
-                }.call()
-                .entity(object : ParameterizedTypeReference<List<VocabularyInfo>>() {})
-
-        return vocabularyList
+        val prompt =
+            "Vui lòng cung cấp 2 từ vựng tiếng Nhật thuộc chủ đề {category} " +
+                "ở cấp độ JLPT {level}. Bao gồm từ, cách đọc, ý nghĩa và câu ví dụ."
+        return chatClient
+            .prompt()
+            .user { u -> u.text(prompt).param("category", category).param("level", level) }
+            .call()
+            .entity(object : ParameterizedTypeReference<List<VocabularyInfo>>() {})
     }
 
     @PostMapping("/vocabulary/explain")
-    @Suppress("SwallowedException", "UnusedParameter")
     fun explainVocabulary(
         @RequestParam term: String,
         @RequestParam(required = false) pronunciation: String?,
@@ -199,7 +189,6 @@ class ChatController(
      * Respond to user messages about vocabulary
      */
     @PostMapping("/vocabulary/chat")
-    @Suppress("SwallowedException")
     fun vocabularyChat(
         @RequestParam vocabWord: String,
         @RequestParam userMessage: String,

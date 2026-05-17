@@ -28,7 +28,6 @@ class FlashcardStatisticsService(
     private val logger = LoggerFactory.getLogger(FlashcardStatisticsService::class.java)
 
     // Get study statistics
-    @Suppress("LongMethod", "MagicNumber")
     fun getStudyStatistics(): GetStatisticsResponseDto {
         val userId = userAuthUtil.getCurrentUserId()
         logger.info("Getting study statistics for user: $userId")
@@ -140,7 +139,6 @@ class FlashcardStatisticsService(
     /**
      * Get flashcard statistics for a specific user
      */
-    @Suppress("LongMethod", "MagicNumber")
     fun getUserFlashcardStatistics(userId: UUID): StudyStatisticsDto {
         logger.info("Getting flashcard statistics for user: $userId")
 
@@ -307,7 +305,6 @@ class FlashcardStatisticsService(
         }
     }
 
-    @Suppress("MagicNumber")
     private fun calculateReviewTrend(reviews: List<ReviewLogEntity>): ReviewTrendDto {
         if (reviews.isEmpty()) return ReviewTrendDto("neutral", 0.0)
 

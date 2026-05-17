@@ -17,6 +17,8 @@ style:
     maxLineLength: 140
   ReturnCount:
     max: 8
+  ForbiddenVoid:
+    active: false
   VarCouldBeVal:
     ignoreAnnotated:
       - 'Value'
@@ -24,6 +26,10 @@ style:
   UnusedParameter:
     active: false
   ThrowsCount:
+    active: false
+
+performance:
+  SpreadOperator:
     active: false
 
 potential-bugs:

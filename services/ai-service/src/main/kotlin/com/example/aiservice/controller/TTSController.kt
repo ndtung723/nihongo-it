@@ -51,7 +51,6 @@ class TTSController(
                 .speed(speed)
                 .build()
 
-        @Suppress("TooGenericExceptionThrown")
         val response =
             try {
                 openAiAudioSpeechModel.call(SpeechPrompt(text, options))

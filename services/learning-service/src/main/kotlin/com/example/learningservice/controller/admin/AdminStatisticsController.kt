@@ -141,7 +141,6 @@ class AdminStatisticsController(
         description = "Retrieves general statistics overview for admin dashboard",
         security = [SecurityRequirement(name = "bearerAuth")],
     )
-    @Suppress("LongMethod")
     fun getStatisticsOverview(): ResponseEntity<Any> {
         logger.info("Fetching statistics overview for admin dashboard")
 

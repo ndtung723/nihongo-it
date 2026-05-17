@@ -10,7 +10,6 @@ import org.springframework.scheduling.annotation.EnableScheduling
 @EnableScheduling
 class NotificationServiceApplication
 
-@Suppress("SpreadOperator")
 fun main(args: Array<String>) {
     runApplication<NotificationServiceApplication>(*args)
 }

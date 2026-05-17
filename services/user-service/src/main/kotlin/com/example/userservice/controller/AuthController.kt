@@ -41,7 +41,6 @@ import java.time.Duration
 @RestController
 @RequestMapping("/api/v1/user/auth")
 @Tag(name = "Authentication", description = "API endpoints for user authentication, registration and profile management")
-@Suppress("TooManyFunctions")
 class AuthController(
     private val authService: AuthService,
     private val passwordService: PasswordService,

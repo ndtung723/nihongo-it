@@ -16,7 +16,6 @@ class SecurityHeadersFilter :
         private const val FILTER_ORDER = 100
     }
 
-    @Suppress("ForbiddenVoid")
     override fun filter(
         exchange: ServerWebExchange,
         chain: GatewayFilterChain,

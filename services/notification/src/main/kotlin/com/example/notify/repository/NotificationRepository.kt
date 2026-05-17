@@ -13,22 +13,20 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
 interface NotificationRepository : JpaRepository<NotificationEntity, UUID> {
     fun findFirstByUserAndTypeOrderBySentAtDesc(
         user: UserEntity,
         type: NotificationType,
     ): NotificationEntity?
 
-    @Suppress("FunctionNaming", "ktlint:standard:function-naming")
     fun findByUser_UserIdOrderBySentAtDesc(
         userId: UUID,
         pageable: Pageable,
     ): Page<NotificationEntity>
 
-    @Suppress("FunctionNaming", "ktlint:standard:function-naming")
     fun countByUser_UserIdAndIsReadFalse(userId: UUID): Long
 
-    @Suppress("FunctionNaming", "ktlint:standard:function-naming")
     fun findByNotificationIdAndUser_UserId(
         notificationId: UUID,
         userId: UUID,

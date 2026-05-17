@@ -209,7 +209,6 @@ class FSRSService(
     /**
      * Calculate interval based on stability and state
      */
-    @Suppress("UnusedParameter")
     private fun calculateInterval(
         stability: Double,
         rating: Rating,

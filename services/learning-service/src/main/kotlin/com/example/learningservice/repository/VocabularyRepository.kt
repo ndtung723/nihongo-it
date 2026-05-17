@@ -86,9 +86,8 @@ interface VocabularyRepository : JpaRepository<VocabularyEntity, UUID> {
     ): Page<VocabularyEntity>
 
     // Find by topic ID
-    @Suppress("FunctionNaming", "ktlint:standard:function-naming")
     @Query("SELECT v FROM VocabularyEntity v WHERE v.topic.topicId = :topicId")
-    fun findByTopic_TopicId(
+    fun findVocabsByTopicId(
         @Param("topicId") topicId: UUID,
         pageable: Pageable,
     ): Page<VocabularyEntity>
@@ -109,9 +108,8 @@ interface VocabularyRepository : JpaRepository<VocabularyEntity, UUID> {
     ): Page<VocabularyEntity>
 
     // Find by topic ID and JLPT level
-    @Suppress("FunctionNaming", "ktlint:standard:function-naming")
     @Query("SELECT v FROM VocabularyEntity v WHERE v.topic.topicId = :topicId AND v.jlptLevel = :level")
-    fun findByTopic_TopicIdAndJlptLevel(
+    fun findVocabsByTopicIdAndJlptLevel(
         @Param("topicId") topicId: UUID,
         @Param("level") level: JlptLevel,
         pageable: Pageable,

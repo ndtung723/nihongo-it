@@ -28,7 +28,6 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 @Service
-@Suppress("LongParameterList")
 class AuthService(
     private val userRepository: UserRepository,
     private val roleRepository: RoleRepository,

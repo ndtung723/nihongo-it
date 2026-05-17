@@ -10,7 +10,6 @@ import org.springframework.scheduling.annotation.EnableScheduling
 @EnableScheduling
 class ApiGatewayApplication
 
-@Suppress("SpreadOperator")
 fun main(args: Array<String>) {
     runApplication<ApiGatewayApplication>(*args)
 }
