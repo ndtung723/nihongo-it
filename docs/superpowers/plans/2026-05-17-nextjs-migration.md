@@ -1345,9 +1345,39 @@ export function AuthInitializer() {
 
 ---
 
-# Phase 4: User App — Vocabulary Feature
+# Phase 4: User App — Vocabulary Feature ✅ COMPLETED 2026-05-17
 
 **Goal:** All 6 vocabulary screens working (browse, learning by category, category detail, topic detail, item detail with AI chat, saved storage).
+
+**Outcome:**
+- 3 services ported: vocabulary, category, topic (public methods only)
+- AI service ported with TTS playback (cached + generated), explainVocabulary, streamVocabularyChat (SSE via fetch)
+- `useVocabularyStore` (Zustand) — currentVocabulary, related, saved, with optimistic toggle pattern
+- 4 reusable components: `VocabularyCard` (with optimistic save toggle), `VocabularyFilter`, `AudioButton` (TTS playback), `AIChat` (streaming SSE)
+- 1 shared component: `Pagination` (page numbers with prev/next, hides when totalPages ≤ 1)
+- 6 vocabulary routes:
+  - `/vocabulary` — paged browse with debounced search + JLPT + topic filters
+  - `/vocabulary/[id]` — detail with AudioButton, AI explanation (lazy load), AI chat (SSE), related vocab
+  - `/vocabulary/learning` — Server Component fetching categories
+  - `/vocabulary/category/[id]` — Server Component fetching category + topics
+  - `/vocabulary/topic/[id]` — Server Component fetching topic + client list of vocab
+  - `/vocabulary/saved` — Client component with debounced search, optimistic remove
+- Build: 13 routes total (10 static + 3 dynamic)
+- Verification: type-check ✓ · lint ✓ · 11/11 tests ✓ · build ✓
+
+### Discoveries (Phase 4)
+
+| Discovery | Impact / Fix |
+|---|---|
+| Async params in Next.js 16 dynamic routes | `params: Promise<{ id: string }>` — must `await params` in server component before reading `id`. Apply to every `[id]` route. Documented in Section "Next.js 16 breaking changes". |
+| `react-hooks/set-state-in-effect` fires on `void fetchX()` calls | Always add `// eslint-disable-next-line react-hooks/set-state-in-effect` on the line above each `void <asyncFn>()` call inside `useEffect`. The disable belongs INSIDE the useEffect callback, not above the useEffect wrapper. |
+| Resetting page via effect (`useEffect(() => setPage(0), [filters])`) triggers the lint rule | Anti-pattern. Wrap filter setters: `handleKeywordChange = v => { setPage(0); setKeyword(v) }`. Eliminates the extra effect entirely — cleaner code. |
+| `<SelectItem value="">` not allowed (Radix forbids empty strings) | Use a sentinel value like `__all__` and translate to `null` in the onChange handler. Applied in `VocabularyFilter` for "All JLPT" / "All topics" options. |
+| SSE chat: use `fetch` directly (not axios) | Axios returns Promise<Response> but reading the body as a stream requires the native `ReadableStream` interface. Pattern: `await fetch(url, { signal })`, then `response.body!.getReader()` + TextDecoder. Always provide an `AbortController` and abort on unmount or when the target word changes. |
+| Server Components can call services directly | `/vocabulary/learning`, `/vocabulary/category/[id]`, `/vocabulary/topic/[id]` page.tsx are plain `async function` — they call `categoryService.getAllCategories()` etc. and pass results to UI. Auth cookie is forwarded automatically because we use `withCredentials: true` in axios. No `'use client'` needed. |
+| TopicVocabularyList (client) inside async server page | When you need pagination/filtering inside a server-rendered shell, split: server `page.tsx` fetches shell data (topic name), passes IDs to a client `XxxList.tsx` that owns the list state. |
+| Sonner `richColors` rendering CSS variables | The shadcn-generated `sonner.tsx` uses `var(--popover)` etc. Defaults look fine; no override needed. |
+| `<Link href={detailUrl}>` wrapping a Card whose internal Button toggles save | Click on the button must `e.preventDefault(); e.stopPropagation()` to avoid navigation. Applied in VocabularyCard. |
 
 ### Task 4.1: Vocabulary service + types
 
