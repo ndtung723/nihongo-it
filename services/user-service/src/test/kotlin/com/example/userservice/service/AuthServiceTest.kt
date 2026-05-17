@@ -26,9 +26,6 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import org.springframework.security.authentication.AuthenticationManager
-import org.springframework.security.authentication.BadCredentialsException
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.crypto.password.PasswordEncoder
 import java.time.LocalDateTime
 import java.util.Optional
@@ -37,7 +34,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 class AuthServiceTest {
-    private lateinit var authenticationManager: AuthenticationManager
     private lateinit var userRepository: UserRepository
     private lateinit var roleRepository: RoleRepository
     private lateinit var passwordEncoder: PasswordEncoder
@@ -67,7 +63,6 @@ class AuthServiceTest {
 
     @BeforeEach
     fun setup() {
-        authenticationManager = mock()
         userRepository = mock()
         roleRepository = mock()
         passwordEncoder = mock()
@@ -81,7 +76,6 @@ class AuthServiceTest {
 
         authService =
             AuthService(
-                authenticationManager,
                 userRepository,
                 roleRepository,
                 passwordEncoder,
@@ -102,10 +96,9 @@ class AuthServiceTest {
         @DisplayName("thành công — trả về token và refreshToken")
         fun success() {
             val request = LoginRequest(email = "test@example.com", password = "password123")
-            val mockAuth = mock<org.springframework.security.core.Authentication>()
 
             whenever(userRepository.findByEmail(request.email)).thenReturn(testUser)
-            whenever(authenticationManager.authenticate(any<UsernamePasswordAuthenticationToken>())).thenReturn(mockAuth)
+            whenever(passwordEncoder.matches(request.password, testUser.password)).thenReturn(true)
             whenever(userRepository.save(any<UserEntity>())).thenReturn(testUser)
             whenever(jwtTokenUtil.generateToken(any<UserEntity>())).thenReturn("jwt_token")
             whenever(refreshTokenRepository.save(any<RefreshTokenEntity>())).thenReturn(
@@ -136,7 +129,7 @@ class AuthServiceTest {
         fun badCredentials() {
             val request = LoginRequest(email = "test@example.com", password = "wrong")
             whenever(userRepository.findByEmail(request.email)).thenReturn(testUser)
-            whenever(authenticationManager.authenticate(any())).thenThrow(BadCredentialsException("bad"))
+            whenever(passwordEncoder.matches(request.password, testUser.password)).thenReturn(false)
 
             assertThrows<UnauthorizedException> {
                 authService.login(request, ip = "192.168.1.1")
