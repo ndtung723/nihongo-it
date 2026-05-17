@@ -1,6 +1,6 @@
 """Tests for main.py — API route auth enforcement."""
 import pytest
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 

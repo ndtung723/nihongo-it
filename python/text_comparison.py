@@ -1,6 +1,6 @@
 import difflib
 import logging
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Tuple
 
 from nlp import process_text_to_tokens, tokenize_japanese, to_hiragana
 from openai_client import analyze_with_llm

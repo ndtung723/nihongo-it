@@ -109,13 +109,10 @@ async def generate_personalized_feedback(
 ) -> str:
     try:
         incorrect_words = [w["text"] for w in words if not w.get("isCorrect", True)]
-        correct_words = [w["text"] for w in words if w.get("isCorrect", True)]
 
         original_tokens = await process_text_to_tokens(sentence)
         transcription_tokens = await process_text_to_tokens(transcription)
         missing_words = [t for t in original_tokens if t not in transcription_tokens]
-
-        total_words = len(original_tokens)
         issues, strengths, suggestions = [], [], []
 
         if text_score < 20:
