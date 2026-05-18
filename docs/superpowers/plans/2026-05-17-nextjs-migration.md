@@ -1758,9 +1758,29 @@ Build a reusable DataTable with sorting, pagination, search. Users page uses it.
 
 ---
 
-# Phase 9: Admin App — Category / Topic / Vocabulary CRUD
+# Phase 9: Admin App — Category / Topic / Vocabulary CRUD ✅ COMPLETED 2026-05-18
 
-### Task 9.1: Category management
+**Outcome:**
+- 3 admin services (`category.service.ts`, `topic.service.ts`, `vocabulary.service.ts`) — clean method names (no `admin` prefix since this app IS admin)
+- `learning.schema.ts` with `categorySchema`, `topicSchema`, `vocabularySchema` (zod)
+- `/categories` — list + search + CRUD dialog + delete + toggle status
+- `/topics` — list + category filter + CRUD dialog + delete + toggle status (category Select inside form)
+- `/vocabulary` — paginated list + filters (search, topic, JLPT) + CRUD dialog with rich form (term, pronunciation, meaning, example, exampleMeaning, audioPath, topic, JLPT)
+- All 3 pages share the same DataTable + dropdown action menu pattern
+- Build: 8 routes total (7 static + 1 dynamic)
+- Verification: type-check ✓ · lint ✓ · 11/11 tests ✓ · build ✓
+
+### Discoveries (Phase 9)
+
+| Discovery | Impact / Fix |
+|---|---|
+| **`z.coerce.number()` breaks RHF resolver typing** | Mixing `z.coerce.number()` with `zodResolver(schema)` + `useForm<z.infer<typeof schema>>` produces `TFieldValues missing the following properties from type 'X': ...` — RHF can't reconcile zod's `unknown` input type with its `output` after coerce. **Fix:** register the field with `valueAsNumber: true` and write the schema as `z.number().int().min(0).or(z.nan()).transform(v => isNaN(v) ? undefined : v).optional()` — accepts NaN from empty input, transforms it back to undefined for the API. |
+| Form dialog mount/unmount via `open` state | Putting the dialog at the page level (not in the row) means a single dialog instance handles both create and edit. Pass `initial: T | null` to differentiate. `useEffect([open, initial])` resets form when dialog opens with new data. |
+| Hide-by-toggle vs delete | Category/topic models have an `isActive` boolean. We expose both delete (destructive, in confirm) and toggle (one-click). UX: toggle is the soft "hide from learners" action, delete is true removal. Both in the same row dropdown. |
+| Reusable filter sentinel | Same `__all__` pattern from user app — Radix Select can't accept empty-string values, so `__all__` is the "all" sentinel mapped to `null` in onChange. Applies to category filter (topics page) and topic/JLPT filters (vocab page). |
+| Topic select uses `topicName` not `topicId` | Backend's CreateVocabularyRequest takes `topicName: string` (the human-readable name) rather than `topicId`. Quirky but legacy — `<SelectItem value={t.name}>` not `value={t.topicId}`. Documented inline so it's not changed later. |
+| Filter default categoryId for new topics | When creating a topic while filtered by a category, pre-fill the form's `categoryId` with that filter. Small UX win — fewer clicks. |
+| Page-level `editing` state for the form dialog | `[dialogOpen, setDialogOpen] + [editing, setEditing]` pattern. `handleCreate` sets `editing = null`, `handleEdit(item)` sets `editing = item`. The dialog reads `initial: editing` and `useEffect` does the reset. |
 
 **Files:**
 - Create: `src/app/(admin)/categories/page.tsx`
