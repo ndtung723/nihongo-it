@@ -6,7 +6,7 @@ WORKDIR /app
 # Use libc6-compat for native modules (e.g. sharp) on Alpine
 RUN apk add --no-cache libc6-compat
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm install --no-audit --no-fund
 
 # ---- builder stage: compile Next.js with Turbopack ----
 FROM node:24-alpine AS builder
