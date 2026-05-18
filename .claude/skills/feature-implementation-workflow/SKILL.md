@@ -1,6 +1,6 @@
 ---
 name: feature-implementation-workflow
-description: Use when implementing a new feature that spans backend + frontend (new endpoint + UI). Orchestrates the order — types first, backend endpoint, frontend service, store/component — and references domain-specific skills along the way.
+description: Use when implementing a new feature that spans backend + frontend (new endpoint + UI). Orchestrates the order — types first, backend endpoint, frontend service, store/component — across the Next.js 16 stack.
 ---
 
 # Feature Implementation Workflow — Nihongo IT
@@ -9,26 +9,36 @@ description: Use when implementing a new feature that spans backend + frontend (
 
 - The user wants a new end-to-end feature (BE + FE)
 - "Add an X feature for user/admin"
-- When multiple layers need coordination (controller → service → store → view)
+- When multiple layers need coordination (controller → service → store → page)
 
 ## Overall workflow
 
 ```
 1. Understand the requirement  → Brainstorm with the user if fuzzy
 2. Backend first               → Endpoint → DTO → controller → service → migration
-3. Frontend types              → Define types in @/types/{domain}.types.ts
+3. Frontend types              → Define in @/types/{domain}.types.ts (the relevant app)
 4. Frontend service            → Add method to {domain}.service.ts
-5. Frontend store/view         → State management or inline in the view
-6. UI integration              → Toast, confirm, loading state
-7. Verify                      → type-check + build for both sides
+5. Frontend store (optional)   → Zustand if shared state needed
+6. UI integration              → Page or component with hook + toast + error
+7. Verify                      → type-check + lint + build for both sides
 8. Commit                      → 1 commit/PR per complete feature
 ```
+
+## Step 0: Pick the right app
+
+There are TWO Next.js apps:
+- `frontend-user/` — user-facing (vocabulary, flashcards, conversation, etc.)
+- `frontend-admin/` — admin (users, content CRUD, statistics)
+
+Many features touch only one. Some (like a new vocabulary endpoint) touch both — the user app consumes the public read endpoint, the admin app consumes the admin CRUD endpoint. Decide which app(s) the feature lives in BEFORE writing code.
+
+Types/services are **duplicated** between the two apps (no shared package). When both apps need a new type, copy it to both `src/types/` directories.
 
 ## Step 1: Brainstorm (when the request is fuzzy)
 
 If the user says "add a 'favorite vocabulary' feature" without clarity:
 - What's the user flow? (click icon → save to server, or local?)
-- Is there a dedicated page listing saved items? (already exists as `VocabularyStorageView`)
+- Is there a dedicated page listing saved items? (already exists as `/vocabulary/saved`)
 - Does admin see stats?
 
 → Invoke `superpowers:brainstorming` to clarify.
@@ -102,20 +112,16 @@ cd services
 
 ## Step 3: Frontend types
 
-Invoke the `frontend-conventions` skill. Add to `@/types/learning.types.ts`:
+Add to the relevant app's `src/types/{domain}.types.ts`. Often unnecessary — most features extend an existing type. For our example, `VocabularyItem.isSaved` already exists, so no new type needed.
 
-```typescript
-// Often unnecessary — save actions usually don't need new types.
-// VocabularyItem.isSaved already exists
-```
-
-In most cases the type is already sufficient — just verify the response shape.
+Remember the import boundary: services import from `@/types/...types`, NEVER define types inside service files.
 
 ## Step 4: Frontend service
 
-Add methods to `vocabulary.service.ts`:
+Add methods to the relevant `{domain}.service.ts`:
 
 ```typescript
+// frontend-user/src/services/vocabulary.service.ts
 saveVocabulary: (id: string): Promise<void> =>
   api.post(`/api/v1/learning/vocabulary/${id}/save`, {}).then(() => undefined),
 
@@ -123,42 +129,67 @@ removeSavedVocabulary: (id: string): Promise<void> =>
   api.delete(`/api/v1/learning/vocabulary/${id}/save`).then(() => undefined),
 ```
 
+Service methods return unwrapped `Promise<T>`. Use `unwrap<T>()` helper if the backend response is enveloped as `{data: T}`.
+
 ## Step 5: Store (only if shared state is needed)
 
-Invoke the `frontend-state-management` skill if:
-- Multiple views need to know the saved status
-- A saved-items list needs caching
+Use Zustand if:
+- Multiple components need to know the saved status
+- A saved-items list needs caching (e.g. `useVocabularyStore.savedVocabulary`)
 
-If only one view uses it → skip the store and call the service directly from the view.
+If only one component uses it → skip the store and call the service directly.
+
+```typescript
+// frontend-user/src/stores/vocabulary.store.ts
+async toggleFavorite() {
+  const current = get().currentVocabulary
+  if (!current) return
+  try {
+    if (current.isSaved) await vocabularyService.removeSavedVocabulary(current.vocabId)
+    else await vocabularyService.saveVocabulary(current.vocabId)
+    set({ currentVocabulary: { ...current, isSaved: !current.isSaved } })
+  } catch (err) {
+    const msg = extractApiError(err, 'Không cập nhật được trạng thái')
+    throw new Error(msg)  // ← throw to caller, do NOT toast from inside the store
+  }
+}
+```
 
 ## Step 6: UI integration
 
-Invoke the `frontend-composables` + `frontend-error-handling` skills.
+Use `useAppToast` for feedback. Always wrap store/service calls in try/catch and surface errors via toast — the component, not the store, owns the user-facing message.
 
-```vue
-<script setup lang="ts">
-import { useAppToast } from '@/composables/useAppToast'
-import { extractApiError } from '@/types/common.types'
-import vocabularyService from '@/services/vocabulary.service'
+```typescript
+// frontend-user/src/app/(app)/vocabulary/[id]/VocabularyDetailClient.tsx
+'use client'
 
-const toast = useAppToast()
+import { useAppToast } from '@/hooks/useAppToast'
+import { useVocabularyStore } from '@/stores/vocabulary.store'
 
-async function toggleSave(item: VocabularyItem) {
-  try {
-    if (item.isSaved) {
-      await vocabularyService.removeSavedVocabulary(item.vocabId)
-      item.isSaved = false                       // optimistic
-      toast.success('Đã bỏ lưu')
-    } else {
-      await vocabularyService.saveVocabulary(item.vocabId)
-      item.isSaved = true
-      toast.success('Đã lưu')
+export function VocabularyDetailClient({ vocabId }: { vocabId: string }) {
+  const toast = useAppToast()
+  const toggleFavorite = useVocabularyStore((s) => s.toggleFavorite)
+
+  async function handleToggle() {
+    try {
+      await toggleFavorite()
+      toast.success('Đã cập nhật')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Không cập nhật được')
     }
-  } catch (err) {
-    toast.error(extractApiError(err, 'Không thực hiện được'))
   }
+  // ...
 }
-</script>
+```
+
+For dynamic routes, remember Next.js 16's async params:
+```typescript
+// frontend-user/src/app/(app)/vocabulary/[id]/page.tsx
+interface Props { params: Promise<{ id: string }> }
+export default async function Page({ params }: Props) {
+  const { id } = await params
+  return <VocabularyDetailClient vocabId={id} />
+}
 ```
 
 ## Step 7: Verify both sides
@@ -167,7 +198,9 @@ Invoke the `build-and-verify` skill.
 
 ```bash
 cd services && ./gradlew :learning-service:build -x test
-cd frontend && npm run type-check && npm run build
+cd frontend-user && npm run type-check && npm run lint && npm run build
+# if admin app also changed:
+cd frontend-admin && npm run type-check && npm run lint && npm run build
 ```
 
 ## Step 8: Commit
@@ -185,7 +218,7 @@ git commit -m "feat(vocab): add save/remove vocabulary endpoints"
 Don't flip the order:
 
 ```
-Migration → Entity → Repo → Service → Controller → FE Type → FE Service → Store/View
+Migration → Entity → Repo → Service → Controller → FE Type → FE Service → Store/Component
 ```
 
 Why:
@@ -209,11 +242,20 @@ If a feature touches 2 services (e.g. learning-service needs to check user-servi
 - Use the Feign client (already configured) or event-driven flows
 - Service A stores service B's entity UUID and validates via API when needed
 
+## Frontend rules to follow
+
+All listed in root `CLAUDE.md` — read them before adding files:
+- Async `params` and `useSearchParams` Suspense rules
+- Service file naming + `Promise<T>` return
+- `extractApiError` + `useAppToast` for errors
+- Zustand: throw from store, toast from component
+- `proxy.ts` (not `middleware.ts`) for auth redirect
+- Forms: `valueAsNumber: true` + `z.number().or(z.nan()).transform(...)` not `z.coerce.number()`
+- Radix Select: sentinel value (e.g. `__all__`) not empty string
+
 ## Reference docs
 
-- `frontend-conventions/SKILL.md` — steps 3, 4
-- `frontend-state-management/SKILL.md` — step 5
-- `frontend-composables/SKILL.md` — step 6
-- `frontend-error-handling/SKILL.md` — step 6
 - `backend-microservice/SKILL.md` — step 2
 - `build-and-verify/SKILL.md` — step 7
+- Root `CLAUDE.md` — all frontend conventions (sections "Frontend — must not be violated" and "Anti-patterns")
+- `docs/superpowers/plans/2026-05-17-nextjs-migration.md` — historical context + Next.js 16 quirks catalog

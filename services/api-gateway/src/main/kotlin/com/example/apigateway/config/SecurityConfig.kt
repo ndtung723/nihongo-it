@@ -18,7 +18,11 @@ class SecurityConfig {
         private const val CORS_MAX_AGE_SECONDS = 3600L
     }
 
-    @Value("\${app.cors.allowed-origins:http://localhost:5173,http://localhost:3000}")
+    // Defaults cover the two Next.js apps in local dev:
+    //   - 3000: frontend-user
+    //   - 3002: frontend-admin (host port 3002 because grafana takes 3001)
+    // Production CORS_ALLOWED_ORIGINS env var should list real domains.
+    @Value("\${app.cors.allowed-origins:http://localhost:3000,http://localhost:3002}")
     private lateinit var allowedOrigins: String
 
     @Bean

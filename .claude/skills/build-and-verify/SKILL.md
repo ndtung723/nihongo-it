@@ -1,6 +1,6 @@
 ---
 name: build-and-verify
-description: Use when verifying code changes compile (Kotlin or TypeScript), running linter, or before committing. Establishes compile-only workflow without running services — user prefers gradle build -x test for backend, npm type-check + build for frontend, NOT bootRun.
+description: Use when verifying code changes compile (Kotlin or TypeScript), running linter, or before committing. Establishes compile-only workflow without running services — user prefers gradle build -x test for backend, npm type-check + build for the two Next.js frontends, NOT bootRun.
 ---
 
 # Build & Verify — Nihongo IT
@@ -8,13 +8,13 @@ description: Use when verifying code changes compile (Kotlin or TypeScript), run
 ## When to invoke
 
 - Before commit/PR
-- After editing Kotlin or Vue/TS code
+- After editing Kotlin or TypeScript code
 - When the user asks for "build", "verify", "test compile", "type check"
 - Do NOT invoke when the user actually wants to run the server
 
 ## Important user preference
 
-**The user only wants compile verification, NOT bootRun.** This is recorded in memory: "compile only with `./gradlew build -x test`, no bootRun needed".
+**The user only wants compile verification, NOT bootRun / dev server.** This is recorded in memory: "compile only with `./gradlew build -x test`, no bootRun needed".
 
 Reason: services run via Docker Compose or on a dedicated test environment. Locally we only need to know the code compiles + type-checks.
 
@@ -38,7 +38,7 @@ cd services
 ./gradlew :learning-service:build -x test
 ./gradlew :user-service:build -x test
 ./gradlew :ai-service:build -x test
-./gradlew :notification:build -x test
+./gradlew :notification-service:build -x test
 ./gradlew :api-gateway:build -x test
 ./gradlew :common:build -x test
 ```
@@ -48,11 +48,8 @@ cd services
 ONLY when the user explicitly asks. Run multiple modules together to save time:
 
 ```bash
-# Run tests for the three modules that currently have test suites:
 cd services
 ./gradlew :common:test :api-gateway:test :learning-service:test
-
-# Single module
 ./gradlew :learning-service:test
 ```
 
@@ -61,34 +58,10 @@ cd services
 ./gradlew :common:ktlintFormat :api-gateway:ktlintFormat :learning-service:ktlintFormat
 ```
 
-**Read test results after running (PowerShell):**
-```powershell
-$modules = @('common','api-gateway','learning-service')
-foreach ($m in $modules) {
-    $dir = "D:/workspace/nihongo-it/services/$m/build/test-results/test"
-    if (Test-Path $dir) {
-        $xmlFiles = Get-ChildItem $dir -Filter '*.xml'
-        $total = 0; $fail = 0; $err = 0
-        foreach ($f in $xmlFiles) {
-            [xml]$x = Get-Content $f.FullName
-            $total += [int]$x.testsuite.tests
-            $fail  += [int]$x.testsuite.failures
-            $err   += [int]$x.testsuite.errors
-        }
-        Write-Host "${m}: $total tests, $fail failures, $err errors"
-    } else {
-        Write-Host "${m}: no test results found"
-    }
-}
-```
-
-Expected clean baseline: `common: 12 tests, 0 failures, 0 errors` / `api-gateway: 14 tests, 0 failures, 0 errors` / `learning-service: 43 tests, 0 failures, 0 errors`
-
 Do NOT run tests as part of the regular verify workflow — slow and unnecessary for a compile check.
 
 ### Ktlint/Detekt failures
 
-If `build` fails on style:
 ```bash
 ./gradlew ktlintFormat       # auto-fixes many cases
 ./gradlew :{service}:ktlintFormat
@@ -105,111 +78,88 @@ Detekt findings usually need manual fixes — read the output and address them.
 
 If you need to run the stack → `cd docker && docker compose up -d`.
 
-## Frontend — npm/Vite/vue-tsc
+## Frontend — Next.js 16 (TWO apps)
 
-### Quick type-check (fastest)
+There are two independent apps with identical scripts. Verify each separately.
+
+### Quick type-check (fastest, per app)
 
 ```bash
-cd frontend
-npm run type-check
+cd frontend-user && npm run type-check
+cd frontend-admin && npm run type-check
 ```
 
-- Runs `vue-tsc --build`
+- Runs `tsc --noEmit`
 - Must be 0 errors before commit
-- The 3 pre-existing ESLint errors about test files outside `tsconfig` are unrelated — ignore them
 
-### Full build verification
-
-```bash
-cd frontend
-npm run build
-```
-
-- Runs `run-p type-check "build-only"` in parallel
-- Vite production build
-- Output to `dist/`, takes about 12 seconds
-- Bundle-size warnings are acceptable
-
-### Lint
+### Lint (per app)
 
 ```bash
-cd frontend
-npm run lint            # eslint --fix
+cd frontend-user && npm run lint
+cd frontend-admin && npm run lint
 ```
 
-- Auto-fixes many issues
-- ~136 floating-Promise warnings are pre-existing and **do not block commits**
-- Errors MUST be 0 (except for the 3 pre-existing ones mentioned above)
+- Runs `eslint .` directly (Next.js 16 removed `next lint`)
+- Errors MUST be 0
+- **React Compiler lint rules** (new in Next 16): `react-hooks/use-memo`, `react-hooks/set-state-in-effect`, `react-hooks/incompatible-library` — see CLAUDE.md rules 10, 11, 18 for handling
 
-### Dev server (when the user wants to test the UI)
+### Full build verification (per app)
 
 ```bash
-cd frontend
-npm run dev             # http://localhost:5173
+cd frontend-user && npm run build
+cd frontend-admin && npm run build
 ```
 
-Only run when the user explicitly wants to test in the browser. Do NOT start it on your own.
+- Runs `next build` (Turbopack by default in Next.js 16)
+- For Docker: `next.config.ts` has `output: 'standalone'` → produces `.next/standalone/server.js`
+- Must succeed before commit
 
 ### Tests (vitest)
 
 ```bash
-# One-shot run (non-interactive) — use this in CI or when verifying
-cd frontend
-npx vitest run
-
-# With verbose output showing each test name (useful for debugging failures)
-npx vitest run --reporter=verbose
-
-# Filter output to pass/fail summary only
-npx vitest run --reporter=verbose 2>&1 | grep -E "FAIL|PASS|Tests |Test Files|✓|×" | tail -20
-
-# Coverage report
-npm run test:coverage
-
-# Watch mode (interactive, for development)
-npm run test:unit
+cd frontend-user && npm test
+cd frontend-admin && npm test
 ```
 
-**DO NOT use `npm run test`** — that script does not exist; the correct scripts are `test:unit` and `test:coverage`.
+- `npm test` runs `vitest run` (non-interactive)
+- Each app has its own vitest config + setup file
+- Watch mode: `npm run test:watch`
+- Coverage: `npm run test:coverage`
 
-Expected clean baseline: **55 tests, 6 test files, 0 failures** across:
-- `src/__tests__/auth.store.test.ts` — auth store (isAuthenticated, login, initializeAuth, logout)
-- `src/__tests__/common.types.test.ts` — `extractApiError()` utility
-- `src/__tests__/guards.test.ts` — router guards (requireAuth, requireAdmin, redirectIfAuthenticated)
-- `src/__tests__/jwt.test.ts` — JWT utilities (decodeToken, isTokenExpired, getStoredPayload, isAdmin)
-- `src/__tests__/tokenStore.test.ts` — in-memory token store
-- `src/__tests__/useDebounce.test.ts` — `useDebounce` composable
+Expected baseline: **11 tests per app** (4 tokenStore + 7 auth store). Both apps should be green.
 
-**Key mocking patterns for frontend tests:**
+**Key mocking patterns:**
 
 ```typescript
-// tokenStore (in-memory — NOT localStorage)
-vi.mock("@/utils/tokenStore", () => ({ getAccessToken: vi.fn(), clearAccessToken: vi.fn() }))
-import { getAccessToken } from "@/utils/tokenStore"
-vi.mocked(getAccessToken).mockReturnValue("token")
+// tokenStore (in-memory)
+vi.mock('@/lib/tokenStore', () => ({
+  getAccessToken: vi.fn(),
+  setAccessToken: vi.fn(),
+  clearAccessToken: vi.fn(),
+}))
 
-// jwt utils
-vi.mock("@/utils/jwt", () => ({ isTokenExpired: vi.fn(), decodeToken: vi.fn() }))
+// axios instance (single mock, then mockResolvedValueOnce per test)
+vi.mock('@/lib/api', () => ({
+  default: { post: vi.fn(), get: vi.fn(), put: vi.fn(), delete: vi.fn() },
+}))
+import api from '@/lib/api'
+const mockedApi = api as unknown as { post: ReturnType<typeof vi.fn> }
+mockedApi.post.mockResolvedValueOnce({ data: { token: 'jwt-abc' } })
 
-// axios (for initializeAuth refresh-token call)
-vi.mock("axios", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("axios")>()
-  return { ...actual, default: { ...actual.default, post: vi.fn() } }
+// Zustand: reset state between tests
+beforeEach(() => {
+  useAuthStore.setState({ user: null, loading: false, error: null, initialized: false })
 })
-import axios from "axios"
-vi.mocked(axios.post).mockResolvedValue({ data: { token: "valid_token" } })
 ```
 
-**Use JUnit 5 assertions in Kotlin tests, NOT `kotlin.test`:**
-```kotlin
-// ✅ Always import from JUnit 5 — kotlin.test is not on classpath in these modules
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
-// ❌ Never import kotlin.test.assertEquals — will cause "Unresolved reference" at compile time
+### Dev server (when the user wants to test the UI)
+
+```bash
+cd frontend-user && npm run dev      # http://localhost:3000
+cd frontend-admin && npm run dev     # http://localhost:3001 (in dev; docker maps to host 3002)
 ```
 
-Only run when the user asks or when you edit a file with a corresponding test.
+Only run when the user explicitly wants to test in the browser. Do NOT start it on your own.
 
 ## Python service
 
@@ -225,11 +175,15 @@ Compilation = "Python runs" — there's no separate build step.
 
 ```bash
 cd docker
-docker compose up -d                       # start everything
+docker compose up -d                       # start everything (incl. both frontends)
 docker compose ps                          # status
 docker compose logs -f learning-service    # tail logs
 docker compose down                        # stop
 ```
+
+Frontend services:
+- `frontend-user` → http://localhost:3000
+- `frontend-admin` → http://localhost:3002 (host) / 3001 (container)
 
 When the user says "end-to-end test" or "run the full stack" → use docker compose.
 
@@ -239,8 +193,9 @@ When the user says "end-to-end test" or "run the full stack" → use docker comp
 # 1. Backend if Kotlin changed
 cd services && ./gradlew build -x test
 
-# 2. Frontend if Vue/TS changed
-cd frontend && npm run type-check && npm run build
+# 2. Frontend if TypeScript changed — check the affected app(s)
+cd frontend-user && npm run type-check && npm run lint && npm run build
+cd frontend-admin && npm run type-check && npm run lint && npm run build
 
 # 3. Git status check
 git status
@@ -263,5 +218,6 @@ Do NOT be silent — the user needs to know the build passed.
 - ❌ Running `bootRun` "just to test" — the user doesn't want it
 - ❌ Running `gradle test` on every commit — slow, unnecessary
 - ❌ Skipping `type-check` on the frontend — TypeScript errors will break the runtime
+- ❌ Running `next lint` (Next.js 16 removed it) — use `npm run lint` which runs eslint directly
+- ❌ Verifying only one of the two frontend apps when both changed — check both
 - ❌ Claiming "build passes" without actually running the command — verify-before-completion principle
-- ❌ Ignoring lint warnings beyond the 136 pre-existing — new warnings might be real problems

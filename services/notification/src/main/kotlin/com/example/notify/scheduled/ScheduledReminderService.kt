@@ -32,7 +32,7 @@ class ScheduledReminderService(
     /**
      * Base URL for the frontend application, used for generating action URLs in notifications
      */
-    @Value("\${app.frontend.url:http://localhost:5173}")
+    @Value("\${app.frontend.url:http://localhost:3000}")
     private lateinit var baseFrontendUrl: String
 
     /**
