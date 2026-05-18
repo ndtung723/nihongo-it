@@ -1670,9 +1670,35 @@ Charts: cards reviewed per day, accuracy trend, JLPT level distribution, time sp
 
 ---
 
-# Phase 8: Admin App — Foundation + Auth + Dashboard
+# Phase 8: Admin App — Foundation + Auth + Dashboard ✅ COMPLETED 2026-05-18
 
 **Goal:** Admin app reaches same shape as user app's Phase 3. Reuses 90% of code structure.
+
+**Outcome:**
+- Auth schema + admin service ported to `frontend-admin/`
+- Admin login page (`/login`) with explicit role check after `fetchCurrentUser` — non-admins get logged out + error toast
+- `(admin)/layout.tsx` — Client Component with role guard via `useEffect` watching `initialized` + `user`. Shows loader until session restored, redirects to `/login` if no user, force-logs-out if not ADMIN
+- `Sidebar` (desktop) + `MobileNavLinks` (drawer via shadcn Sheet) — shared NAV_ITEMS with active route highlighting via `usePathname`
+- `AdminHeader` — mobile menu trigger + user dropdown (logout)
+- `AuthInitializer` mounted in `Providers` — same pattern as user app
+- Dashboard (`/`) with summary stat cards + today's activity + recent activity list
+- TanStack Table v8 + reusable `DataTable` (generic, sortable, empty state)
+- Users list (`/users`) — search + DataTable + row actions (view, activate/deactivate)
+- User detail (`/users/[id]`) — info card with role/status badges, action buttons (toggle active + toggle role), stat rows for tracking progress
+- Build: 5 routes (4 static + 1 dynamic)
+- Verification: type-check ✓ · lint ✓ · 11/11 tests ✓ · build ✓
+
+### Discoveries (Phase 8)
+
+| Discovery | Impact / Fix |
+|---|---|
+| **TanStack Table v8 + React Compiler incompatibility** | `useReactTable()` returns functions the React Compiler can't safely cache → triggers `react-hooks/incompatible-library` error. Suppress with `// eslint-disable-next-line react-hooks/incompatible-library` directly above `useReactTable(...)`. This is a library limitation (TanStack Table hasn't adopted React Compiler conventions), not a bug in our usage. |
+| Role check must be CLIENT-side, not in proxy.ts | Proxy can only check cookie presence — it can't decode JWT to check role without a backend call (which would slow every request). Pattern: layout-level guard. `(admin)/layout.tsx` waits for `initialized`, then checks `user.roleId === ROLES.ADMIN`, force-logout-redirect if not. Shows Loader meanwhile. |
+| Admin login also needs role check | Even though anyone can hit the login endpoint, after successful login the admin app must verify `roleId === ADMIN` and reject otherwise (logout + error). Otherwise a regular user could log in and reach the admin app's session cookie. |
+| `DataTable` doesn't own pagination | Server-side pagination (the only kind we use) is owned by the page, not the table. DataTable only does client-side sorting on the current page's data. Cleaner separation, fewer foot-guns. |
+| Sidebar + mobile drawer share NAV_ITEMS | Single source of truth in `Sidebar.tsx`. Desktop renders `<Sidebar>` (always visible on md+), mobile renders `<MobileNavLinks>` inside a Sheet via header trigger. Both use `usePathname` + `isActive(...)` for highlight. |
+| `redirect()` from `next/navigation` doesn't work in Client Components | Use `router.replace('/login')` inside `useEffect`. `redirect()` only works in async Server Components or server actions. The layout is `'use client'` because it needs to read Zustand state, so router is the right tool. |
+| Dropdown actions inside DataTable rows | Each row's action menu is a shadcn DropdownMenu. To call store actions from inside a column definition, use `useCallback` for the handler and reference it via `useMemo` deps for the columns array. Otherwise every render rebuilds the columns. |
 
 ### Task 8.1: Port shared foundation to admin app
 
