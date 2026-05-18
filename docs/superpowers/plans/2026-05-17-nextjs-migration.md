@@ -1812,7 +1812,34 @@ Most complex CRUD: term, meaning, pronunciation, example, exampleMeaning, audioP
 
 ---
 
-# Phase 10: Admin App — Conversations + Drag-Drop Editor
+# Phase 10: Admin App — Conversations + Drag-Drop Editor ✅ COMPLETED 2026-05-18
+
+**Outcome:**
+- `conversation.service.ts` + `conversation.schema.ts` (admin scoped, clean naming)
+- `/conversations` — paged list with search + JLPT filter + CRUD dialog (basic info: title, description, JLPT, unit) + 4 row actions (view, edit lines, edit info, delete)
+- `/conversations/[id]` — Server Component read-only view of all lines (sorted by orderIndex) with badges + speaker + Japanese + Vietnamese + notes + important vocab
+- `/conversations/[id]/edit` — drag-drop lines editor using `@dnd-kit/sortable`:
+  - `SortableLine` per row: drag handle (`useSortable`), speaker Select, JP textarea, VN textarea, notes input, important vocab input, delete button
+  - PointerSensor (5px activation distance) + KeyboardSensor for a11y
+  - `tempId` for keying so unsaved new lines don't collide with backend IDs
+  - Add/delete line, drag reorder, batch save in one PUT
+  - Dirty state tracking + `beforeunload` warn + confirm dialog on back button
+  - On save: rewrite `orderIndex` from array position, drop client-only `tempId`
+- Build: 11 routes total (8 static + 3 dynamic)
+- Verification: type-check ✓ · lint ✓ · 11/11 tests ✓ · build ✓
+
+### Discoveries (Phase 10)
+
+| Discovery | Impact / Fix |
+|---|---|
+| **`@dnd-kit/sortable` works fine with React Compiler lint rules** | Initially added `// eslint-disable-next-line react-hooks/incompatible-library` above `useSortable(...)` defensively, but lint reported "unused directive" — `@dnd-kit` is compatible. Removed the directive. (Compare to `useReactTable` in Phase 8 which DOES need the disable.) |
+| `tempId` client-side ID for new lines | Backend lines have a `lineId` (UUID) on edit, but new lines created in the editor don't. Sortable needs a stable key per item — use `lineId ?? generate()`. The generated id is stored as `tempId` on each line object and stripped before sending to server. |
+| `orderIndex` is derived from array position on save | Don't trust whatever `orderIndex` the server originally sent. After drag-reorder + add/delete, rewrite all `orderIndex = i` based on array position. Server stores the indices we send. |
+| Dirty state + `beforeunload` warn | Track `dirty` boolean set true on any mutation (drag, edit, add, delete). Use it to: (1) disable Save button when nothing changed, (2) attach a `beforeunload` listener that calls `e.preventDefault()` for browser warn, (3) ask via `useConfirm` when user clicks Back. |
+| Drag activation distance prevents accidental drags | `PointerSensor({ activationConstraint: { distance: 5 } })` — drag only starts after pointer moves 5px. Without this, every click on the drag handle would start a drag, blocking textarea text selection inside the row. |
+| KeyboardSensor for a11y | `useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })` lets users press Tab → Space to "grab" then arrow keys to move. Important — drag-drop is otherwise unusable with keyboard only. |
+| Unused-destructure pattern for stripping fields | TS doesn't allow `const { tempId: _tempId, ...rest } = obj` without flagging `_tempId` unused. Workaround: `const { tempId, ...rest } = obj; void tempId; return rest`. Cleaner than `// eslint-disable-next-line`. |
+| Two layers of confirm (back vs delete line) | `useConfirm()` works for both: destructive line delete (immediate from view), AND "discard changes?" on back navigation when dirty. Same hook, different prompts. |
 
 ### Task 10.1: Conversation list + detail
 
