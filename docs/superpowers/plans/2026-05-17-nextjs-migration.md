@@ -1871,7 +1871,29 @@ Each line is a sortable item. Drag to reorder. Inline-edit speaker + japaneseTex
 
 ---
 
-# Phase 11: Admin App — Statistics
+# Phase 11: Admin App — Statistics ✅ COMPLETED 2026-05-18 — ADMIN APP COMPLETE
+
+**Outcome (ADMIN APP NOW FEATURE-COMPLETE — 14 routes total):**
+- `types/statistics.types.ts` — `UserStatistics`, `ReviewHistoryItem`, `UserStatisticsDetail`, `AdminStatisticsOverview`, `UserStatisticsListResponse`
+- `statistics.service.ts` with `getOverview()`, `getUsers()`, `getUserDetail()`. Inconsistent backend wrapping handled with `unwrap<T>()` helper.
+- `lib/charts.ts` — same centralized Chart.js registration as user app
+- `/statistics` — 5 summary cards + 2 distribution charts (users by level Bar, users by JLPT goal Doughnut) + top performers + most active users lists (clickable to detail)
+- `/statistics/users` — DataTable with all users + their key stats (total cards, due, streak, reviews 30d, retention)
+- `/statistics/users/[id]` — full per-user view: 2 stat cards + 4 charts (daily reviews Line, retention Line, due forecast Bar, JLPT distribution Doughnut) + review history (last 20 with rating badge + Vietnamese meaning)
+- Build: 14 routes total (10 static + 4 dynamic)
+- Verification: type-check ✓ · lint ✓ · 11/11 tests ✓ · build ✓
+
+### Discoveries (Phase 11)
+
+| Discovery | Impact / Fix |
+|---|---|
+| Backend wraps statistics endpoints inconsistently | `/overview` and `/users/{id}` nest under `.data.data`; `/users` (list) sometimes returns the list directly. Same `unwrap<T>()` helper from Phase 5 handles all cases: `obj.data ?? obj ?? fallback`. |
+| Retention rates come as 0..1 floats | Format as `Math.round(v * 100) + '%'` for display. Chart data also multiplied by 100 for the retention chart (y-axis is implicit %). |
+| Empty Records vs null | Some users have no `dailyReviews` / `cardsByJlptLevel` etc. Guard with `sortedEntries(obj)` helper that returns `[]` for null/undefined, then chart renders "Chưa có dữ liệu" placeholder when array is empty. |
+| Rating badges in review history | Backend stores ratings 1-4 (FSRS). Local `RATING_LABEL` map: `1=Quên`, `2=Khó`, `3=Tốt`, `4=Dễ` with tone classes (rose/amber/emerald/primary). Same convention as the user app's flashcard study. |
+| Vocabulary field naming inconsistency in review history | Server returns either `vocabulary.term` + `vocabulary.meaning` (new shape) or `vocabulary.japanese` + `vocabulary.english` (legacy). Fall back: `r.vocabulary?.term ?? r.vocabulary?.japanese ?? '—'`. Documented inline. |
+
+---
 
 ### Task 11.1: Statistics overview
 
