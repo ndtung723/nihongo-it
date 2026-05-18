@@ -8,18 +8,43 @@ updates:
       interval: "weekly"
     labels: ["dependencies", "ci"]
 
-  # Frontend (npm)
+  # Frontend user app (Next.js 16 + React 19)
   - package-ecosystem: "npm"
-    directory: "/frontend"
+    directory: "/frontend-user"
     schedule:
       interval: "weekly"
     groups:
       security-updates:
         applies-to: security-updates
         patterns: ["*"]
-      vue-ecosystem:
-        patterns: ["vue*", "@vue*", "vite*", "vitest*", "vuetify*"]
-    labels: ["dependencies", "frontend"]
+      nextjs-ecosystem:
+        patterns: ["next", "react", "react-dom", "@types/react*"]
+      shadcn-radix:
+        patterns: ["@radix-ui/*", "radix-ui", "shadcn", "lucide-react", "tw-animate-css"]
+      tailwind:
+        patterns: ["tailwindcss", "@tailwindcss/*", "prettier-plugin-tailwindcss"]
+      testing:
+        patterns: ["vitest", "@vitest/*", "@vitejs/*", "@testing-library/*", "jsdom"]
+    labels: ["dependencies", "frontend-user"]
+
+  # Frontend admin app (Next.js 16 + React 19)
+  - package-ecosystem: "npm"
+    directory: "/frontend-admin"
+    schedule:
+      interval: "weekly"
+    groups:
+      security-updates:
+        applies-to: security-updates
+        patterns: ["*"]
+      nextjs-ecosystem:
+        patterns: ["next", "react", "react-dom", "@types/react*"]
+      shadcn-radix:
+        patterns: ["@radix-ui/*", "radix-ui", "shadcn", "lucide-react", "tw-animate-css"]
+      tailwind:
+        patterns: ["tailwindcss", "@tailwindcss/*", "prettier-plugin-tailwindcss"]
+      testing:
+        patterns: ["vitest", "@vitest/*", "@vitejs/*", "@testing-library/*", "jsdom"]
+    labels: ["dependencies", "frontend-admin"]
 
   # Python
   - package-ecosystem: "pip"
@@ -43,6 +68,18 @@ updates:
 
   - package-ecosystem: "docker"
     directory: "/services/api-gateway"
+    schedule:
+      interval: "monthly"
+    labels: ["dependencies", "docker"]
+
+  - package-ecosystem: "docker"
+    directory: "/frontend-user"
+    schedule:
+      interval: "monthly"
+    labels: ["dependencies", "docker"]
+
+  - package-ecosystem: "docker"
+    directory: "/frontend-admin"
     schedule:
       interval: "monthly"
     labels: ["dependencies", "docker"]
