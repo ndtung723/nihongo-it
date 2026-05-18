@@ -1921,9 +1921,89 @@ DataTable of users with key stats (streakCount, points, flashcardCount). Detail 
 
 ---
 
-# Phase 12: Cutover
+# Phase 12: Cutover ⏳ PARTIAL — safe parts done 2026-05-18; destructive parts await user approval
 
 **Goal:** Replace the old Vue frontend in production. **Destructive** — do this only after Phases 1-11 are 100% green and manually verified.
+
+**Status:**
+- ✅ 12.1 — Dockerfiles + standalone config for both apps
+- ✅ 12.1 — Both apps added to `docker/docker-compose.yaml`
+- ✅ 12.2 — Reverse proxy options documented below (no infra changes)
+- ⏸️ 12.3 — Staging smoke test (requires deploy)
+- ⛔ 12.4 — Decommission Vue frontend (DESTRUCTIVE — awaiting user authorization)
+
+### What was added (safe artifacts)
+
+| File | Purpose |
+|---|---|
+| `frontend-user/next.config.ts` | `output: 'standalone'` for Docker bundling |
+| `frontend-user/Dockerfile` | Multi-stage: node:24-alpine deps/builder/runner, non-root nextjs user, EXPOSE 3000 |
+| `frontend-user/.dockerignore` | Excludes node_modules, .next, tests, secrets |
+| `frontend-admin/next.config.ts` | Same `output: 'standalone'` |
+| `frontend-admin/Dockerfile` | Same shape, EXPOSE 3001 (internal) |
+| `frontend-admin/.dockerignore` | Same exclusions |
+| `docker/docker-compose.yaml` | New `frontend-user` (host 3000) + `frontend-admin` (host **3002** — grafana already holds 3001) |
+
+**Build verified locally:** both `npm run build` produce `.next/standalone/server.js`. `docker compose config --quiet` reports no errors.
+
+### Reverse proxy options (recommendation: subdomain)
+
+**Subdomain (recommended):**
+```
+nihongo-it.com         → frontend-user:3000   (host port 3000)
+admin.nihongo-it.com   → frontend-admin:3001  (host port 3002)
+api.nihongo-it.com     → api-gateway:8080
+```
+Benefits: separate cookies per origin (admin session can't leak to user), cleaner CORS, separate session lifetimes, independent rollback.
+
+**Path-based (alternative):**
+```
+nihongo-it.com/        → frontend-user
+nihongo-it.com/admin   → frontend-admin   (requires `basePath: '/admin'` in next.config)
+nihongo-it.com/api     → api-gateway
+```
+Shares the cookie domain, simpler DNS, but requires `basePath` config + careful link rewriting.
+
+**For nginx (subdomain):**
+```nginx
+server {
+  server_name nihongo-it.com;
+  location / { proxy_pass http://frontend-user:3000; proxy_set_header Host $host; ... }
+}
+server {
+  server_name admin.nihongo-it.com;
+  location / { proxy_pass http://frontend-admin:3001; ... }
+}
+server {
+  server_name api.nihongo-it.com;
+  location / { proxy_pass http://api-gateway:8080; ... }
+}
+```
+
+**Backend CORS:** `api-gateway` must whitelist both origins explicitly. Update `application.yml`:
+```yaml
+spring:
+  cloud:
+    gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origins:
+              - https://nihongo-it.com
+              - https://admin.nihongo-it.com
+            allow-credentials: true
+            allowed-methods: [GET, POST, PUT, PATCH, DELETE]
+```
+
+### What's left for Task 12.4 (DESTRUCTIVE — requires explicit user approval)
+
+1. Delete `frontend/` directory (current Vue app)
+2. Update `.github/workflows/frontend.yml` to point at `frontend-user/` + `frontend-admin/` (or split into two workflows)
+3. Update `CLAUDE.md` and `README.md` to remove references to the Vue app and document the new structure
+4. Update `.gitignore` if any Vue-specific patterns need removing
+5. Tag a release (`v2.0.0-nextjs-cutover` or similar)
+
+**Do not run any of the above** until staging deployment of the two Next.js apps has been validated for at least a week with no production-blocking issues. Roll-back-by-revert is much harder once the Vue source is gone.
 
 ### Task 12.1: Docker images for both Next.js apps
 
@@ -1981,7 +2061,7 @@ DataTable of users with key stats (streakCount, points, flashcardCount). Detail 
 - [ ] **Step 1: Remove `frontend/` service from `docker-compose.yml`.**
 - [ ] **Step 2: Delete `frontend/` directory.**
 - [ ] **Step 3: Update CI workflows (`.github/workflows/frontend.yml`) to point at `frontend-user/` and `frontend-admin/` instead.**
-- [ ] **Step 4: Update `CLAUDE.md` and `README.md` to reflect new structure.**
+- [ ] **Step 4: Update `CLAUDE.md` and `README.md` and `.claude/skills` in root project to reflect new structure.**
 - [ ] **Step 5: Commit + tag the release.**
 
 ---
