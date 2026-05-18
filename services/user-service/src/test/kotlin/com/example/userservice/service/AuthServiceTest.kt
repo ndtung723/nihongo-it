@@ -291,7 +291,7 @@ class AuthServiceTest {
         fun notAuthenticated() {
             whenever(userAuthUtil.getCurrentUserId()).thenReturn(null)
 
-            assertThrows<com.example.common.exception.UnauthorizedException> {
+            assertThrows<UnauthorizedException> {
                 authService.logoutAll()
             }
             verify(refreshTokenRepository, never()).deleteByUserId(any())

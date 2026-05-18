@@ -61,10 +61,10 @@ class NotificationService(
 
         try {
             val message = SimpleMailMessage()
-            message.setFrom(senderEmail)
+            message.from = senderEmail
             message.setTo(email)
-            message.setSubject(subject)
-            message.setText(content)
+            message.subject = subject
+            message.text = content
             javaMailSender.send(message)
             logger.debug("Verification email sent to $email")
         } catch (e: Exception) {
@@ -117,10 +117,10 @@ class NotificationService(
             logger.debug("Sending password change email to $email")
 
             val message = SimpleMailMessage()
-            message.setFrom(senderEmail)
+            message.from = senderEmail
             message.setTo(email)
-            message.setSubject(subject)
-            message.setText(content)
+            message.subject = subject
+            message.text = content
 
             javaMailSender.send(message)
 
