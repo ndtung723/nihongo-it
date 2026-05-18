@@ -23,7 +23,7 @@ class NotificationService(
     @Value("\${spring.mail.username:no.reply.nihongo.it@gmail.com}")
     private lateinit var senderEmail: String
 
-    @Value("\${app.frontend.url:http://localhost:5173}")
+    @Value("\${app.frontend.url:http://localhost:3000}")
     private lateinit var frontendUrl: String
 
     // Remove the property initialization here

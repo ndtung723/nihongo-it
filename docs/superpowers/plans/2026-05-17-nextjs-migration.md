@@ -2036,16 +2036,49 @@ spring:
 
 - [ ] **Step 4: Commit.**
 
-### Task 12.2: Reverse proxy setup
+### Task 12.2: Reverse proxy setup + CORS coexistence (PARTIAL — local CORS done 2026-05-18)
 
-**Decision needed before this task:** subdomain (admin.nihongo-it.com vs nihongo-it.com) OR path-based (/admin/* vs /*)?
+**Local development (Vue + Next.js coexist) — DONE:**
 
-**Recommended: subdomain** — cleaner CORS, separate cookies, separate session lifetimes.
+- [x] **Step 1: Update CORS allowed origins to include both new apps**
+  - `services/api-gateway/src/main/kotlin/com/example/apigateway/config/SecurityConfig.kt:21` — default fallback updated to include `http://localhost:3002`
+  - `services/api-gateway/src/main/resources/application.yml:89` — same default in YAML
+  - Both files now list all three: `5173` (legacy Vue), `3000` (frontend-user), `3002` (frontend-admin host port)
+  - Comments mark `5173` for removal in Phase 12.4
+  - `./gradlew :api-gateway:build -x test` passes
+- [x] **Step 2: Update `.env.example`**
+  - `APP_FRONTEND_URL` changed from `5173` → `3000` (Next.js user app is now the canonical user-facing URL — used by backend for email links etc.)
+  - Added commented `CORS_ALLOWED_ORIGINS` example for staging/prod
+  - Added `NEXT_PUBLIC_API_BASE_URL=http://localhost:8080` with comment explaining browser-facing requirement
 
-- [ ] **Step 1: Add nginx/traefik routing rule** for the chosen strategy.
-- [ ] **Step 2: Update CORS config in api-gateway** to allow both origins.
-- [ ] **Step 3: Test end-to-end via the proxy.**
-- [ ] **Step 4: Commit.**
+**Staging/production (subdomain strategy — recommended, NOT yet done):**
+
+- [ ] **Step 3: Pick deployment strategy** — subdomain (recommended) vs path-based. See "Reverse proxy options" section above for nginx config + trade-offs.
+- [ ] **Step 4: Configure nginx/traefik** at the production edge.
+- [ ] **Step 5: Set `CORS_ALLOWED_ORIGINS` env var** in staging/prod to the actual domains (NOT localhost).
+- [ ] **Step 6: Verify end-to-end** — login from each subdomain, refresh token flow across browser restarts, OAuth callback URLs match.
+
+### Remaining 5173 references (Phase 12.4 cleanup catalog)
+
+Files still referencing `localhost:5173` to be cleaned during decommission. Most are doc-strings or backend defaults that the legacy Vue app used:
+
+| File | What it does | Action in 12.4 |
+|---|---|---|
+| `services/api-gateway/src/.../SecurityConfig.kt` | CORS default | Remove `5173` from default list |
+| `services/api-gateway/src/main/resources/application.yml` | CORS default | Remove `5173` |
+| `services/user-service/.../service/NotificationService.kt` | Email template default URL | ✅ DONE 2026-05-18 — `5173` → `3000` |
+| `services/user-service/src/main/resources/application.yml` | `APP_FRONTEND_URL` default | ✅ DONE — `5173` → `3000` |
+| `services/notification/.../scheduled/ScheduledReminderService.kt` | Reminder email URL | ✅ DONE — `5173` → `3000` |
+| `services/notification/.../service/NotificationService.kt` | Email template URL | ✅ DONE — `5173` → `3000` |
+| `services/notification/src/main/resources/application.yml` | `APP_FRONTEND_URL` default | ✅ DONE — `5173` → `3000` |
+| `services/api-gateway/.../SecurityConfig.kt` | CORS default | Removes `5173` from default list (kept for now during coexist) |
+| `services/api-gateway/src/main/resources/application.yml` | CORS default | Removes `5173` (kept for now during coexist) |
+| `frontend/vite.config.ts` + `frontend/package.json` | Vue dev server config | Deleted with `frontend/` directory |
+| `README.md` | Docs reference | Update to mention `frontend-user` (3000) + `frontend-admin` (3002) |
+| `CLAUDE.md` | Project guide | Update directory + dev URL references |
+| `.claude/skills/build-and-verify/SKILL.md` | Build skill doc | Update frontend section to reference new paths/ports |
+
+**APP_FRONTEND_URL audit (2026-05-18):** confirmed the variable IS load-bearing — used for email links in 5 places: reset password (user + notification), verify email, disable notifications opt-out, study reminder. NOT safe to remove. Only changed defaults from `5173` → `3000`.
 
 ### Task 12.3: Production smoke test in staging
 

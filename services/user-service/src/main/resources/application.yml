@@ -57,7 +57,9 @@ feign:
 
 app:
   frontend:
-    url: ${APP_FRONTEND_URL:http://localhost:5173}
+    # Default points at frontend-user (Next.js) on port 3000.
+    # Set APP_FRONTEND_URL in staging/prod to the public domain.
+    url: ${APP_FRONTEND_URL:http://localhost:3000}
   cookie:
     secure: ${COOKIE_SECURE:false}  # set true in production (HTTPS)
 
