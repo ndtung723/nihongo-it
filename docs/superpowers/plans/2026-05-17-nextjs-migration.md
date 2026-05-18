@@ -1921,16 +1921,29 @@ DataTable of users with key stats (streakCount, points, flashcardCount). Detail 
 
 ---
 
-# Phase 12: Cutover ⏳ PARTIAL — safe parts done 2026-05-18; destructive parts await user approval
+# Phase 12: Cutover ✅ COMPLETED 2026-05-18 — VUE FRONTEND DECOMMISSIONED
 
-**Goal:** Replace the old Vue frontend in production. **Destructive** — do this only after Phases 1-11 are 100% green and manually verified.
+**Goal:** Replace the old Vue frontend in production.
 
 **Status:**
 - ✅ 12.1 — Dockerfiles + standalone config for both apps
 - ✅ 12.1 — Both apps added to `docker/docker-compose.yaml`
-- ✅ 12.2 — Reverse proxy options documented below (no infra changes)
-- ⏸️ 12.3 — Staging smoke test (requires deploy)
-- ⛔ 12.4 — Decommission Vue frontend (DESTRUCTIVE — awaiting user authorization)
+- ✅ 12.2 — Reverse proxy options documented + local CORS coexistence done
+- ⏸️ 12.3 — Staging smoke test (requires deploy — out of code scope)
+- ✅ 12.4 — Vue frontend decommissioned (user-authorized 2026-05-18)
+
+### Task 12.4 outcome (executed 2026-05-18)
+
+- `frontend/` directory deleted via `git rm -r` (Vue 3 app)
+- `.github/workflows/frontend.yml` rewritten as matrix build (`frontend-user`, `frontend-admin`), Node 24, lint + type-check + test + build
+- 5 obsolete skills deleted: `frontend-conventions`, `frontend-state-management`, `frontend-composables`, `frontend-router-auth`, `frontend-error-handling` (all Vue/Pinia/Vuetify-specific)
+- `api-gateway` CORS defaults: `5173` removed; now `localhost:3000,localhost:3002`
+- `CLAUDE.md` rewritten with 20 Next.js 16 / React 19 / Tailwind 4 rules + new directory tree + new anti-patterns list
+- `README.md` rewritten with new ports, services table, tech stack, env vars
+- `.claude/skills/README.md` updated (3 remaining skills + pointer to CLAUDE.md for frontend conventions)
+- `.claude/skills/build-and-verify/SKILL.md` rewritten for two-app workflow (Next 16 specifics)
+- `.claude/skills/feature-implementation-workflow/SKILL.md` rewritten for new stack
+- `docker-compose.yaml` "(replaces Vue frontend after Phase 12.4 cutover)" comment removed
 
 ### What was added (safe artifacts)
 

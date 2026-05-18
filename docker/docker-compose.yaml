@@ -211,7 +211,7 @@ services:
       - nihongo_network
     restart: no
 
-  # Next.js user app (replaces Vue frontend after Phase 12.4 cutover)
+  # Next.js user app — primary user-facing frontend
   frontend-user:
     build:
       context: ../frontend-user

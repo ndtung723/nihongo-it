@@ -86,9 +86,8 @@ jwt:
 
 app:
   cors:
-    # 5173 = legacy Vue, 3000 = frontend-user (Next.js), 3002 = frontend-admin (Next.js host port)
-    # Remove 5173 once Phase 12.4 (Vue decommission) is executed.
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000,http://localhost:3002}
+    # 3000 = frontend-user (Next.js), 3002 = frontend-admin (Next.js host port)
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3002}
 
 logging:
   level:

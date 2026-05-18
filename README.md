@@ -9,10 +9,11 @@ Nền tảng học tiếng Nhật IT xây dựng theo kiến trúc microservice.
 ## Architecture Overview
 
 ```
-Frontend (Vue.js :5173)
+Frontend User  (Next.js :3000)        ← user-facing app
+Frontend Admin (Next.js :3002 host)   ← admin app
         │
         ▼
-  API Gateway (:8080)          ← JWT validation, Rate limiting, Correlation ID
+  API Gateway (:8080)                ← JWT validation, Rate limiting, Correlation ID, CORS
         │
         ├──▶ User Service (:8086)          ← Auth, Profile, OAuth2 Google
         ├──▶ Learning Service (:8088)      ← Flashcard, FSRS, Conversation
@@ -31,7 +32,9 @@ Frontend (Vue.js :5173)
 
 | Service | Port | Mô tả |
 |---|---|---|
-| `api-gateway` | 8080 | Entry point, JWT validation, rate limiting, routing |
+| `frontend-user` | 3000 | Next.js 16 user app (vocabulary, flashcards, conversation, speech, tools) |
+| `frontend-admin` | 3002 host / 3001 container | Next.js 16 admin app (users, content CRUD, statistics) |
+| `api-gateway` | 8080 | Entry point, JWT validation, rate limiting, routing, CORS |
 | `user-service` | 8086 | Auth (login/register/OAuth2), profile, refresh token |
 | `learning-service` | 8088 | Flashcard, FSRS spaced repetition, conversation |
 | `ai-service` | 8087 | OpenAI chat, text-to-speech |
@@ -42,16 +45,19 @@ Frontend (Vue.js :5173)
 ## Technology Stack
 
 **Backend**
-- Kotlin 2.3.0 + Spring Boot 4.0.2 + Spring Cloud 2025.1.1
+- Kotlin 2.3.0 + Spring Boot 4.0.2 + Spring Cloud 2025.1.1 (JDK 25)
 - Spring Cloud Gateway + Netflix Eureka + Feign
 - Spring Security 7 — JWT (access 2h, refresh 14d với rotation)
 - PostgreSQL 16 + Flyway migrations + HikariCP
 - Gradle 9.3.0 (Kotlin DSL) với shared `common` module
 
-**Frontend**
-- Vue 3 + TypeScript + Vite
-- Pinia (state management) + Vue Router
-- Vuetify 3
+**Frontend** (two standalone Next.js apps)
+- Next.js 16 (App Router) + React 19 + TypeScript 5
+- Tailwind CSS 4 + shadcn/ui (Radix primitives)
+- Zustand (state) + react-hook-form + zod + sonner (toast)
+- chart.js + react-chartjs-2 (statistics), @dnd-kit/sortable (drag-drop), @tanstack/react-table (admin tables)
+- @react-oauth/google (Google login), microsoft-cognitiveservices-speech-sdk (speech), native MediaRecorder (audio)
+- Vitest + @testing-library/react
 
 **AI / NLP**
 - OpenAI API (GPT, TTS)
@@ -68,6 +74,7 @@ Frontend (Vue.js :5173)
 - Bucket4j rate limiting (login 5/min, AI 30/min, speech 10/min)
 - CORS whitelist qua `CORS_ALLOWED_ORIGINS` env var
 - Python service protected bằng `X-Internal-Key`
+- httpOnly refresh-token cookie + in-memory access token; single-flight refresh + 5xx exponential backoff in frontend axios client
 
 ## Directory Structure
 
@@ -81,14 +88,9 @@ nihongo-it/
 │   ├── learning-service/
 │   ├── ai-service/
 │   └── notification/
-├── frontend/                    # Vue 3 + TypeScript
+├── frontend-user/               # Next.js 16 user app (port 3000)
+├── frontend-admin/              # Next.js 16 admin app (port 3001/3002)
 ├── python/                      # FastAPI NLP/Speech service
-│   ├── config.py
-│   ├── nlp.py
-│   ├── openai_client.py
-│   ├── text_comparison.py
-│   ├── speech.py
-│   └── main.py
 ├── docker/                      # Docker Compose + observability config
 │   ├── docker-compose.yaml
 │   ├── prometheus.yml
@@ -97,6 +99,7 @@ nihongo-it/
 │   └── grafana-provisioning/
 ├── deploy/                      # GCP deploy scripts
 ├── ddl/                         # SQL schema reference
+├── docs/superpowers/plans/      # Migration plans + discoveries
 └── .env                         # Environment variables (không commit)
 ```
 
@@ -104,8 +107,8 @@ nihongo-it/
 
 ### Prerequisites
 - Docker Desktop
-- Node.js 20+ (frontend)
-- JDK 25 (nếu build local)
+- Node.js 24+ (frontend)
+- JDK 25 (nếu build backend local)
 
 ### 1. Cấu hình environment
 
@@ -123,13 +126,25 @@ docker compose up -d
 
 Flyway sẽ tự động chạy migrations tạo schema và seed data khi services khởi động.
 
-### 3. Chạy frontend local
+Truy cập:
+- User app: http://localhost:3000
+- Admin app: http://localhost:3002
+- API Gateway: http://localhost:8080
+
+### 3. Chạy frontend local (hot reload)
 
 ```bash
-cd frontend
+cd frontend-user
 npm install
 npm run dev
-# → http://localhost:5173
+# → http://localhost:3000
+```
+
+```bash
+cd frontend-admin
+npm install
+npm run dev
+# → http://localhost:3001  (dev mode; docker maps to host 3002)
 ```
 
 ### 4. Build backend (không cần chạy, chỉ compile kiểm tra)
@@ -166,8 +181,9 @@ cd services
 | `OPENAI_API_KEY` | OpenAI API key |
 | `MAIL_USERNAME` / `MAIL_PASSWORD` | Gmail app password |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | OAuth2 Google |
-| `APP_FRONTEND_URL` | URL frontend (default: `http://localhost:5173`) |
-| `CORS_ALLOWED_ORIGINS` | CORS whitelist (default: `http://localhost:5173,http://localhost:3000`) |
+| `APP_FRONTEND_URL` | URL frontend-user — dùng cho email links (default: `http://localhost:3000`) |
+| `CORS_ALLOWED_ORIGINS` | CORS whitelist (default: `http://localhost:3000,http://localhost:3002`) |
+| `NEXT_PUBLIC_API_BASE_URL` | Browser-facing gateway URL được bake vào Next.js bundle (default: `http://localhost:8080`) |
 | `INTERNAL_API_KEY` | Key bảo vệ Python service |
 | `PYTHON_SERVICE_URL` | URL Python service (default: `http://python:8000`) |
 
